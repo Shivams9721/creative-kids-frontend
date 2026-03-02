@@ -47,7 +47,7 @@ export default function UserProfile() {
     // Fetch My Orders using the new Advanced Order route
     const fetchMyOrders = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/orders/user/${parsedUser.email}`);
+        const response = await fetch(`https://creative-kids-api.onrender.com/api/orders/user/${parsedUser.email}`);
         if (response.ok) {
           const data = await response.json();
           setOrders(data);
@@ -63,7 +63,7 @@ export default function UserProfile() {
     // Fetch My Wishlist
     const fetchMyWishlist = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/wishlist", {
+        const response = await fetch("https://creative-kids-api.onrender.com/api/wishlist", {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {
@@ -263,7 +263,7 @@ export default function UserProfile() {
                       <button
                         onClick={async () => {
                           const token = localStorage.getItem("token");
-                          await fetch("http://localhost:5000/api/wishlist/toggle", {
+                          await fetch("https://creative-kids-api.onrender.com/api/wishlist/toggle", {
                             method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify({ productId: product.id })
                           });
                           setWishlist(wishlist.filter(p => p.id !== product.id));

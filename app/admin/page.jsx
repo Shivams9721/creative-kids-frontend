@@ -65,7 +65,7 @@ export default function AdminDashboard() {
   const fetchAdminOrders = async () => {
     setIsRefreshingOrders(true);
     try {
-      const response = await fetch("http://localhost:5000/api/admin/orders");
+      const response = await fetch("https://creative-kids-api.onrender.com/api/admin/orders");
       const data = await response.json();
       if (Array.isArray(data)) setOrders(data);
       else setOrders([]); 
@@ -81,11 +81,11 @@ export default function AdminDashboard() {
     if (!isAuthenticated) return;
 
     if (activeTab === "dashboard") {
-      fetch("http://localhost:5000/api/admin/stats").then(res => res.json()).then(data => setStats(data)).catch(err => console.error(err));
+      fetch("https://creative-kids-api.onrender.com/api/admin/stats").then(res => res.json()).then(data => setStats(data)).catch(err => console.error(err));
     } else if (activeTab === "orders") {
       fetchAdminOrders();
     } else if (activeTab === "products") {
-      fetch("http://localhost:5000/api/products").then(res => res.json()).then(data => setAllProducts(data)).catch(err => console.error(err));
+      fetch("https://creative-kids-api.onrender.com/api/products").then(res => res.json()).then(data => setAllProducts(data)).catch(err => console.error(err));
     }
   }, [activeTab, isAuthenticated]);
 
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`https://creative-kids-api.onrender.com/api/admin/orders/${orderId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })
@@ -215,7 +215,7 @@ export default function AdminDashboard() {
     };
 
     try {
-      const url = editingId ? `http://localhost:5000/api/products/${editingId}` : "http://localhost:5000/api/products";
+      const url = editingId ? `https://creative-kids-api.onrender.com/api/products/${editingId}` : "https://creative-kids-api.onrender.com/api/products";
       const method = editingId ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this product?")) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, { method: "DELETE" });
+      const response = await fetch(`https://creative-kids-api.onrender.com/api/products/${id}`, { method: "DELETE" });
       if (response.ok) setAllProducts(allProducts.filter(p => p.id !== id));
       else alert("Failed to delete product.");
     } catch (err) { console.error("Delete error:", err); }

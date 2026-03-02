@@ -26,7 +26,7 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/products/${id}`);
+        const response = await fetch(`https://creative-kids-api.onrender.com/api/products/${id}`);
         // Prevent JSON crash if server sends a plain text error
         if (!response.ok) throw new Error("Product fetch failed or server error");
         
@@ -66,7 +66,7 @@ export default function ProductPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token && product) {
-      fetch(`http://localhost:5000/api/wishlist/check/${product.id}`, {
+      fetch(`https://creative-kids-api.onrender.com/api/wishlist/check/${product.id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
       .then(async res => {
@@ -90,7 +90,7 @@ export default function ProductPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/wishlist/toggle", {
+      const response = await fetch("https://creative-kids-api.onrender.com/api/wishlist/toggle", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
