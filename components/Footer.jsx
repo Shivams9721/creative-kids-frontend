@@ -39,10 +39,10 @@ export default function Footer() {
               Haryana 122001
             </p>
             <a 
-              href="tel:09999899441" 
+              href="tel:+911244130381" 
               className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity"
             >
-              Call: 099998 99441
+              Call: +911244130381
             </a>
           </div>
 
