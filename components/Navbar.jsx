@@ -492,7 +492,7 @@ export default function Navbar() {
                   href="tel:09999899441"
                   className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity mt-4 inline-block"
                 >
-                  Call: +918527910223
+                  Call: +911244130381
                 </a>
               </div>
             </motion.div>
