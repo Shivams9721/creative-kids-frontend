@@ -50,7 +50,7 @@ export default function CartDrawer() {
                   <p className="text-xs tracking-widest uppercase text-black/50 mb-4">Your cart is empty</p>
                   <button
                     onClick={() => setIsCartOpen(false)}
-                    className="border border-black px-6 py-3 text-xs tracking-widest uppercase text-black hover:bg-black hover:text-white transition-colors"
+                    className="border border-black px-6 py-3 text-xs tracking-widest uppercase text-black hover:bg-black hover:text-white transition-colors rounded-full"
                   >
                     Continue Shopping
                   </button>
@@ -73,7 +73,7 @@ export default function CartDrawer() {
                       <p className="text-xs text-black/50 tracking-widest uppercase mt-1">
                         Size: {item.selectedSize || item.size}
                       </p>
-                      <p className="text-sm text-black mt-2">${item.price}</p>
+                      <p className="text-sm text-black mt-2">₹{item.price}</p>
                     </div>
 
                     {/* Remove Button */}
@@ -94,7 +94,7 @@ export default function CartDrawer() {
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-sm tracking-widest uppercase text-black">Subtotal</span>
                   {/* Fixed: Using cartTotal directly instead of calling it as a function */}
-                  <span className="text-lg text-black font-medium">${cartTotal.toFixed(2)}</span>
+                  <span className="text-lg text-black font-medium">₹{cartTotal.toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] tracking-widest uppercase text-black/40 text-center mb-4">
                   Taxes and shipping calculated at checkout
@@ -104,7 +104,7 @@ export default function CartDrawer() {
                 <Link
                   href="/checkout"
                   onClick={() => setIsCartOpen(false)}
-                  className="w-full bg-[#333] hover:bg-black text-white px-8 py-4 text-[12px] font-bold tracking-widest uppercase flex justify-center transition-colors"
+                  className="w-full bg-[#333] hover:bg-black text-white px-8 py-4 text-[12px] font-bold tracking-widest uppercase flex justify-center transition-colors rounded-full"
                 >
                   Proceed to Checkout
                 </Link>

@@ -81,7 +81,7 @@ export default function ProductGrid() {
                   </p>
                 </div>
                 <p className="text-sm text-black">
-                  ${product.price}
+                  ₹{product.price}
                 </p>
               </div>
 

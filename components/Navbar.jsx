@@ -37,8 +37,8 @@ const ANNOUNCEMENTS = [
     id: 2,
     content: (
       <a 
-        // Replace 919999899441 with your actual WhatsApp business number (Country Code + Number)
-        href="https://wa.me/919999899441?text=Hello%20Creative%20Kids,%20I%20need%20help%20with..." 
+        // Replace 918527910223 with your actual WhatsApp business number (Country Code + Number)
+        href="https://wa.me/918527910223?text=Hello%20Creative%20Kids,%20I%20need%20help%20with..." 
         target="_blank" 
         rel="noopener noreferrer"
         // REMOVED: underline underline-offset-4
@@ -302,7 +302,7 @@ export default function Navbar() {
               <Search size={18} />
               <span className="text-[11px] font-bold tracking-widest uppercase">Search</span>
             </button>
-            <a href="tel:09999899441" className="hidden xl:block text-[12px] font-medium tracking-widest uppercase hover:opacity-40 transition-opacity duration-300 ease-in-out">
+            <a href="tel:+911244130381" className="hidden xl:block text-[12px] font-medium tracking-widest uppercase hover:opacity-40 transition-opacity duration-300 ease-in-out">
               Call Us
             </a>
 
@@ -492,7 +492,7 @@ export default function Navbar() {
                   href="tel:09999899441"
                   className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity mt-4 inline-block"
                 >
-                  Call: 099998 99441
+                  Call: +918527910223
                 </a>
               </div>
             </motion.div>

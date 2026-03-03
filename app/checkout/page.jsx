@@ -153,7 +153,7 @@ export default function CheckoutPage() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center pt-20 px-4 bg-white">
                 <h2 className="text-2xl font-light tracking-widest uppercase mb-4 text-black">Your cart is empty</h2>
-                <Link href="/shop" className="bg-black text-white px-8 py-3 text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors">
+                <Link href="/shop" className="bg-black text-white px-8 py-3 text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors rounded-full">
                     Return to Shop
                 </Link>
             </div>
@@ -255,7 +255,7 @@ export default function CheckoutPage() {
                                             <SmartInput label="Landmark (Optional)" name="landmark" value={address.landmark} onChange={handleInputChange} placeholder="e.g. Near Apollo Hospital" />
                                         </div>
 
-                                        <button onClick={handleSaveAddress} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-8 text-[12px] transition-colors">
+                                        <button onClick={handleSaveAddress} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-8 text-[12px] transition-colors rounded-full">
                                             Save & Continue to Summary
                                         </button>
                                     </div>
@@ -295,10 +295,10 @@ export default function CheckoutPage() {
                                                     <h3 className="text-[15px] text-black font-medium mb-1">{item.title}</h3>
                                                     <p className="text-[12px] text-black/50 tracking-widest uppercase">Size: {item.size} | Color: {item.color}</p>
                                                     <div className="flex gap-3 items-center mt-3">
-                                                        <span className="text-[15px] font-bold text-black">${item.price}</span>
+                                                        <span className="text-[15px] font-bold text-black">₹{item.price}</span>
                                                         {item.mrp > item.price && (
                                                             <>
-                                                                <span className="text-[12px] text-black/40 line-through">${item.mrp}</span>
+                                                                <span className="text-[12px] text-black/40 line-through">₹{item.mrp}</span>
                                                                 <span className="text-[10px] font-bold text-black border border-black/10 px-2 py-0.5 rounded-sm bg-black/5">
                                                                     {Math.round(((item.mrp - item.price) / item.mrp) * 100)}% OFF
                                                                 </span>
@@ -311,7 +311,7 @@ export default function CheckoutPage() {
                                         ))}
                                     </div>
 
-                                    <button onClick={() => { setStep(3); window.scrollTo(0, 0); }} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-8 text-[12px] transition-colors">
+                                    <button onClick={() => { setStep(3); window.scrollTo(0, 0); }} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-8 text-[12px] transition-colors rounded-full">
                                         Continue to Payment
                                     </button>
                                 </motion.div>
@@ -343,8 +343,8 @@ export default function CheckoutPage() {
                                         </label>
                                     </div>
 
-                                    <button onClick={handlePlaceOrder} disabled={loading} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-4 text-[12px] transition-colors flex items-center justify-center gap-2 disabled:opacity-70">
-                                        {loading ? "Processing Securely..." : `Confirm & Pay $${cartTotal.toFixed(2)}`}
+                                    <button onClick={handlePlaceOrder} disabled={loading} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-4 text-[12px] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 rounded-full">
+                                        {loading ? "Processing Securely..." : `Confirm & Pay ₹${cartTotal.toFixed(2)}`}
                                     </button>
                                 </motion.div>
                             )}
@@ -357,7 +357,7 @@ export default function CheckoutPage() {
                                 <div className="space-y-4 text-[13px] mb-6 pb-6 border-b border-black/10">
                                     <div className="flex justify-between text-black/70">
                                         <span>Cart Value ({cart.length} items)</span>
-                                        <span>${cartTotal.toFixed(2)}</span>
+                                        <span>₹{cartTotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-black/70">
                                         <span>Delivery Charges</span>
@@ -366,7 +366,7 @@ export default function CheckoutPage() {
                                 </div>
                                 <div className="flex justify-between text-[16px] font-bold text-black mb-6">
                                     <span>Total Amount</span>
-                                    <span>${cartTotal.toFixed(2)}</span>
+                                    <span>₹{cartTotal.toFixed(2)}</span>
                                 </div>
 
                                 <div className="bg-black/5 rounded-lg p-4 flex items-start gap-3">

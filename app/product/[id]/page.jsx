@@ -215,12 +215,12 @@ export default function ProductPage() {
               {/* PRICE & DISCOUNT LOGIC */}
               <div className="flex items-center gap-4">
                 <p className="text-xl text-black font-medium">
-                  ${parseFloat(product.price).toFixed(2)}
+                  ₹{parseFloat(product.price).toFixed(2)}
                 </p>
                 {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
                   <>
                     <p className="text-[14px] text-black/40 line-through">
-                      ${parseFloat(product.mrp).toFixed(2)}
+                      ₹{parseFloat(product.mrp).toFixed(2)}
                     </p>
                     <span className="bg-red-50 text-[#D32F2F] border border-red-100 px-2 py-1 text-[10px] font-bold tracking-widest uppercase rounded-sm">
                       {Math.round(((parseFloat(product.mrp) - parseFloat(product.price)) / parseFloat(product.mrp)) * 100)}% OFF
@@ -242,7 +242,7 @@ export default function ProductPage() {
                     <button 
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-6 py-3 border text-[11px] font-bold tracking-widest uppercase transition-all ${selectedColor === color ? 'border-black bg-black text-white' : 'border-black/20 text-black/70 hover:border-black/50'}`}
+                      className={`px-6 py-3 border rounded-full text-[11px] font-bold tracking-widest uppercase transition-all ${selectedColor === color ? 'border-black bg-black text-white' : 'border-black/20 text-black/70 hover:border-black/50'}`}
                     >
                       {color}
                     </button>
@@ -263,7 +263,7 @@ export default function ProductPage() {
                     <button 
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`min-w-[60px] h-[45px] flex items-center justify-center border text-[11px] font-bold tracking-widest uppercase transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-black/20 text-black/70 hover:border-black/50'}`}
+                      className={`min-w-[60px] h-[45px] flex items-center justify-center border rounded-full text-[11px] font-bold tracking-widest uppercase transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-black/20 text-black/70 hover:border-black/50'}`}
                     >
                       {size}
                     </button>
@@ -276,7 +276,7 @@ export default function ProductPage() {
             <div className="flex flex-col gap-4 mb-10">
               <button 
                 onClick={handleAddToCart}
-                className="w-full bg-black text-white h-[54px] flex items-center justify-center gap-3 text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-xl"
+                className="w-full bg-black text-white h-[54px] flex items-center justify-center gap-3 text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-xl rounded-full"
               >
                 <ShoppingBag size={18} strokeWidth={1.5} />
                 Add to Cart
