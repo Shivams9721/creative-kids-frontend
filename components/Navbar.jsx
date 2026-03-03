@@ -489,7 +489,7 @@ export default function Navbar() {
                   Haryana 122001
                 </p>
                 <a
-                  href="tel:09999899441"
+                  href="tel:+911244130381"
                   className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity mt-4 inline-block"
                 >
                   Call: +911244130381
