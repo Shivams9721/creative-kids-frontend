@@ -44,7 +44,7 @@ const ANNOUNCEMENTS = [
         // REMOVED: underline underline-offset-4
         className="flex items-center justify-center gap-2 hover:opacity-60 transition-opacity"
       >
-        <span className="text-[#25D366] text-[14px]">✆</span> Contact Client Services via Whatsapp
+        <span className="text-[#25D366] text-[14px]">✆</span> For Product Inquiries, Chat with Us on WhatsApp!
       </a>
     )
   }
