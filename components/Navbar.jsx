@@ -39,7 +39,8 @@ const ANNOUNCEMENTS = [
       <>
       On Purchase Above ₹599, Get Free Shipping!
       </>
-  }
+    )
+  },
   {
     id: 3,
     content: (
