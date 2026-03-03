@@ -36,6 +36,13 @@ const ANNOUNCEMENTS = [
   {
     id: 2,
     content: (
+      <>
+      On Purchase Above ₹599, Get Free Shipping!
+      </>
+  }
+  {
+    id: 3,
+    content: (
       <a 
         // Replace 918527910223 with your actual WhatsApp business number (Country Code + Number)
         href="https://wa.me/918527910223?text=Hello%20Creative%20Kids,%20I%20need%20help%20with..." 
