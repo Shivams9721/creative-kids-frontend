@@ -7,7 +7,6 @@ import { CheckCircle2, ChevronLeft, MapPin, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-// FIXED: Moved SmartInput OUTSIDE the main component so it doesn't lose focus when typing!
 const SmartInput = ({ label, name, value, placeholder, error, type = "text", disabled = false, badge, onChange }) => (
     <div className="w-full relative">
         <div className={`relative border rounded-lg overflow-hidden transition-colors ${error ? 'border-red-500 bg-red-50/30' : 'border-black/20 focus-within:border-black bg-white'}`}>
@@ -30,6 +29,9 @@ export default function CheckoutPage() {
     const { cart, cartTotal, setCart } = useCart();
     const router = useRouter();
 
+    // SECURITY STATE
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
     const [step, setStep] = useState(1); // 1: Address, 2: Summary, 3: Payment
     const [loading, setLoading] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
@@ -47,19 +49,25 @@ export default function CheckoutPage() {
     const [showAltPhone, setShowAltPhone] = useState(false);
     const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
+    // ==========================================
+    // 1. SECURITY CHECK (NEW)
+    // ==========================================
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        
+        if (!token) {
+            // If they are not logged in, alert them and send them to the login page!
+            alert("Please log in or create an account to securely place your order.");
+            router.push("/login"); 
+        } else {
+            // If they are logged in, allow the checkout page to load
+            setIsCheckingAuth(false);
+        }
+    }, [router]);
 
-        // Only allow numbers for phone and pincode
-        if ((name === "phone" || name === "altPhone" || name === "pincode") && !/^\d*$/.test(value)) return;
-        if (name === "pincode" && value.length > 6) return;
-        if ((name === "phone" || name === "altPhone") && value.length > 10) return;
-
-        setAddress(prev => ({ ...prev, [name]: value }));
-        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
-    };
-
-    // SMART FEATURE: Auto-fetch City and State when Pincode is 6 digits long
+    // ==========================================
+    // 2. SMART PINCODE FETCH
+    // ==========================================
     useEffect(() => {
         const fetchLocation = async () => {
             if (address.pincode.length === 6) {
@@ -89,6 +97,16 @@ export default function CheckoutPage() {
         fetchLocation();
     }, [address.pincode]);
 
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        if ((name === "phone" || name === "altPhone" || name === "pincode") && !/^\d*$/.test(value)) return;
+        if (name === "pincode" && value.length > 6) return;
+        if ((name === "phone" || name === "altPhone") && value.length > 10) return;
+
+        setAddress(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+    };
+
     const validateAddress = () => {
         const newErrors = {};
         if (!address.fullName.trim()) newErrors.fullName = "Required";
@@ -113,7 +131,6 @@ export default function CheckoutPage() {
     const handlePlaceOrder = async () => {
         setLoading(true);
         try {
-            // Get the logged-in user's data from localStorage (or set to guest)
             const userStr = localStorage.getItem("user");
             const currentUser = userStr ? JSON.parse(userStr) : null;
             const userEmail = currentUser ? currentUser.email : "guest";
@@ -126,7 +143,7 @@ export default function CheckoutPage() {
                     totalAmount: cartTotal,
                     address: address,
                     paymentMethod: paymentMethod,
-                    userEmail: userEmail // Sending the email to the backend!
+                    userEmail: userEmail 
                 })
             });
 
@@ -149,6 +166,21 @@ export default function CheckoutPage() {
         }
     };
 
+    // ==========================================
+    // RENDER SCREENS
+    // ==========================================
+
+    // 1. Show a loading spinner while checking security clearance
+    if (isCheckingAuth) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center pt-20 px-4 bg-white">
+                <Loader2 size={40} className="animate-spin text-black/30 mb-4" />
+                <p className="text-[11px] font-bold tracking-widest uppercase text-black/50">Securing Checkout...</p>
+            </div>
+        );
+    }
+
+    // 2. Prevent empty checkouts
     if (cart.length === 0 && !orderSuccess) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center pt-20 px-4 bg-white">
@@ -160,6 +192,7 @@ export default function CheckoutPage() {
         );
     }
 
+    // 3. Main Checkout UI
     return (
         <main className="min-h-screen bg-white pt-[64px] md:pt-[72px] pb-24">
 
