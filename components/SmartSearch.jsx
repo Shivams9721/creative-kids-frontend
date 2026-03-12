@@ -15,7 +15,7 @@ export default function SmartSearch({ isOpen, onClose }) {
   // Fetch products so the search engine can analyze them instantly
   useEffect(() => {
     if (isOpen) {
-      fetch("https://creative-kids-api.onrender.com/api/products")
+      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products")
         .then(res => res.json())
         .then(data => setProducts(data))
         .catch(err => console.error("Search fetch error:", err));

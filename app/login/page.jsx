@@ -26,7 +26,7 @@ export default function LoginPage() {
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
     
     try {
-      const response = await fetch(`https://creative-kids-api.onrender.com${endpoint}`, {
+      const response = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

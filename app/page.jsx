@@ -16,7 +16,7 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("https://creative-kids-api.onrender.com/api/products");
+        const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products");
         const data = await response.json();
         
         // 1. INTELLIGENT SLOT SORTER FOR THE 4-CARD GRIDS

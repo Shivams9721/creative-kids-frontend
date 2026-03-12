@@ -16,7 +16,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const response = await fetch("https://creative-kids-api.onrender.com/api/admin/login", {
+      const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
