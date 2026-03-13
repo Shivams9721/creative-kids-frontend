@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'Creative Kids | Luxury Childrenswear',
   description: 'Premium fashion for babies, toddlers, and kids.',
+  icons: {
+    icon: '/images/logo.png',
+  },
 }
 
 export default function RootLayout({
