@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon
+  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon, Menu
 } from "lucide-react";
 
 const CATEGORY_TREE = {
@@ -17,7 +17,6 @@ const CATEGORY_TREE = {
   }
 };
 
-// FIXED: image_urls is now an Array to handle multiple LV-style images
 const DEFAULT_FORM_STATE = {
   title: "", price: "", mrp: "", sku: "", hsn_code: "", 
   main_category: "Baby", sub_category: "Baby Boy", item_type: "Onesies & Rompers",
@@ -31,6 +30,7 @@ const DEFAULT_FORM_STATE = {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW: Mobile Menu State
 
   const [activeTab, setActiveTab] = useState("dashboard"); 
   const [loading, setLoading] = useState(false);
@@ -46,8 +46,6 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState(null); 
 
   const [formData, setFormData] = useState(DEFAULT_FORM_STATE);
-  
-  // NEW: State for adding a single image URL to the array
   const [newImageUrl, setNewImageUrl] = useState("");
 
   // --- 1. SECURITY CHECK ---
@@ -94,6 +92,17 @@ export default function AdminDashboard() {
     window.location.href = "/admin/login";
   };
 
+  // NEW: Navigation handler to auto-close mobile menu
+  const handleNavClick = (tabId) => {
+    setActiveTab(tabId);
+    setEditingId(null);
+    if(tabId !== "add_product") {
+       setFormData(DEFAULT_FORM_STATE);
+       setNewImageUrl("");
+    }
+    setIsMobileMenuOpen(false); // Close sidebar on mobile after clicking
+  };
+
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       const response = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/admin/orders/${orderId}/status`, {
@@ -128,14 +137,13 @@ export default function AdminDashboard() {
     });
   };
 
-  // NEW: Multiple Image Handlers
   const addImageUrl = () => {
     if (newImageUrl.trim()) {
       setFormData(prev => ({
         ...prev,
         image_urls: [...prev.image_urls, newImageUrl.trim()]
       }));
-      setNewImageUrl(""); // clear input after adding
+      setNewImageUrl("");
     }
   };
 
@@ -255,7 +263,7 @@ export default function AdminDashboard() {
       sku: product.sku || "", hsn_code: product.hsn_code || "",
       main_category: product.main_category || "Baby", sub_category: product.sub_category || "Baby Boy", item_type: product.item_type || "Onesies & Rompers",
       fabric: product.fabric || "", pattern: product.pattern || "", neck_type: product.neck_type || "", belt_included: product.belt_included || false,
-      image_urls: parsedImages, // Set the array
+      image_urls: parsedImages, 
       sizes: "", colors: "", 
       description: product.description || "", manufacturer_details: product.manufacturer_details || "", care_instructions: product.care_instructions || "", origin_country: product.origin_country || "India",
       variants: parsedVariants,
@@ -311,27 +319,53 @@ export default function AdminDashboard() {
   return (
     <div className="fixed inset-0 z-[100] min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans">
       
-      {/* MODERN DARK SIDEBAR */}
-      <aside className="w-full md:w-72 bg-[#0f172a] text-slate-300 flex-shrink-0 flex flex-col overflow-y-auto border-r border-slate-800 shadow-2xl z-20">
+      {/* MOBILE HEADER (Visible only on small screens) */}
+      <div className="md:hidden bg-[#0f172a] text-white p-4 flex justify-between items-center z-30 shadow-md">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <ShieldAlert size={16} className="text-white" />
+          </div>
+          <h2 className="text-sm font-bold tracking-widest uppercase">Workspace</h2>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {/* BACKDROP BLUR FOR MOBILE MENU */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* MODERN DARK SIDEBAR (Responsive) */}
+      <aside className={`absolute md:relative top-0 left-0 h-full w-72 bg-[#0f172a] text-slate-300 flex-shrink-0 flex flex-col overflow-y-auto border-r border-slate-800 shadow-2xl z-40 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className="p-8 pb-4">
-          <div className="flex items-center gap-3 mb-10">
+          <div className="hidden md:flex items-center gap-3 mb-10">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <ShieldAlert size={16} className="text-white" />
             </div>
             <h2 className="text-sm font-bold tracking-widest uppercase text-white">Workspace</h2>
           </div>
 
-          <nav className="flex flex-col gap-2">
-            <button onClick={() => setActiveTab("dashboard")} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
+          <nav className="flex flex-col gap-2 mt-4 md:mt-0">
+            <button onClick={() => handleNavClick("dashboard")} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
               <LayoutDashboard size={18} /> Overview
             </button>
-            <button onClick={() => setActiveTab("orders")} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'orders' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
+            <button onClick={() => handleNavClick("orders")} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'orders' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
               <ListOrdered size={18} /> Orders
             </button>
-            <button onClick={() => { setActiveTab("products"); setEditingId(null); setFormData(DEFAULT_FORM_STATE); }} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'products' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
+            <button onClick={() => handleNavClick("products")} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'products' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
               <Tag size={18} /> Inventory
             </button>
-            <button onClick={() => { setActiveTab("add_product"); setEditingId(null); setFormData(DEFAULT_FORM_STATE); setNewImageUrl(""); }} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'add_product' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
+            <button onClick={() => handleNavClick("add_product")} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'add_product' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
               <PackagePlus size={18} /> List Product
             </button>
           </nav>
@@ -345,7 +379,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-6 md:p-10 lg:p-12 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-10 lg:p-12 overflow-y-auto">
         
         {/* TAB 1: DASHBOARD */}
         {activeTab === "dashboard" && (
@@ -380,7 +414,7 @@ export default function AdminDashboard() {
         {/* TAB 2: ORDERS */}
         {activeTab === "orders" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-end mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
               <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Order Management</h1>
               <button onClick={fetchAdminOrders} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-[11px] font-bold tracking-widest uppercase hover:bg-slate-50 transition-colors shadow-sm">
                 <RefreshCcw size={14} className={isRefreshingOrders ? "animate-spin" : ""} /> Refresh List
@@ -389,7 +423,7 @@ export default function AdminDashboard() {
             
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[800px] text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
                       <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Order ID</th>
@@ -448,7 +482,7 @@ export default function AdminDashboard() {
                                 className="bg-slate-50 border-b border-slate-200 overflow-hidden"
                               >
                                 <td colSpan="6" className="p-0">
-                                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                  <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                                       <h4 className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 border-b border-slate-100 pb-2">Shipping Address</h4>
                                       {order.shipping_address ? (
@@ -472,11 +506,11 @@ export default function AdminDashboard() {
                                             <div className="w-12 h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
                                               <img src={item.image || (item.image_urls && item.image_urls[0])} alt="item" className="w-full h-full object-cover" />
                                             </div>
-                                            <div className="flex-1">
-                                              <p className="text-[12px] font-bold text-slate-800 leading-tight mb-1">{item.title}</p>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-[12px] font-bold text-slate-800 leading-tight mb-1 truncate">{item.title}</p>
                                               <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Size: {item.size || item.selectedSize} | Color: {item.color}</p>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="text-right flex-shrink-0">
                                               <p className="text-[13px] font-bold text-slate-800">₹{item.price}</p>
                                               <p className="text-[11px] text-slate-500 mt-1">Qty: {item.quantity || 1}</p>
                                             </div>
@@ -528,7 +562,7 @@ export default function AdminDashboard() {
 
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[800px] text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
                       <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 w-20">Preview</th>
@@ -623,7 +657,7 @@ export default function AdminDashboard() {
         {/* TAB 4: ADD/EDIT PRODUCT FORM */}
         {activeTab === "add_product" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pb-20">
-            <div className="flex justify-between items-end mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
               <div>
                 <h1 className="text-2xl font-bold text-slate-800 mb-2 tracking-tight">
                   {editingId ? "Edit Product" : "List New Product"}
@@ -633,7 +667,7 @@ export default function AdminDashboard() {
                 </p>
               </div>
               {editingId && (
-                <button onClick={cancelEdit} className="text-[12px] font-bold tracking-wider uppercase text-red-500 border border-red-200 bg-red-50 px-6 py-3 rounded-xl hover:bg-red-100 transition-colors">
+                <button onClick={cancelEdit} className="w-full sm:w-auto text-[12px] font-bold tracking-wider uppercase text-red-500 border border-red-200 bg-red-50 px-6 py-3 rounded-xl hover:bg-red-100 transition-colors">
                   Cancel Edit
                 </button>
               )}
@@ -651,7 +685,7 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-8">
               
-              <div className="bg-white p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
+              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
                 <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">1. Core Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="md:col-span-2 flex flex-col gap-2">
@@ -681,7 +715,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
+              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
                 <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">2. Store Routing Path</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="flex flex-col gap-2">
@@ -705,7 +739,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
+              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
                 <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">3. Product Attributes</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="flex flex-col gap-2">
@@ -720,14 +754,14 @@ export default function AdminDashboard() {
                     <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Neck Type</label>
                     <input type="text" name="neck_type" value={formData.neck_type} onChange={handleChange} placeholder="e.g. Round Neck" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50" />
                   </div>
-                  <div className="flex items-center gap-3 pt-8">
+                  <div className="flex items-center gap-3 pt-2 md:pt-8">
                     <input type="checkbox" name="belt_included" checked={formData.belt_included} onChange={handleChange} className="w-5 h-5 accent-blue-600 cursor-pointer rounded" id="beltCheck" />
                     <label htmlFor="beltCheck" className="text-[12px] font-bold tracking-widest uppercase text-slate-700 cursor-pointer">Belt Included?</label>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
+              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
                 <div className="flex justify-between items-end border-b border-slate-100 pb-3">
                   <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800">4. Inventory Variations Matrix</h3>
                 </div>
@@ -748,8 +782,8 @@ export default function AdminDashboard() {
                 </button>
 
                 {formData.variants.length > 0 && (
-                  <div className="mt-6 border border-slate-200 rounded-xl overflow-hidden">
-                    <table className="w-full text-left bg-white">
+                  <div className="mt-6 border border-slate-200 rounded-xl overflow-x-auto">
+                    <table className="w-full min-w-[500px] text-left bg-white">
                       <thead>
                         <tr className="border-b border-slate-200 bg-slate-50">
                           <th className="p-4 text-[11px] font-bold tracking-widest uppercase text-slate-500">Color</th>
@@ -770,7 +804,7 @@ export default function AdminDashboard() {
                               <td className="p-4 text-[13px] font-bold text-slate-800">{variant.color}</td>
                               <td className="p-4 text-[13px] text-slate-600">{variant.size}</td>
                               <td className="p-4">
-                                <input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, "stock", parseInt(e.target.value))} className="border border-slate-300 p-2.5 w-24 rounded-lg text-[13px] outline-none focus:border-blue-500 bg-white" />
+                                <input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, "stock", parseInt(e.target.value))} className="border border-slate-300 p-2.5 w-20 md:w-24 rounded-lg text-[13px] outline-none focus:border-blue-500 bg-white" />
                               </td>
                               <td className="p-4">
                                 <input type="text" value={variant.sku} onChange={(e) => handleVariantChange(index, "sku", e.target.value)} className="border border-slate-300 p-2.5 w-full rounded-lg text-[13px] outline-none focus:border-blue-500 bg-white text-slate-500" />
@@ -789,16 +823,13 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* ============================================== */}
-              {/* NEW: LUXURY MEDIA MANAGER (LV STYLE MULTI-IMAGE) */}
-              {/* ============================================== */}
-              <div className="bg-white p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
+              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
                 <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
                   <ImageIcon size={18} /> 5. Product Media Gallery (LV Style) *
                 </h3>
                 
                 <div className="flex flex-col gap-6">
-                  <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <input 
                       type="text" 
                       value={newImageUrl}
@@ -816,13 +847,13 @@ export default function AdminDashboard() {
                   </div>
 
                   {formData.image_urls.length === 0 ? (
-                    <div className="w-full border-2 border-dashed border-slate-200 rounded-xl p-12 flex flex-col items-center justify-center text-slate-400">
+                    <div className="w-full border-2 border-dashed border-slate-200 rounded-xl p-8 md:p-12 flex flex-col items-center justify-center text-slate-400 text-center">
                       <ImageIcon size={40} className="mb-4 opacity-50" />
                       <p className="text-[13px] font-medium">No images added yet.</p>
                       <p className="text-[11px] uppercase tracking-widest mt-1 opacity-70">Add at least one image to display on the storefront.</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                       <AnimatePresence>
                         {formData.image_urls.map((url, idx) => (
                           <motion.div 
@@ -835,13 +866,13 @@ export default function AdminDashboard() {
                             <button 
                               type="button"
                               onClick={() => removeImageUrl(idx)}
-                              className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-md hover:scale-110"
+                              className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all shadow-md hover:scale-110"
                             >
                               <X size={14} strokeWidth={2.5} />
                             </button>
 
                             <div className={`absolute bottom-2 left-2 px-2 py-1 rounded text-[9px] font-bold tracking-widest shadow-sm backdrop-blur-md ${idx === 0 ? 'bg-blue-600/90 text-white' : 'bg-black/60 text-white'}`}>
-                              {idx === 0 ? "MAIN IMAGE" : `GALLERY ${idx}`}
+                              {idx === 0 ? "MAIN" : `GAL ${idx}`}
                             </div>
                           </motion.div>
                         ))}
@@ -851,7 +882,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-white p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
+              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
                 <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">6. Description & Manufacturing</h3>
                 <div className="flex flex-col gap-2">
                   <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Main Description *</label>
@@ -869,26 +900,26 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="space-y-4 bg-slate-50 p-8 rounded-2xl border border-slate-200 shadow-inner">
+              <div className="space-y-4 bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200 shadow-inner">
                 <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-200 pb-3">7. Storefront & Homepage Controls</h3>
                 
-                <div className="flex items-center justify-between bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
                   <div>
                     <h3 className="text-[13px] font-bold tracking-wide text-slate-800">Tag as New Arrival</h3>
                     <p className="text-[12px] text-slate-500 mt-1">Show this item inside the "New Arrivals" shop category</p>
                   </div>
-                  <button type="button" onClick={() => setFormData({...formData, is_new_arrival: !formData.is_new_arrival})} className={`w-14 h-7 rounded-full transition-colors relative shadow-inner ${formData.is_new_arrival ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                  <button type="button" onClick={() => setFormData({...formData, is_new_arrival: !formData.is_new_arrival})} className={`w-14 h-7 rounded-full transition-colors relative shadow-inner flex-shrink-0 ${formData.is_new_arrival ? 'bg-blue-600' : 'bg-slate-300'}`}>
                     <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${formData.is_new_arrival ? 'left-8' : 'left-1'}`} />
                   </button>
                 </div>
 
                 <div className="flex flex-col bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h3 className="text-[13px] font-bold tracking-wide text-slate-800">Display on Homepage</h3>
                       <p className="text-[12px] text-slate-500 mt-1">Turn this ON to select which grid and card position this product appears in.</p>
                     </div>
-                    <button type="button" onClick={() => setFormData({...formData, is_featured: !formData.is_featured})} className={`w-14 h-7 rounded-full transition-colors relative shadow-inner ${formData.is_featured ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                    <button type="button" onClick={() => setFormData({...formData, is_featured: !formData.is_featured})} className={`w-14 h-7 rounded-full transition-colors relative shadow-inner flex-shrink-0 ${formData.is_featured ? 'bg-blue-600' : 'bg-slate-300'}`}>
                       <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${formData.is_featured ? 'left-8' : 'left-1'}`} />
                     </button>
                   </div>
