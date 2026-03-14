@@ -190,7 +190,18 @@ export default function AdminDashboard() {
     }
   };
 
-  const removeImageUrl = (indexToRemove) => {
+  const removeImageUrl = async (indexToRemove) => {
+    const urlToDelete = formData.image_urls[indexToRemove];
+    try {
+      const token = localStorage.getItem("adminToken");
+      await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/upload", {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: urlToDelete })
+      });
+    } catch (err) {
+      console.error("Failed to delete image from S3:", err);
+    }
     setFormData(prev => ({
       ...prev,
       image_urls: prev.image_urls.filter((_, idx) => idx !== indexToRemove)
