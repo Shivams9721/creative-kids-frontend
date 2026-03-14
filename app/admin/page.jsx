@@ -32,7 +32,10 @@ export default function AdminDashboard() {
   const [authChecking, setAuthChecking] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("dashboard"); 
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('adminActiveTab') || 'dashboard';
+    return 'dashboard';
+  });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   
@@ -43,12 +46,28 @@ export default function AdminDashboard() {
   
   const [allProducts, setAllProducts] = useState([]);
   const [inventorySearch, setInventorySearch] = useState(""); 
-  const [editingId, setEditingId] = useState(null); 
+  const [editingId, setEditingId] = useState(() => {
+    if (typeof window !== 'undefined') { const id = localStorage.getItem('adminEditingId'); return id ? parseInt(id) : null; }
+    return null;
+  });
 
-  const [formData, setFormData] = useState(DEFAULT_FORM_STATE);
+  const [formData, setFormData] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try { const saved = localStorage.getItem('adminFormDraft'); return saved ? JSON.parse(saved) : DEFAULT_FORM_STATE; } catch(e) {}
+    }
+    return DEFAULT_FORM_STATE;
+  });
   
   // NEW: State for tracking the AWS Upload progress
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Persist formData, activeTab, editingId to localStorage
+  useEffect(() => { localStorage.setItem('adminFormDraft', JSON.stringify(formData)); }, [formData]);
+  useEffect(() => { localStorage.setItem('adminActiveTab', activeTab); }, [activeTab]);
+  useEffect(() => { 
+    if (editingId) localStorage.setItem('adminEditingId', editingId);
+    else localStorage.removeItem('adminEditingId');
+  }, [editingId]);
 
   // --- 1. SECURITY CHECK ---
   useEffect(() => {
@@ -109,8 +128,10 @@ export default function AdminDashboard() {
   const handleNavClick = (tabId) => {
     setActiveTab(tabId);
     setEditingId(null);
-    if(tabId !== "add_product") {
-       setFormData(DEFAULT_FORM_STATE);
+    if (tabId !== "add_product") {
+      setFormData(DEFAULT_FORM_STATE);
+      localStorage.removeItem('adminFormDraft');
+      localStorage.removeItem('adminEditingId');
     }
     setIsMobileMenuOpen(false);
   };
@@ -290,6 +311,8 @@ export default function AdminDashboard() {
         setSuccess(true);
         setFormData(DEFAULT_FORM_STATE);
         setEditingId(null);
+        localStorage.removeItem('adminFormDraft');
+        localStorage.removeItem('adminEditingId');
         window.scrollTo(0, 0);
         setTimeout(() => {
           setSuccess(false);
@@ -339,6 +362,8 @@ export default function AdminDashboard() {
   const cancelEdit = () => {
     setEditingId(null);
     setFormData(DEFAULT_FORM_STATE);
+    localStorage.removeItem('adminFormDraft');
+    localStorage.removeItem('adminEditingId');
     setActiveTab("products");
   };
 
