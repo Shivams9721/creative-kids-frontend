@@ -12,7 +12,11 @@ export default function ProductGrid() {
     const fetchProducts = async () => {
       try {
         const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products");
-        const data = await response.json();
+        const rawData = await response.json();
+        const data = rawData.map(p => ({
+          ...p,
+          image_urls: typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || [])
+        }));
         setProducts(data);
         setLoading(false);
       } catch (error) {

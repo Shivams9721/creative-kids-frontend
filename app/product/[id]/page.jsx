@@ -32,6 +32,10 @@ export default function ProductPage() {
         
         const data = await response.json();
         
+        let parsedImages = [];
+        try { parsedImages = typeof data.image_urls === 'string' ? JSON.parse(data.image_urls) : (data.image_urls || []); } catch(e) {}
+        data.image_urls = parsedImages;
+
         let parsedVariants = [];
         if (typeof data.variants === 'string') {
           parsedVariants = JSON.parse(data.variants);
