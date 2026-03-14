@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon, Menu
+  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon, Menu, UploadCloud
 } from "lucide-react";
 
 const CATEGORY_TREE = {
@@ -30,7 +30,7 @@ const DEFAULT_FORM_STATE = {
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW: Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState("dashboard"); 
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,9 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState(null); 
 
   const [formData, setFormData] = useState(DEFAULT_FORM_STATE);
-  const [newImageUrl, setNewImageUrl] = useState("");
+  
+  // NEW: State for tracking the AWS Upload progress
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // --- 1. SECURITY CHECK ---
   useEffect(() => {
@@ -83,7 +85,19 @@ export default function AdminDashboard() {
     } else if (activeTab === "orders") {
       fetchAdminOrders();
     } else if (activeTab === "products") {
-      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products").then(res => res.json()).then(data => setAllProducts(data)).catch(err => console.error(err));
+      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products")
+        .then(res => res.json())
+        .then(data => {
+          const unpackedProducts = data.map(product => {
+            let unpackedImages = [];
+            try { 
+              unpackedImages = typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : (product.image_urls || []); 
+            } catch(e) {}
+            return { ...product, image_urls: unpackedImages };
+          });
+          setAllProducts(unpackedProducts);
+        })
+        .catch(err => console.error(err));
     }
   }, [activeTab, isAuthenticated]);
 
@@ -92,15 +106,13 @@ export default function AdminDashboard() {
     window.location.href = "/admin/login";
   };
 
-  // NEW: Navigation handler to auto-close mobile menu
   const handleNavClick = (tabId) => {
     setActiveTab(tabId);
     setEditingId(null);
     if(tabId !== "add_product") {
        setFormData(DEFAULT_FORM_STATE);
-       setNewImageUrl("");
     }
-    setIsMobileMenuOpen(false); // Close sidebar on mobile after clicking
+    setIsMobileMenuOpen(false);
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -137,13 +149,44 @@ export default function AdminDashboard() {
     });
   };
 
-  const addImageUrl = () => {
-    if (newImageUrl.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        image_urls: [...prev.image_urls, newImageUrl.trim()]
-      }));
-      setNewImageUrl("");
+  // NEW: Secure AWS S3 Upload Handler
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    
+    // Package the file securely
+    const uploadData = new FormData();
+    uploadData.append("image", file);
+
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/upload", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}` // Show the VIP wristband
+        },
+        body: uploadData
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Add the new AWS public URL to our gallery array
+        setFormData(prev => ({
+          ...prev,
+          image_urls: [...prev.image_urls, data.imageUrl]
+        }));
+      } else {
+        alert(data.error || "Failed to upload image.");
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("An error occurred while uploading the image.");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = ""; // Reset the input so you can upload another one
     }
   };
 
@@ -205,7 +248,7 @@ export default function AdminDashboard() {
     }
 
     if (formData.image_urls.length === 0) {
-      alert("Please add at least one Product Image!");
+      alert("Please upload at least one Product Image!");
       setLoading(false);
       return;
     }
@@ -319,7 +362,7 @@ export default function AdminDashboard() {
   return (
     <div className="fixed inset-0 z-[100] min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans">
       
-      {/* MOBILE HEADER (Visible only on small screens) */}
+      {/* MOBILE HEADER */}
       <div className="md:hidden bg-[#0f172a] text-white p-4 flex justify-between items-center z-30 shadow-md">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -332,20 +375,17 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* BACKDROP BLUR FOR MOBILE MENU */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }} 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
             onClick={() => setIsMobileMenuOpen(false)}
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 md:hidden"
           />
         )}
       </AnimatePresence>
 
-      {/* MODERN DARK SIDEBAR (Responsive) */}
+      {/* SIDEBAR */}
       <aside className={`absolute md:relative top-0 left-0 h-full w-72 bg-[#0f172a] text-slate-300 flex-shrink-0 flex flex-col overflow-y-auto border-r border-slate-800 shadow-2xl z-40 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className="p-8 pb-4">
           <div className="hidden md:flex items-center gap-3 mb-10">
@@ -554,7 +594,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 
-                <button onClick={() => { setActiveTab("add_product"); setEditingId(null); setFormData(DEFAULT_FORM_STATE); setNewImageUrl(""); }} className="w-full sm:w-auto flex-shrink-0 bg-blue-600 text-white px-6 py-3 rounded-xl text-[12px] font-bold tracking-wider hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
+                <button onClick={() => { setActiveTab("add_product"); setEditingId(null); setFormData(DEFAULT_FORM_STATE); }} className="w-full sm:w-auto flex-shrink-0 bg-blue-600 text-white px-6 py-3 rounded-xl text-[12px] font-bold tracking-wider hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
                   + Add New Product
                 </button>
               </div>
@@ -823,34 +863,34 @@ export default function AdminDashboard() {
                 )}
               </div>
 
+              {/* ================================================== */}
+              {/* NEW SECURE UPLOAD BUTTON                           */}
+              {/* ================================================== */}
               <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
                 <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
-                  <ImageIcon size={18} /> 5. Product Media Gallery (LV Style) *
+                  <ImageIcon size={18} /> 5. Product Media Gallery (AWS S3) *
                 </h3>
                 
                 <div className="flex flex-col gap-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  
+                  {/* Custom Styled File Input Button */}
+                  <label className={`w-full md:w-auto self-start px-8 py-4 rounded-xl text-[12px] font-bold tracking-widest uppercase transition-colors shadow-md cursor-pointer flex items-center justify-center gap-3 ${uploadingImage ? 'bg-slate-400 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                    <UploadCloud size={20} />
+                    {uploadingImage ? "Uploading to Cloud..." : "Upload Image from PC"}
                     <input 
-                      type="text" 
-                      value={newImageUrl}
-                      onChange={(e) => setNewImageUrl(e.target.value)}
-                      placeholder="Paste a direct image URL here (e.g., https://image.jpg)"
-                      className="flex-1 border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50"
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleImageUpload} 
+                      disabled={uploadingImage}
                     />
-                    <button 
-                      type="button"
-                      onClick={addImageUrl}
-                      className="bg-slate-800 text-white px-8 py-3.5 rounded-xl text-[12px] font-bold tracking-widest uppercase hover:bg-slate-900 transition-colors shadow-md whitespace-nowrap"
-                    >
-                      + Add Image
-                    </button>
-                  </div>
+                  </label>
 
                   {formData.image_urls.length === 0 ? (
                     <div className="w-full border-2 border-dashed border-slate-200 rounded-xl p-8 md:p-12 flex flex-col items-center justify-center text-slate-400 text-center">
                       <ImageIcon size={40} className="mb-4 opacity-50" />
-                      <p className="text-[13px] font-medium">No images added yet.</p>
-                      <p className="text-[11px] uppercase tracking-widest mt-1 opacity-70">Add at least one image to display on the storefront.</p>
+                      <p className="text-[13px] font-medium">No images uploaded yet.</p>
+                      <p className="text-[11px] uppercase tracking-widest mt-1 opacity-70">Click the button above to upload directly to AWS.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
