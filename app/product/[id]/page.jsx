@@ -21,6 +21,7 @@ export default function ProductPage() {
   const [openSection, setOpenSection] = useState("description");
   
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showGuestWishlistModal, setShowGuestWishlistModal] = useState(false);
 
   // 2. FETCH PRODUCT DATA (Now Crash-Proof)
   useEffect(() => {
@@ -88,8 +89,7 @@ export default function ProductPage() {
   const handleWishlistToggle = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Please sign in to save items to your wishlist!");
-      window.location.href = "/login";
+      setShowGuestWishlistModal(true);
       return;
     }
 
@@ -161,6 +161,36 @@ export default function ProductPage() {
   // 6. RENDER UI
   return (
     <main className="min-h-screen bg-white pt-[64px] md:pt-[72px]">
+
+      {/* GUEST WISHLIST MODAL */}
+      <AnimatePresence>
+        {showGuestWishlistModal && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowGuestWishlistModal(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            />
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
+              className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-sm w-full bg-white rounded-t-3xl md:rounded-2xl p-8 z-50 shadow-2xl"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <Heart size={32} className="text-red-400 fill-red-100" />
+                <button onClick={() => setShowGuestWishlistModal(false)} className="p-1 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+              </div>
+              <h3 className="text-xl font-light text-black mb-2">Love this item?</h3>
+              <p className="text-[13px] text-black/60 mb-6">Create a free account to save it to your wishlist and never lose track of your favourites.</p>
+              <div className="flex flex-col gap-3">
+                <Link href="/login" className="w-full bg-black text-white text-center py-3.5 rounded-full text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors">
+                  Sign In
+                </Link>
+                <Link href="/login" className="w-full border border-black text-black text-center py-3.5 rounded-full text-[12px] font-bold tracking-widest uppercase hover:bg-gray-50 transition-colors">
+                  Create Account
+                </Link>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
       
       {/* BREADCRUMBS */}
       <div className="w-full px-4 md:px-8 py-4 border-b border-black/5 bg-[#fafafa]">

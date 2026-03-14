@@ -104,7 +104,10 @@ export default function AdminDashboard() {
     } else if (activeTab === "orders") {
       fetchAdminOrders();
     } else if (activeTab === "products") {
-      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products")
+      const token = localStorage.getItem("adminToken");
+      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/admin/products", {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
         .then(res => res.json())
         .then(data => {
           const unpackedProducts = data.map(product => {
@@ -136,15 +139,15 @@ export default function AdminDashboard() {
     setIsMobileMenuOpen(false);
   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, courierName, awbNumber) => {
     try {
       const response = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/admin/orders/${orderId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus, courier_name: courierName, awb_number: awbNumber })
       });
       if (response.ok) {
-        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+        setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, courier_name: courierName, awb_number: awbNumber } : o));
       } else {
         alert("Failed to update status on server.");
       }
@@ -528,16 +531,29 @@ export default function AdminDashboard() {
                               <span className="text-[11px] text-slate-400 font-normal ml-1">({order.items_count} items)</span>
                             </td>
                             <td className="p-5">
-                              <select 
-                                value={order.status}
-                                onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase border outline-none cursor-pointer appearance-none transition-colors ${getStatusColor(order.status)}`}
-                              >
-                                <option value="Processing">Processing</option>
-                                <option value="Shipped">Shipped</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Cancelled">Cancelled</option>
-                              </select>
+                              <div className="flex flex-col gap-2">
+                                <select 
+                                  value={order.status}
+                                  onChange={(e) => {
+                                    if (e.target.value === 'Shipped') {
+                                      const courier = prompt('Courier name (e.g. Delhivery):');
+                                      const awb = prompt('AWB / Tracking Number:');
+                                      updateOrderStatus(order.id, e.target.value, courier, awb);
+                                    } else {
+                                      updateOrderStatus(order.id, e.target.value, order.courier_name, order.awb_number);
+                                    }
+                                  }}
+                                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase border outline-none cursor-pointer appearance-none transition-colors ${getStatusColor(order.status)}`}
+                                >
+                                  <option value="Processing">Processing</option>
+                                  <option value="Shipped">Shipped</option>
+                                  <option value="Delivered">Delivered</option>
+                                  <option value="Cancelled">Cancelled</option>
+                                </select>
+                                {order.awb_number && (
+                                  <span className="text-[9px] text-slate-500 font-medium">AWB: {order.awb_number}</span>
+                                )}
+                              </div>
                             </td>
                             <td className="p-5 text-right">
                               <button 

@@ -430,6 +430,12 @@ export default function UserProfile() {
                               {status === "current" && "Your package is currently in this stage."}
                               {status === "pending" && "Waiting for previous step to complete."}
                             </p>
+                            {stepName === "Shipped" && status !== "pending" && selectedOrder.awb_number && (
+                              <div className="mt-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                                <p className="text-[10px] font-bold tracking-widest uppercase text-blue-600">Courier: {selectedOrder.courier_name}</p>
+                                <p className="text-[11px] font-bold text-blue-800 mt-0.5">AWB: {selectedOrder.awb_number}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
