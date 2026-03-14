@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { ShoppingBag, ChevronDown, ChevronUp, Heart, Share2, Truck, ShieldCheck } from "lucide-react";
+import { ShoppingBag, ChevronDown, ChevronUp, Heart, Share2, Truck, ShieldCheck, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProductPage() {
@@ -22,6 +22,12 @@ export default function ProductPage() {
   
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showGuestWishlistModal, setShowGuestWishlistModal] = useState(false);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [canReview, setCanReview] = useState(false);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // 2. FETCH PRODUCT DATA (Now Crash-Proof)
   useEffect(() => {
@@ -68,6 +74,47 @@ export default function ProductPage() {
   }, [id]);
 
   // 3. WISHLIST LOGIC (Now Crash-Proof)
+  useEffect(() => {
+    if (!product) return;
+    // Fetch reviews
+    fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/reviews/${product.id}`)
+      .then(r => r.json()).then(setReviews).catch(() => {});
+
+    // Check if logged-in user can review
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/reviews/check/${product.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json()).then(d => {
+        setCanReview(d.canReview);
+        setAlreadyReviewed(d.alreadyReviewed);
+      }).catch(() => {});
+    }
+  }, [product]);
+
+  const handleSubmitReview = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    setSubmittingReview(true);
+    try {
+      const res = await fetch('https://vbaumdstnz.ap-south-1.awsapprunner.com/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ productId: product.id, ...reviewForm })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReviews(prev => [data, ...prev]);
+        setCanReview(false);
+        setAlreadyReviewed(true);
+        setReviewForm({ rating: 5, comment: '' });
+      }
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  // WISHLIST LOGIC (Now Crash-Proof)
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token && product) {
@@ -161,6 +208,29 @@ export default function ProductPage() {
   // 6. RENDER UI
   return (
     <main className="min-h-screen bg-white pt-[64px] md:pt-[72px]">
+
+      {/* SIZE GUIDE MODAL */}
+      <AnimatePresence>
+        {showSizeGuide && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowSizeGuide(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-[12px] font-bold tracking-widest uppercase">Size Guide</h3>
+                  <button onClick={() => setShowSizeGuide(false)} className="p-1 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                </div>
+                <img src="https://i.postimg.cc/nrj3wLGL/image.png" alt="Size Guide" className="w-full rounded-lg" />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* GUEST WISHLIST MODAL */}
       <AnimatePresence>
@@ -290,7 +360,7 @@ export default function ProductPage() {
               <div className="mb-8">
                 <div className="flex justify-between items-end mb-3">
                   <span className="text-[11px] font-bold tracking-widest uppercase text-black">Size</span>
-                  <button className="text-[10px] tracking-widest uppercase text-black/50 hover:text-black border-b border-black/20 pb-0.5">Size Guide</button>
+                  <button onClick={() => setShowSizeGuide(true)} className="text-[10px] tracking-widest uppercase text-black/50 hover:text-black border-b border-black/20 pb-0.5">Size Guide</button>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {availableSizes.map(size => (
@@ -448,6 +518,65 @@ export default function ProductPage() {
                 </AnimatePresence>
               </div>
 
+            </div>
+
+            {/* REVIEWS SECTION */}
+            <div className="mt-12 border-t border-black/10 pt-10">
+              <h2 className="text-[12px] font-bold tracking-widest uppercase mb-6">
+                Customer Reviews
+                {reviews.length > 0 && (
+                  <span className="ml-3 text-black/40 font-medium">
+                    ({reviews.length}) · {(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)} ★
+                  </span>
+                )}
+              </h2>
+
+              {/* WRITE REVIEW FORM */}
+              {canReview && (
+                <div className="bg-[#fafafa] border border-black/10 rounded-xl p-6 mb-8">
+                  <p className="text-[11px] font-bold tracking-widest uppercase mb-4">Write a Review</p>
+                  <div className="flex gap-2 mb-4">
+                    {[1,2,3,4,5].map(s => (
+                      <button key={s} onClick={() => setReviewForm(f => ({ ...f, rating: s }))}
+                        className={`text-2xl transition-transform hover:scale-110 ${s <= reviewForm.rating ? 'text-yellow-400' : 'text-black/20'}`}
+                      >★</button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={reviewForm.comment}
+                    onChange={e => setReviewForm(f => ({ ...f, comment: e.target.value }))}
+                    placeholder="Share your experience with this product..."
+                    rows={3}
+                    className="w-full border border-black/10 rounded-lg p-3 text-[13px] resize-none focus:outline-none focus:border-black/30 mb-4"
+                  />
+                  <button onClick={handleSubmitReview} disabled={submittingReview || !reviewForm.comment.trim()}
+                    className="bg-black text-white px-8 py-3 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 disabled:opacity-40 transition-colors"
+                  >
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                  </button>
+                </div>
+              )}
+              {alreadyReviewed && (
+                <p className="text-[12px] text-green-600 mb-6">✓ You have reviewed this product</p>
+              )}
+
+              {/* REVIEWS LIST */}
+              {reviews.length === 0 ? (
+                <p className="text-[13px] text-black/40">No reviews yet. Be the first verified buyer to review!</p>
+              ) : (
+                <div className="space-y-6">
+                  {reviews.map(r => (
+                    <div key={r.id} className="border-b border-black/5 pb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[12px] font-bold">{r.user_name}</span>
+                        <span className="text-[11px] text-black/40">{new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+                      <div className="text-yellow-400 text-sm mb-2">{"★".repeat(r.rating)}<span className="text-black/20">{"★".repeat(5 - r.rating)}</span></div>
+                      <p className="text-[13px] text-black/70 leading-relaxed">{r.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>
