@@ -3,8 +3,23 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon, Menu, UploadCloud
+  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon, Menu, UploadCloud, ChevronDown
 } from "lucide-react";
+
+// Shared size & color constants (must match shop filter exactly)
+const ALL_SIZES = [
+  '0-3M','3-6M','6-9M','9-12M','12-18M','18-24M',
+  '1-2Y','2-3Y','3-4Y','4-5Y','5-6Y','6-7Y','7-8Y','8-9Y',
+  '9-10Y','10-11Y','11-12Y','12-13Y','13-14Y','14-15Y','15-16Y','16-17Y','17-18Y'
+];
+
+const ALL_COLORS = [
+  { name: 'Black', hex: '#000000' }, { name: 'White', hex: '#FFFFFF' }, { name: 'Beige', hex: '#F5F5DC' },
+  { name: 'Blue', hex: '#4A90E2' }, { name: 'Pink', hex: '#E2889D' }, { name: 'Red', hex: '#D32F2F' },
+  { name: 'Green', hex: '#2E7D32' }, { name: 'Yellow', hex: '#FBC02D' }, { name: 'Grey', hex: '#9E9E9E' },
+  { name: 'Orange', hex: '#FF6B35' }, { name: 'Purple', hex: '#7B2D8B' }, { name: 'Brown', hex: '#795548' },
+  { name: 'Navy', hex: '#1A237E' }, { name: 'Maroon', hex: '#880E4F' }
+];
 
 const CATEGORY_TREE = {
   "Baby": {
@@ -21,7 +36,7 @@ const DEFAULT_FORM_STATE = {
   title: "", price: "", mrp: "", sku: "", hsn_code: "", 
   main_category: "Baby", sub_category: "Baby Boy", item_type: "Onesies & Rompers",
   fabric: "", pattern: "", neck_type: "", belt_included: false,
-  image_urls: [], sizes: "", colors: "",
+  image_urls: [], sizes: [], colors: [],
   description: "", manufacturer_details: "", care_instructions: "Dry clean or gentle hand wash", origin_country: "India",
   variants: [], 
   is_featured: false, is_new_arrival: false, homepage_section: "None", homepage_card_slot: "1",
@@ -233,12 +248,12 @@ export default function AdminDashboard() {
   };
 
   const generateVariants = () => {
-    const sizeList = formData.sizes.split(",").map(s => s.trim()).filter(Boolean);
-    const colorList = formData.colors.split(",").map(c => c.trim()).filter(Boolean);
+    const sizeList = Array.isArray(formData.sizes) ? formData.sizes : formData.sizes.split(',').map(s => s.trim()).filter(Boolean);
+    const colorList = Array.isArray(formData.colors) ? formData.colors : formData.colors.split(',').map(c => c.trim()).filter(Boolean);
     const baseSku = formData.sku || "SKU";
     
     if (sizeList.length === 0 && colorList.length === 0) {
-      alert("Please enter at least one Size or Color first!");
+      alert("Please select at least one Size or Color first!");
       return;
     }
 
@@ -257,7 +272,7 @@ export default function AdminDashboard() {
       else if (sizeList.length > 0) sizeList.forEach(size => addVariant("Default", size));
       else if (colorList.length > 0) colorList.forEach(color => addVariant(color, "Default"));
 
-      return { ...prev, sizes: "", colors: "", variants: existingMatrix };
+      return { ...prev, sizes: [], colors: [], variants: existingMatrix };
     });
   };
 
@@ -303,10 +318,11 @@ export default function AdminDashboard() {
     try {
       const url = editingId ? `https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products/${editingId}` : "https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products";
       const method = editingId ? "PUT" : "POST";
+      const token = localStorage.getItem("adminToken");
 
       const response = await fetch(url, {
         method: method,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
 
@@ -344,7 +360,7 @@ export default function AdminDashboard() {
       main_category: product.main_category || "Baby", sub_category: product.sub_category || "Baby Boy", item_type: product.item_type || "Onesies & Rompers",
       fabric: product.fabric || "", pattern: product.pattern || "", neck_type: product.neck_type || "", belt_included: product.belt_included || false,
       image_urls: parsedImages, 
-      sizes: "", colors: "", 
+      sizes: [], colors: [], 
       description: product.description || "", manufacturer_details: product.manufacturer_details || "", care_instructions: product.care_instructions || "", origin_country: product.origin_country || "India",
       variants: parsedVariants,
       is_featured: product.is_featured || false, is_new_arrival: product.is_new_arrival || false, homepage_section: product.homepage_section || "None", homepage_card_slot: product.homepage_card_slot ? String(product.homepage_card_slot) : "1",
@@ -356,7 +372,11 @@ export default function AdminDashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this product?")) return;
     try {
-      const response = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products/${id}`, { method: "DELETE" });
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (response.ok) setAllProducts(allProducts.filter(p => p.id !== id));
       else alert("Failed to delete product.");
     } catch (err) { console.error("Delete error:", err); }
@@ -860,12 +880,38 @@ export default function AdminDashboard() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Add Sizes</label>
-                    <input type="text" name="sizes" value={formData.sizes} onChange={handleChange} placeholder="e.g. 0-3M, 3-6M, 6-9M" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50" />
+                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Select Sizes</label>
+                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex flex-wrap gap-2 min-h-[52px]">
+                      {ALL_SIZES.map(size => {
+                        const selected = formData.sizes.includes(size);
+                        return (
+                          <button type="button" key={size}
+                            onClick={() => setFormData(prev => ({ ...prev, sizes: selected ? prev.sizes.filter(s => s !== size) : [...prev.sizes, size] }))}
+                            className={`px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-lg border transition-colors ${selected ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}
+                          >{size}</button>
+                        );
+                      })}
+                    </div>
+                    {formData.sizes.length > 0 && <p className="text-[10px] text-blue-600 font-medium">{formData.sizes.length} size(s) selected</p>}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Add Colors</label>
-                    <input type="text" name="colors" value={formData.colors} onChange={handleChange} placeholder="e.g. Red, Blue" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50" />
+                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Select Colors</label>
+                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex flex-wrap gap-2 min-h-[52px]">
+                      {ALL_COLORS.map(color => {
+                        const selected = formData.colors.includes(color.name);
+                        return (
+                          <button type="button" key={color.name}
+                            onClick={() => setFormData(prev => ({ ...prev, colors: selected ? prev.colors.filter(c => c !== color.name) : [...prev.colors, color.name] }))}
+                            title={color.name}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-lg border transition-all ${selected ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'}`}
+                          >
+                            <span className="w-3 h-3 rounded-full flex-shrink-0 border border-black/10" style={{ backgroundColor: color.hex }} />
+                            {color.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {formData.colors.length > 0 && <p className="text-[10px] text-blue-600 font-medium">{formData.colors.length} color(s) selected</p>}
                   </div>
                 </div>
 

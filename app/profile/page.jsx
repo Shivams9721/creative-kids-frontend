@@ -336,28 +336,42 @@ export default function UserProfile() {
         {activeTab === "settings" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
             <h1 className="text-2xl font-light tracking-widest uppercase text-black mb-8">Account Settings</h1>
-            <form className="bg-white p-8 border border-black/10 rounded-xl shadow-sm space-y-6">
+            <form className="bg-white p-8 border border-black/10 rounded-xl shadow-sm space-y-6" onSubmit={async (e) => {
+              e.preventDefault();
+              const token = localStorage.getItem('token');
+              const name = e.target.name.value;
+              const phone = e.target.phone.value;
+              try {
+                const res = await fetch('https://vbaumdstnz.ap-south-1.awsapprunner.com/api/user/profile', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                  body: JSON.stringify({ name, phone })
+                });
+                if (res.ok) {
+                  const saved = JSON.parse(localStorage.getItem('user') || '{}');
+                  localStorage.setItem('user', JSON.stringify({ ...saved, name }));
+                  setUser(prev => ({ ...prev, name }));
+                  alert('Settings saved!');
+                } else { alert('Failed to save. Try again.'); }
+              } catch { alert('Network error.'); }
+            }}>
               <h3 className="text-[12px] font-bold tracking-widest uppercase text-black border-b border-black/10 pb-2">Edit Personal Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Full Name</label>
-                  <input type="text" defaultValue={user.name} className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black transition-colors capitalize" />
+                  <input type="text" name="name" defaultValue={user.name} className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black transition-colors capitalize" />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Phone Number</label>
-                  <input type="tel" defaultValue={user.phone !== "Not provided yet" ? user.phone : ""} placeholder="+1 (555) 000-0000" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black transition-colors" />
+                  <input type="tel" name="phone" defaultValue={user.phone || ''} placeholder="10-digit mobile number" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black transition-colors" />
                 </div>
                 <div className="md:col-span-2 flex flex-col gap-2">
                   <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Email Address (Cannot be changed)</label>
                   <input type="email" defaultValue={user.email} disabled className="border border-black/10 bg-gray-50 text-black/50 p-3 rounded-lg text-[13px] cursor-not-allowed" />
                 </div>
-                <div className="md:col-span-2 flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Default Shipping Address</label>
-                  <textarea rows="3" defaultValue={user.address !== "No shipping address saved." ? user.address : ""} placeholder="Enter your full street address..." className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black transition-colors resize-none"></textarea>
-                </div>
               </div>
               <div className="pt-6 border-t border-black/10 flex justify-end">
-                <button type="button" onClick={() => alert("Settings saved!")} className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-lg">
+                <button type="submit" className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-lg">
                   Save Changes
                 </button>
               </div>

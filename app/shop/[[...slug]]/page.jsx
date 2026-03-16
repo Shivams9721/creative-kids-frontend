@@ -10,22 +10,26 @@ import { ChevronDown, SlidersHorizontal, Heart, X } from "lucide-react";
 // Filter Constants
 const SIZE_GROUPS = {
   'BABY': ['0-3M', '3-6M', '6-9M', '9-12M', '12-18M', '18-24M'],
-  'TODDLER': ['2Y', '3Y', '4Y'],
-  'KIDS': ['5Y', '6Y', '7Y', '8Y', '9Y', '10Y', '11Y', '12Y'],
-  'TEEN': ['13Y', '14Y', '15Y', '16Y', '17Y', '18Y']
+  'TODDLER': ['1-2Y', '2-3Y', '3-4Y', '4-5Y'],
+  'KIDS': ['5-6Y', '6-7Y', '7-8Y', '8-9Y', '9-10Y', '10-11Y', '11-12Y', '12-13Y'],
+  'TEEN': ['13-14Y', '14-15Y', '15-16Y', '16-17Y', '17-18Y']
 };
 
-const COLORS = [
+export const ALL_SIZES = Object.values(SIZE_GROUPS).flat();
+
+export const COLORS = [
   { name: 'Black', hex: '#000000' }, { name: 'White', hex: '#FFFFFF' }, { name: 'Beige', hex: '#F5F5DC' },
   { name: 'Blue', hex: '#4A90E2' }, { name: 'Pink', hex: '#E2889D' }, { name: 'Red', hex: '#D32F2F' },
-  { name: 'Green', hex: '#2E7D32' }, { name: 'Yellow', hex: '#FBC02D' }, { name: 'Grey', hex: '#9E9E9E' }
+  { name: 'Green', hex: '#2E7D32' }, { name: 'Yellow', hex: '#FBC02D' }, { name: 'Grey', hex: '#9E9E9E' },
+  { name: 'Orange', hex: '#FF6B35' }, { name: 'Purple', hex: '#7B2D8B' }, { name: 'Brown', hex: '#795548' },
+  { name: 'Navy', hex: '#1A237E' }, { name: 'Maroon', hex: '#880E4F' }
 ];
 
 const PRICE_RANGES = [
-  { label: 'Under ₹50', min: 0, max: 50 },
-  { label: '₹50 - ₹100', min: 50, max: 100 },
-  { label: '₹100 - ₹200', min: 100, max: 200 },
-  { label: 'Over ₹200', min: 200, max: 999999 }
+  { label: 'Under ₹299', min: 0, max: 299 },
+  { label: '₹299 - ₹599', min: 299, max: 599 },
+  { label: '₹599 - ₹999', min: 599, max: 999 },
+  { label: 'Over ₹999', min: 999, max: 999999 }
 ];
 
 export default function Shop() {
@@ -125,11 +129,21 @@ export default function Shop() {
   }
 
   if (selectedSizes.length > 0) {
-    displayedProducts = displayedProducts.filter(p => selectedSizes.some(size => JSON.stringify(p).toLowerCase().includes(size.toLowerCase())));
+    displayedProducts = displayedProducts.filter(p => {
+      try {
+        const variants = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []);
+        return selectedSizes.some(size => variants.some(v => v.size === size));
+      } catch { return false; }
+    });
   }
 
   if (selectedColors.length > 0) {
-    displayedProducts = displayedProducts.filter(p => selectedColors.some(color => JSON.stringify(p).toLowerCase().includes(color.toLowerCase())));
+    displayedProducts = displayedProducts.filter(p => {
+      try {
+        const variants = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []);
+        return selectedColors.some(color => variants.some(v => v.color.toLowerCase() === color.toLowerCase()));
+      } catch { return false; }
+    });
   }
 
   if (sortBy === "newest") displayedProducts.sort((a, b) => b.id - a.id);
@@ -212,7 +226,7 @@ export default function Shop() {
             </div>
 
             <button onClick={() => setIsMobileFilterOpen(true)} className="md:hidden flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase border border-black/20 px-4 py-2">
-              <SlidersHorizontal size={14} /> Filters
+              <SlidersHorizontal size={14} /> Filters {hasActiveFilters && <span className="w-2 h-2 bg-black rounded-full"></span>}
             </button>
           </div>
         </div>
@@ -300,6 +314,68 @@ export default function Shop() {
             )}
           </AnimatePresence>
         </aside>
+
+        {/* MOBILE FILTER DRAWER */}
+        <AnimatePresence>
+          {isMobileFilterOpen && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="fixed inset-0 bg-black/50 z-40 md:hidden"
+              />
+              <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'tween', duration: 0.3 }}
+                className="fixed bottom-0 left-0 right-0 bg-white z-50 md:hidden rounded-t-2xl max-h-[85vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-center p-5 border-b border-black/10 sticky top-0 bg-white">
+                  <span className="text-[12px] font-bold tracking-widest uppercase">Filters</span>
+                  <button onClick={() => setIsMobileFilterOpen(false)}><X size={20} /></button>
+                </div>
+                <div className="p-6 space-y-8">
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-4">Price</h3>
+                    <div className="flex flex-col gap-3">
+                      {PRICE_RANGES.map((range, idx) => (
+                        <label key={idx} className="flex items-center gap-3 text-[12px] cursor-pointer">
+                          <input type="checkbox" checked={selectedPrice?.label === range.label} onChange={() => setSelectedPrice(selectedPrice?.label === range.label ? null : range)} className="accent-black w-4 h-4" />
+                          {range.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-4">Size</h3>
+                    <div className="flex gap-3 mb-4 flex-wrap">
+                      {Object.keys(SIZE_GROUPS).map(g => (
+                        <button key={g} onClick={() => setActiveSizeTab(g)} className={`text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 rounded-full border transition-colors ${activeSizeTab === g ? 'bg-black text-white border-black' : 'border-black/20 text-black/60'}`}>{g}</button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {SIZE_GROUPS[activeSizeTab].map(size => (
+                        <button key={size} onClick={() => toggleSize(size)} className={`border py-2 text-[10px] font-bold tracking-wider transition-colors text-center rounded ${selectedSizes.includes(size) ? 'border-black bg-black text-white' : 'border-black/10 text-black/60'}`}>{size}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-4">Color</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {COLORS.map(color => (
+                        <button key={color.name} onClick={() => toggleColor(color.name)} title={color.name}
+                          className={`w-7 h-7 rounded-full ring-2 transition-all ${selectedColors.includes(color.name) ? 'ring-black ring-offset-2 scale-110' : 'ring-transparent border border-black/10'}`}
+                          style={{ backgroundColor: color.hex }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    {hasActiveFilters && <button onClick={() => { clearFilters(); }} className="flex-1 border border-black py-3 text-[11px] font-bold tracking-widest uppercase rounded-full">Clear All</button>}
+                    <button onClick={() => setIsMobileFilterOpen(false)} className="flex-1 bg-black text-white py-3 text-[11px] font-bold tracking-widest uppercase rounded-full">Apply Filters</button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* PRODUCT GRID (GAPLESS, SYMMETRIC) */}
         <main className="flex-1">
