@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon, Menu, UploadCloud, ChevronDown
+  LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp, CreditCard, Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X, Image as ImageIcon, Menu, UploadCloud, ChevronDown, MessageCircle, AlertTriangle, Barcode, Clock, ShoppingBag, Printer, Command, LayoutGrid, List
 } from "lucide-react";
 
 // Shared size & color constants (must match shop filter exactly)
@@ -39,7 +39,7 @@ const DEFAULT_FORM_STATE = {
   image_urls: [], sizes: [], colors: [],
   description: "", manufacturer_details: "", care_instructions: "Dry clean or gentle hand wash", origin_country: "India",
   variants: [], 
-  is_featured: false, is_new_arrival: false, homepage_section: "None", homepage_card_slot: "1",
+  is_featured: false, is_new_arrival: false, homepage_section: "None", homepage_card_slot: "1", is_draft: false,
 };
 
 export default function AdminDashboard() {
@@ -54,9 +54,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   
-  const [stats, setStats] = useState({ revenue: 0, activeOrders: 0, totalProducts: 0 });
+  const [stats, setStats] = useState({ totalRevenue: 0, activeOrders: 0, totalProducts: 0, todayOrders: 0, todayRevenue: 0, lowStockProducts: 0 });
+  const [orderSearch, setOrderSearch] = useState("");
   const [orders, setOrders] = useState([]);
   const [expandedOrder, setExpandedOrder] = useState(null); 
+  const [orderView, setOrderView] = useState("table"); // 'table' or 'kanban'
   const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
   
   const [allProducts, setAllProducts] = useState([]);
@@ -76,6 +78,10 @@ export default function AdminDashboard() {
   // NEW: State for tracking the AWS Upload progress
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // Command Center State
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [commandSearch, setCommandSearch] = useState("");
+
   // Persist formData, activeTab, editingId to localStorage
   useEffect(() => { localStorage.setItem('adminFormDraft', JSON.stringify(formData)); }, [formData]);
   useEffect(() => { localStorage.setItem('adminActiveTab', activeTab); }, [activeTab]);
@@ -83,6 +89,21 @@ export default function AdminDashboard() {
     if (editingId) localStorage.setItem('adminEditingId', editingId);
     else localStorage.removeItem('adminEditingId');
   }, [editingId]);
+
+  // --- COMMAND CENTER (CTRL+K) ---
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setIsCommandOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // --- 1. SECURITY CHECK ---
   useEffect(() => {
@@ -115,7 +136,8 @@ export default function AdminDashboard() {
     if (!isAuthenticated) return;
 
     if (activeTab === "dashboard") {
-      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/admin/stats").then(res => res.json()).then(data => setStats(data)).catch(err => console.error(err));
+      const token = localStorage.getItem("adminToken");
+      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/admin/stats/full", { headers: { "Authorization": `Bearer ${token}` } }).then(res => res.json()).then(data => setStats(data)).catch(err => console.error(err));
     } else if (activeTab === "orders") {
       fetchAdminOrders();
     } else if (activeTab === "products") {
@@ -312,7 +334,8 @@ export default function AdminDashboard() {
       is_featured: formData.is_featured,
       is_new_arrival: formData.is_new_arrival,
       homepage_section: formData.is_featured ? formData.homepage_section : "None",
-      homepage_card_slot: formData.is_featured ? parseInt(formData.homepage_card_slot) : null
+      homepage_card_slot: formData.is_featured ? parseInt(formData.homepage_card_slot) : null,
+      is_draft: formData.is_draft
     };
 
     try {
@@ -363,7 +386,7 @@ export default function AdminDashboard() {
       sizes: [], colors: [], 
       description: product.description || "", manufacturer_details: product.manufacturer_details || "", care_instructions: product.care_instructions || "", origin_country: product.origin_country || "India",
       variants: parsedVariants,
-      is_featured: product.is_featured || false, is_new_arrival: product.is_new_arrival || false, homepage_section: product.homepage_section || "None", homepage_card_slot: product.homepage_card_slot ? String(product.homepage_card_slot) : "1",
+      is_featured: product.is_featured || false, is_new_arrival: product.is_new_arrival || false, homepage_section: product.homepage_section || "None", homepage_card_slot: product.homepage_card_slot ? String(product.homepage_card_slot) : "1", is_draft: product.is_draft || false,
     });
     setEditingId(product.id);
     setActiveTab("add_product");
@@ -416,13 +439,48 @@ export default function AdminDashboard() {
     (product.sku && product.sku.toLowerCase().includes(inventorySearch.toLowerCase()))
   );
 
+  const getColorHex = (colorName) => ALL_COLORS.find(c => c.name === colorName)?.hex || '#94a3b8';
+
+  const getVariantSku = (item) => {
+    const color = item.color || item.selectedColor;
+    const size = item.size || item.selectedSize;
+    if (item.sku) return item.sku;
+    const parts = [item.baseSku || ''].filter(Boolean);
+    if (color && color !== 'Default') parts.push(color.toUpperCase().replace(/\s+/g, ''));
+    if (size && size !== 'Default') parts.push(size.toUpperCase().replace(/\s+/g, ''));
+    return parts.join('-') || 'N/A';
+  };
+
+  const filteredOrders = orders.filter(o => {
+    if (!orderSearch) return true;
+    const q = orderSearch.toLowerCase();
+    return (o.order_number || '').toLowerCase().includes(q) ||
+      (o.customer_name || '').toLowerCase().includes(q) ||
+      (o.phone || '').toLowerCase().includes(q);
+  });
+
+  const commandResults = [];
+  if (commandSearch.length > 1) {
+    const q = commandSearch.toLowerCase();
+    orders.forEach(o => {
+      if (o.order_number?.toLowerCase().includes(q) || o.customer_name?.toLowerCase().includes(q) || o.phone?.includes(q)) {
+        commandResults.push({ type: 'order', data: o });
+      }
+    });
+    allProducts.forEach(p => {
+      if (p.title?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)) {
+        commandResults.push({ type: 'product', data: p });
+      }
+    });
+  }
+
   if (authChecking) return <div className="fixed inset-0 z-[100] bg-[#0f172a] flex items-center justify-center"><span className="text-white/50 animate-pulse tracking-widest text-sm">Verifying Access...</span></div>;
 
   return (
-    <div className="fixed inset-0 z-[100] min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans">
+    <div className="fixed inset-0 z-[100] min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans print:bg-white print:z-0 print:static print:h-auto print:overflow-visible">
       
       {/* MOBILE HEADER */}
-      <div className="md:hidden bg-[#0f172a] text-white p-4 flex justify-between items-center z-30 shadow-md">
+      <div className="md:hidden bg-[#0f172a] text-white p-4 flex justify-between items-center z-30 shadow-md print:hidden">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <ShieldAlert size={16} className="text-white" />
@@ -445,7 +503,7 @@ export default function AdminDashboard() {
       </AnimatePresence>
 
       {/* SIDEBAR */}
-      <aside className={`absolute md:relative top-0 left-0 h-full w-72 bg-[#0f172a] text-slate-300 flex-shrink-0 flex flex-col overflow-y-auto border-r border-slate-800 shadow-2xl z-40 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+      <aside className={`absolute md:relative top-0 left-0 h-full w-72 bg-[#0f172a] text-slate-300 flex-shrink-0 flex flex-col overflow-y-auto border-r border-slate-800 shadow-2xl z-40 transition-transform duration-300 ease-in-out print:hidden ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
         <div className="p-8 pb-4">
           <div className="hidden md:flex items-center gap-3 mb-10">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -467,6 +525,13 @@ export default function AdminDashboard() {
             <button onClick={() => handleNavClick("add_product")} className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === 'add_product' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
               <PackagePlus size={18} /> List Product
             </button>
+            
+            <div className="mt-6 mb-2">
+              <p className="px-4 text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-2">Shortcuts</p>
+              <button onClick={() => setIsCommandOpen(true)} className="flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl text-slate-400 hover:text-white hover:bg-white/5 w-full text-left">
+                <Command size={18} /> Cmd Center <kbd className="ml-auto bg-slate-800 px-2 py-0.5 rounded text-[9px] border border-slate-700">Ctrl+K</kbd>
+              </button>
+            </div>
           </nav>
         </div>
 
@@ -477,20 +542,76 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
+      {/* COMMAND CENTER MODAL */}
+      <AnimatePresence>
+        {isCommandOpen && (
+          <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-start justify-center pt-[10vh] print:hidden" onClick={() => setIsCommandOpen(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              onClick={e => e.stopPropagation()} className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 mx-4">
+              <div className="flex items-center gap-3 p-4 border-b border-slate-100">
+                <Search className="text-slate-400" />
+                <input autoFocus type="text" placeholder="Search orders, products, SKUs... (Ctrl+K)" value={commandSearch} onChange={e => setCommandSearch(e.target.value)} className="w-full outline-none text-[15px] text-slate-800 placeholder-slate-400 bg-transparent" />
+                <div className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">ESC</div>
+              </div>
+              <div className="max-h-[60vh] overflow-y-auto p-2">
+                {commandSearch.length < 2 ? (
+                  <div className="p-8 text-center text-slate-400 text-[13px]">Type at least 2 characters to search across your entire workspace.</div>
+                ) : commandResults.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400 text-[13px]">No results found for "{commandSearch}"</div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {commandResults.map((res, i) => (
+                      <div key={i} className="p-3 hover:bg-slate-50 rounded-xl cursor-pointer flex items-center justify-between transition-colors border border-transparent hover:border-slate-200" onClick={() => {
+                        setIsCommandOpen(false);
+                        if (res.type === 'order') {
+                          setActiveTab('orders'); setOrderSearch(res.data.order_number); setExpandedOrder(res.data.id); setOrderView('table');
+                        } else {
+                          setActiveTab('products'); setInventorySearch(res.data.sku || res.data.title);
+                        }
+                      }}>
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${res.type === 'order' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                            {res.type === 'order' ? <Package size={16} /> : <Tag size={16} />}
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-bold text-slate-800">{res.type === 'order' ? res.data.order_number : res.data.title}</p>
+                            <p className="text-[11px] text-slate-500">{res.type === 'order' ? `Customer: ${res.data.customer_name}` : `SKU: ${res.data.sku || 'N/A'}`}</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{res.type}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 p-4 md:p-10 lg:p-12 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-10 lg:p-12 overflow-y-auto print:p-0">
         
         {/* TAB 1: DASHBOARD */}
         {activeTab === "dashboard" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto">
             <h1 className="text-2xl font-bold text-slate-800 mb-8 tracking-tight">Business Overview</h1>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white p-6 border border-slate-200 shadow-sm rounded-2xl">
+
+            {stats.lowStockProducts > 0 && (
+              <div className="mb-6 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 px-5 py-4 rounded-xl">
+                <AlertTriangle size={18} className="flex-shrink-0 animate-pulse" />
+                <p className="text-[13px] font-bold">{stats.lowStockProducts} product{stats.lowStockProducts > 1 ? 's are' : ' is'} running low on stock. <button onClick={() => handleNavClick('products')} className="underline">View Inventory →</button></p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6">
+              <div className="bg-white p-6 border border-slate-200 shadow-sm rounded-2xl col-span-2 md:col-span-1">
                 <div className="flex justify-between items-start mb-4">
                   <span className="text-[12px] font-bold tracking-widest uppercase text-slate-400">Total Revenue</span>
                   <div className="p-2.5 bg-emerald-50 rounded-xl"><TrendingUp size={20} className="text-emerald-600"/></div>
                 </div>
-                <h3 className="text-3xl font-bold text-slate-800">₹{stats.revenue.toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
+                <h3 className="text-3xl font-bold text-slate-800">₹{(stats.totalRevenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</h3>
+                <p className="text-[11px] text-emerald-600 font-bold mt-2">Today: ₹{(stats.todayRevenue || 0).toLocaleString()}</p>
               </div>
               <div className="bg-white p-6 border border-slate-200 shadow-sm rounded-2xl">
                 <div className="flex justify-between items-start mb-4">
@@ -498,13 +619,15 @@ export default function AdminDashboard() {
                   <div className="p-2.5 bg-blue-50 rounded-xl"><Package size={20} className="text-blue-600"/></div>
                 </div>
                 <h3 className="text-3xl font-bold text-slate-800">{stats.activeOrders}</h3>
+                <p className="text-[11px] text-blue-600 font-bold mt-2">Today: {stats.todayOrders || 0} new</p>
               </div>
               <div className="bg-white p-6 border border-slate-200 shadow-sm rounded-2xl">
                 <div className="flex justify-between items-start mb-4">
                   <span className="text-[12px] font-bold tracking-widest uppercase text-slate-400">Total Products</span>
-                  <div className="p-2.5 bg-purple-50 rounded-xl"><CreditCard size={20} className="text-purple-600"/></div>
+                  <div className="p-2.5 bg-purple-50 rounded-xl"><ShoppingBag size={20} className="text-purple-600"/></div>
                 </div>
                 <h3 className="text-3xl font-bold text-slate-800">{stats.totalProducts}</h3>
+                {stats.lowStockProducts > 0 && <p className="text-[11px] text-amber-600 font-bold mt-2">{stats.lowStockProducts} low stock</p>}
               </div>
             </div>
           </motion.div>
@@ -512,15 +635,31 @@ export default function AdminDashboard() {
 
         {/* TAB 2: ORDERS */}
         {activeTab === "orders" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto print:max-w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
               <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Order Management</h1>
-              <button onClick={fetchAdminOrders} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-[11px] font-bold tracking-widest uppercase hover:bg-slate-50 transition-colors shadow-sm">
-                <RefreshCcw size={14} className={isRefreshingOrders ? "animate-spin" : ""} /> Refresh List
-              </button>
+              <div className="flex items-center gap-3 print:hidden">
+                <div className="flex bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
+                  <button onClick={() => setOrderView('table')} className={`p-1.5 rounded-lg transition-colors ${orderView === 'table' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
+                    <List size={16} />
+                  </button>
+                  <button onClick={() => setOrderView('kanban')} className={`p-1.5 rounded-lg transition-colors ${orderView === 'kanban' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>
+                    <LayoutGrid size={16} />
+                  </button>
+                </div>
+                <button onClick={fetchAdminOrders} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-[11px] font-bold tracking-widest uppercase hover:bg-slate-50 transition-colors shadow-sm">
+                  <RefreshCcw size={14} className={isRefreshingOrders ? "animate-spin" : ""} /> Refresh List
+                </button>
+              </div>
+            </div>
+            <div className="relative mb-6 print:hidden">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input type="text" placeholder="Search by order #, customer name, or phone..." value={orderSearch} onChange={e => setOrderSearch(e.target.value)}
+                className="w-full bg-white border border-slate-200 text-slate-800 text-[13px] rounded-xl pl-11 pr-4 py-3.5 outline-none focus:border-blue-500 shadow-sm" />
             </div>
             
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm">
+            {orderView === "table" ? (
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm print:border-none print:shadow-none">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[800px] text-left border-collapse">
                   <thead>
@@ -529,15 +668,15 @@ export default function AdminDashboard() {
                       <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Date</th>
                       <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Customer</th>
                       <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Amount</th>
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Status</th>
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 text-right">Details</th>
+                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 print:hidden">Status</th>
+                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 text-right print:hidden">Details</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.length === 0 ? (
-                      <tr><td colSpan="6" className="p-12 text-center text-[13px] text-slate-400 font-medium">No orders yet.</td></tr>
+                    {filteredOrders.length === 0 ? (
+                      <tr><td colSpan="6" className="p-12 text-center text-[13px] text-slate-400 font-medium">{orderSearch ? 'No orders match your search.' : 'No orders yet.'}</td></tr>
                     ) : (
-                      orders.map((order) => (
+                      filteredOrders.map((order) => (
                         <React.Fragment key={order.id}>
                           <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                             <td className="p-5 text-[13px] font-bold text-slate-800">{order.order_number}</td>
@@ -550,7 +689,7 @@ export default function AdminDashboard() {
                               ₹{parseFloat(order.total_amount || 0).toFixed(2)} 
                               <span className="text-[11px] text-slate-400 font-normal ml-1">({order.items_count} items)</span>
                             </td>
-                            <td className="p-5">
+                            <td className="p-5 print:hidden">
                               <div className="flex flex-col gap-2">
                                 <select 
                                   value={order.status}
@@ -575,7 +714,7 @@ export default function AdminDashboard() {
                                 )}
                               </div>
                             </td>
-                            <td className="p-5 text-right">
+                            <td className="p-5 text-right print:hidden">
                               <button 
                                 onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
                                 className="text-[11px] font-bold tracking-widest uppercase text-blue-600 hover:text-blue-800 transition-colors"
@@ -586,12 +725,12 @@ export default function AdminDashboard() {
                           </tr>
 
                           <AnimatePresence>
-                            {expandedOrder === order.id && (
+                            {(expandedOrder === order.id || typeof window !== 'undefined' && window.matchMedia('print').matches) && (
                               <motion.tr 
                                 initial={{ opacity: 0, height: 0 }} 
                                 animate={{ opacity: 1, height: "auto" }} 
                                 exit={{ opacity: 0, height: 0 }}
-                                className="bg-slate-50 border-b border-slate-200 overflow-hidden"
+                                className="bg-slate-50 border-b border-slate-200 overflow-hidden print:border-none print:bg-white"
                               >
                                 <td colSpan="6" className="p-0">
                                   <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
@@ -611,23 +750,55 @@ export default function AdminDashboard() {
                                     </div>
 
                                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                      <h4 className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 border-b border-slate-100 pb-2">Purchased Items</h4>
-                                      <div className="space-y-4 max-h-48 overflow-y-auto pr-2">
-                                        {order.items && (typeof order.items === 'string' ? JSON.parse(order.items) : order.items).map((item, idx) => (
-                                          <div key={idx} className="flex gap-3 items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                            <div className="w-12 h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
-                                              <img src={item.image || (item.image_urls && item.image_urls[0])} alt="item" className="w-full h-full object-cover" />
+                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-slate-100 pb-2">
+                                        <h4 className="text-[10px] font-bold tracking-widest uppercase text-slate-400 flex items-center gap-1"><CheckCircle2 size={12} className="text-emerald-500"/> Packing List — SKU Verified</h4>
+                                        <div className="flex items-center gap-2 print:hidden">
+                                          <button onClick={() => window.print()} className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[10px] font-bold tracking-wider px-3 py-1.5 rounded-lg transition-colors">
+                                            <Printer size={13} /> Print Slip
+                                          </button>
+                                          <a
+                                            href={`https://wa.me/91${order.phone?.replace(/\D/g,'')}?text=${encodeURIComponent(`Hi ${order.customer_name}, your Creative Kids order ${order.order_number} is packed and ready to ship! 🎉`)}`}
+                                            target="_blank" rel="noreferrer"
+                                            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold tracking-wider px-3 py-1.5 rounded-lg transition-colors"
+                                          >
+                                            <MessageCircle size={13} /> WhatsApp
+                                          </a>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-3 max-h-64 overflow-y-auto pr-1 print:max-h-full print:overflow-visible">
+                                        {order.items && (typeof order.items === 'string' ? JSON.parse(order.items) : order.items).map((item, idx) => {
+                                          const itemColor = item.color || item.selectedColor;
+                                          const itemSize = item.size || item.selectedSize;
+                                          const variantSku = getVariantSku(item);
+                                          return (
+                                            <div key={idx} className="flex gap-3 items-start bg-slate-50 p-3 rounded-xl border border-slate-200 print:bg-white">
+                                              <div className="w-14 h-18 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 border border-slate-300" style={{minHeight:'72px'}}>
+                                                <img src={item.image || (item.image_urls && item.image_urls[0])} alt="item" className="w-full h-full object-cover" />
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-[13px] font-bold text-slate-800 leading-tight mb-2">{item.title}</p>
+                                                <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                                                  {itemSize && itemSize !== 'Default' && (
+                                                    <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-wider">{itemSize}</span>
+                                                  )}
+                                                  {itemColor && itemColor !== 'Default' && (
+                                                    <span className="flex items-center gap-1 bg-white border border-slate-200 text-[10px] font-bold px-2 py-0.5 rounded tracking-wider text-slate-700">
+                                                      <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{backgroundColor: getColorHex(itemColor)}} />
+                                                      {itemColor}
+                                                    </span>
+                                                  )}
+                                                  <span className="flex items-center gap-1 bg-yellow-100 border border-yellow-300 text-yellow-900 text-[11px] font-bold px-2 py-0.5 rounded tracking-wider shadow-sm">
+                                                    <Barcode size={12} /> SKU: {variantSku}
+                                                  </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500">Qty: <span className="font-bold text-slate-700">{item.quantity || 1}</span></p>
+                                              </div>
+                                              <div className="text-right flex-shrink-0">
+                                                <p className="text-[14px] font-bold text-slate-800">₹{item.price}</p>
+                                              </div>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                              <p className="text-[12px] font-bold text-slate-800 leading-tight mb-1 truncate">{item.title}</p>
-                                              <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Size: {item.size || item.selectedSize} | Color: {item.color}</p>
-                                            </div>
-                                            <div className="text-right flex-shrink-0">
-                                              <p className="text-[13px] font-bold text-slate-800">₹{item.price}</p>
-                                              <p className="text-[11px] text-slate-500 mt-1">Qty: {item.quantity || 1}</p>
-                                            </div>
-                                          </div>
-                                        ))}
+                                          );
+                                        })}
                                       </div>
                                     </div>
                                   </div>
@@ -642,6 +813,49 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
+            ) : (
+              /* KANBAN BOARD VIEW */
+              <div className="flex gap-4 overflow-x-auto pb-6 snap-x">
+                {['Processing', 'Shipped', 'Delivered', 'Cancelled'].map(status => (
+                  <div key={status} className="flex-1 min-w-[300px] w-[300px] bg-slate-100/80 rounded-2xl p-4 flex flex-col gap-4 snap-center border border-slate-200">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <h3 className="font-bold text-slate-700 uppercase tracking-widest text-[11px] flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${status === 'Processing' ? 'bg-blue-500' : status === 'Shipped' ? 'bg-purple-500' : status === 'Delivered' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                        {status}
+                      </h3>
+                      <span className="bg-white text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-200">{filteredOrders.filter(o => o.status === status).length}</span>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      {filteredOrders.filter(o => o.status === status).map(order => (
+                        <div key={order.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-blue-300 transition-colors group" onClick={() => { setOrderView('table'); setOrderSearch(order.order_number); setExpandedOrder(order.id); }}>
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-[11px] font-bold text-blue-600 group-hover:text-blue-700">{order.order_number}</span>
+                            <span className="text-[10px] text-slate-400">{new Date(order.created_at).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-[13px] font-bold text-slate-800">{order.customer_name}</p>
+                          <p className="text-[12px] text-slate-500 mb-3">{order.items_count} items • ₹{parseFloat(order.total_amount).toFixed(2)}</p>
+                          <div onClick={e => e.stopPropagation()}>
+                            <select 
+                              value={order.status}
+                              onChange={(e) => {
+                                if (e.target.value === 'Shipped') { const courier = prompt('Courier name (e.g. Delhivery):'); const awb = prompt('AWB / Tracking Number:'); updateOrderStatus(order.id, e.target.value, courier, awb); }
+                                else { updateOrderStatus(order.id, e.target.value, order.courier_name, order.awb_number); }
+                              }}
+                              className={`w-full px-2 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase border outline-none cursor-pointer appearance-none transition-colors ${getStatusColor(order.status)}`}
+                            >
+                              <option value="Processing">Processing</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -699,16 +913,18 @@ export default function AdminDashboard() {
                         const totalStock = calculateTotalStock(product.variants);
                         let statusColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
                         let statusText = "In Stock";
-                        if (totalStock === 0) {
+                        const isLowStock = totalStock > 0 && totalStock < 10;
+                        const isOutOfStock = totalStock === 0;
+                        if (isOutOfStock) {
                           statusColor = "bg-red-50 text-red-700 border-red-200";
                           statusText = "Out of Stock";
-                        } else if (totalStock < 10) {
+                        } else if (isLowStock) {
                           statusColor = "bg-amber-50 text-amber-700 border-amber-200";
                           statusText = "Low Stock";
                         }
 
                         return (
-                          <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <tr key={product.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${isLowStock || isOutOfStock ? 'bg-amber-50/30' : ''}`}>
                             <td className="p-5">
                               <div className="w-14 h-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm relative">
                                 {product.image_urls && product.image_urls.length > 1 && (
@@ -723,6 +939,7 @@ export default function AdminDashboard() {
                               <p className="text-[14px] font-bold text-slate-800">{product.title}</p>
                               <p className="text-[11px] text-slate-400 mt-1 font-medium tracking-wider uppercase">SKU: {product.sku || 'N/A'}</p>
                               <div className="flex gap-2 mt-2">
+                                  {product.is_draft && <span className="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">Draft</span>}
                                   {product.is_featured && <span className="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">Homepage</span>}
                                   {product.is_new_arrival && <span className="bg-purple-50 text-purple-600 border border-purple-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">New</span>}
                               </div>
@@ -1043,6 +1260,16 @@ export default function AdminDashboard() {
                 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
                   <div>
+                    <h3 className="text-[13px] font-bold tracking-wide text-slate-800">Save as Draft</h3>
+                    <p className="text-[12px] text-slate-500 mt-1">Keep this product hidden from customers until you are ready to publish.</p>
+                  </div>
+                  <button type="button" onClick={() => setFormData({...formData, is_draft: !formData.is_draft})} className={`w-14 h-7 rounded-full transition-colors relative shadow-inner flex-shrink-0 ${formData.is_draft ? 'bg-slate-800' : 'bg-slate-300'}`}>
+                    <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${formData.is_draft ? 'left-8' : 'left-1'}`} />
+                  </button>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
+                  <div>
                     <h3 className="text-[13px] font-bold tracking-wide text-slate-800">Tag as New Arrival</h3>
                     <p className="text-[12px] text-slate-500 mt-1">Show this item inside the "New Arrivals" shop category</p>
                   </div>
@@ -1093,7 +1320,7 @@ export default function AdminDashboard() {
 
               <div className="pt-6 pb-12 flex justify-end">
                 <button type="submit" disabled={loading} className="w-full md:w-auto px-16 bg-blue-600 text-white rounded-xl py-4 text-[13px] font-bold tracking-widest uppercase hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 disabled:opacity-50">
-                  {loading ? "Saving Data..." : (editingId ? "Update Product" : "Publish to Storefront")}
+                  {loading ? "Saving Data..." : (editingId ? "Update Product" : (formData.is_draft ? "Save Draft" : "Publish to Storefront"))}
                 </button>
               </div>
             </form>
