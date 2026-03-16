@@ -326,7 +326,7 @@ export default function CheckoutPage() {
                                                 </div>
                                                 <div className="flex-1 flex flex-col justify-center">
                                                     <h3 className="text-[15px] text-black font-medium mb-1">{item.title}</h3>
-                                                    <p className="text-[12px] text-black/50 tracking-widest uppercase">Size: {item.size} | Color: {item.color}</p>
+                                                    <p className="text-[12px] text-black/50 tracking-widest uppercase">Size: {item.selectedSize || item.size} | Color: {item.selectedColor || item.color}</p>
                                                     <div className="flex gap-3 items-center mt-3">
                                                         <span className="text-[15px] font-bold text-black">₹{item.price}</span>
                                                         {item.mrp > item.price && (

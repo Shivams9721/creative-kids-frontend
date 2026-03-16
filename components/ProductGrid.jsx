@@ -64,7 +64,7 @@ export default function ProductGrid() {
               
               <div className="relative w-full aspect-[3/4] overflow-hidden mb-4 bg-gray-50">
                 <img 
-                  src={product.image_urls[0]} 
+                  src={product.image_urls[0] || 'https://via.placeholder.com/400x500'} 
                   alt={product.title}
                   className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />

@@ -577,23 +577,23 @@ export default function AdminDashboard() {
                                   <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
                                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                                       <h4 className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 border-b border-slate-100 pb-2">Shipping Address</h4>
-                                      {order.shipping_address ? (
+                                      {(() => { const addr = order.shipping_address ? (typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address) : null; return addr ? (
                                         <div className="text-[13px] text-slate-700 leading-relaxed">
-                                          <p className="font-bold text-slate-900 mb-1">{order.shipping_address.fullName || order.customer_name}</p>
-                                          <p>{order.shipping_address.houseNo}, {order.shipping_address.roadName}</p>
-                                          {order.shipping_address.landmark && <p>Landmark: {order.shipping_address.landmark}</p>}
-                                          <p>{order.shipping_address.city}, {order.shipping_address.state} - {order.shipping_address.pincode}</p>
+                                          <p className="font-bold text-slate-900 mb-1">{addr.fullName || order.customer_name}</p>
+                                          <p>{addr.houseNo}, {addr.roadName}</p>
+                                          {addr.landmark && <p>Landmark: {addr.landmark}</p>}
+                                          <p>{addr.city}, {addr.state} - {addr.pincode}</p>
                                           <p className="mt-2 pt-2 border-t border-slate-100 text-[12px] font-medium">Payment Method: <span className="uppercase text-blue-600 font-bold">{order.payment_method || 'N/A'}</span></p>
                                         </div>
                                       ) : (
                                         <p className="text-[12px] text-slate-400">No address data found.</p>
-                                      )}
+                                      ); })()}
                                     </div>
 
                                     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                                       <h4 className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 border-b border-slate-100 pb-2">Purchased Items</h4>
                                       <div className="space-y-4 max-h-48 overflow-y-auto pr-2">
-                                        {order.items && order.items.map((item, idx) => (
+                                        {order.items && (typeof order.items === 'string' ? JSON.parse(order.items) : order.items).map((item, idx) => (
                                           <div key={idx} className="flex gap-3 items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
                                             <div className="w-12 h-16 bg-slate-200 rounded overflow-hidden flex-shrink-0">
                                               <img src={item.image || (item.image_urls && item.image_urls[0])} alt="item" className="w-full h-full object-cover" />

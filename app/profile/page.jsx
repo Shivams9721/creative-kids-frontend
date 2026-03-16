@@ -281,7 +281,7 @@ export default function UserProfile() {
                     </div>
                     <div className="flex flex-col px-1">
                       <h3 className="text-[13px] text-black mb-1 truncate">{product.title}</h3>
-                      <p className="text-[12px] text-black font-medium">${parseFloat(product.price).toFixed(2)}</p>
+                      <p className="text-[12px] text-black font-medium">₹{parseFloat(product.price).toFixed(2)}</p>
                     </div>
                   </div>
                 ))}
