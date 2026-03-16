@@ -30,7 +30,7 @@ export default function PrivacyPage() {
           </section>
           <section>
             <h2 className="text-[12px] font-bold tracking-widest uppercase text-black mb-3">5. Your Rights</h2>
-            <p>You have the right to access, correct, or delete your personal data at any time. To exercise these rights, contact us at <a href="mailto:support@creativekids.co.in" className="text-black underline">support@creativekids.co.in</a>.</p>
+            <p>You have the right to access, correct, or delete your personal data at any time. To exercise these rights, contact us at <a href="mailto:shrawan@creativeimpression.in" className="text-black underline">shrawan@creativeimpression.in</a>.</p>
           </section>
           <section>
             <h2 className="text-[12px] font-bold tracking-widest uppercase text-black mb-3">6. Cookies</h2>
