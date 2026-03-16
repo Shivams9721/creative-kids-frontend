@@ -39,6 +39,7 @@ const DEFAULT_FORM_STATE = {
   image_urls: [], sizes: [], colors: [],
   description: "", manufacturer_details: "", care_instructions: "Dry clean or gentle hand wash", origin_country: "India",
   variants: [], 
+  color_variations: [],
   is_featured: false, is_new_arrival: false, homepage_section: "None", homepage_card_slot: "1",
 };
 
@@ -286,6 +287,31 @@ export default function AdminDashboard() {
     setFormData(prev => ({ ...prev, variants: prev.variants.filter((_, index) => index !== indexToRemove) }));
   };
 
+  const addColorVariation = (variationColor) => {
+    if (!variationColor) return;
+    setFormData(prev => {
+      const exists = prev.color_variations.some(v => v.color === variationColor);
+      if (exists) return prev;
+      return { ...prev, color_variations: [...prev.color_variations, { color: variationColor, images: [] }] };
+    });
+  };
+
+  const removeColorVariation = (colorToRemove) => {
+    setFormData(prev => ({ ...prev, color_variations: prev.color_variations.filter(v => v.color !== colorToRemove) }));
+  };
+
+  const assignColorImage = (color, imageUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      color_variations: prev.color_variations.map(v => v.color === color ? { ...v, images: [...v.images, imageUrl] } : v)
+    }));
+  };
+
+  const packerLabelForItem = (item) => {
+    const sku = item.sku || item.variant_sku || item.product_sku || "UNKNOWN";
+    return `${sku} | ${item.color || item.selectedColor || "N/A"} | ${item.size || item.selectedSize || "N/A"}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -309,6 +335,7 @@ export default function AdminDashboard() {
       mrp: formData.mrp ? parseFloat(formData.mrp) : parseFloat(formData.price), 
       sizes: [...new Set(formData.variants.map(v => v.size))].filter(s => s !== "Default"),
       colors: [...new Set(formData.variants.map(v => v.color))].filter(c => c !== "Default"),
+      color_variations: formData.color_variations,
       is_featured: formData.is_featured,
       is_new_arrival: formData.is_new_arrival,
       homepage_section: formData.is_featured ? formData.homepage_section : "None",
@@ -363,6 +390,7 @@ export default function AdminDashboard() {
       sizes: [], colors: [], 
       description: product.description || "", manufacturer_details: product.manufacturer_details || "", care_instructions: product.care_instructions || "", origin_country: product.origin_country || "India",
       variants: parsedVariants,
+      color_variations: product.color_variations ? (typeof product.color_variations === 'string' ? JSON.parse(product.color_variations) : product.color_variations) : [],
       is_featured: product.is_featured || false, is_new_arrival: product.is_new_arrival || false, homepage_section: product.homepage_section || "None", homepage_card_slot: product.homepage_card_slot ? String(product.homepage_card_slot) : "1",
     });
     setEditingId(product.id);
@@ -620,7 +648,8 @@ export default function AdminDashboard() {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                               <p className="text-[12px] font-bold text-slate-800 leading-tight mb-1 truncate">{item.title}</p>
-                                              <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Size: {item.size || item.selectedSize} | Color: {item.color}</p>
+                                              <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Size: {item.size || item.selectedSize} | Color: {item.color || item.selectedColor || 'N/A'}</p>
+                                              <p className="text-[9px] mt-1 font-semibold text-slate-600">Packer Slip: {packerLabelForItem(item)}</p>
                                             </div>
                                             <div className="text-right flex-shrink-0">
                                               <p className="text-[13px] font-bold text-slate-800">₹{item.price}</p>
@@ -722,6 +751,14 @@ export default function AdminDashboard() {
                             <td className="p-5">
                               <p className="text-[14px] font-bold text-slate-800">{product.title}</p>
                               <p className="text-[11px] text-slate-400 mt-1 font-medium tracking-wider uppercase">SKU: {product.sku || 'N/A'}</p>
+                              {product.color_variations && product.color_variations.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {product.color_variations.slice(0, 4).map(v => (
+                                    <span key={`${product.id}-${v.color}`} className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">{v.color}</span>
+                                  ))}
+                                  {product.color_variations.length > 4 && <span className="text-[10px] text-slate-500">+{product.color_variations.length - 4} more</span>}
+                                </div>
+                              )}
                               <div className="flex gap-2 mt-2">
                                   {product.is_featured && <span className="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">Homepage</span>}
                                   {product.is_new_arrival && <span className="bg-purple-50 text-purple-600 border border-purple-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">New</span>}
@@ -913,6 +950,49 @@ export default function AdminDashboard() {
                     </div>
                     {formData.colors.length > 0 && <p className="text-[10px] text-blue-600 font-medium">{formData.colors.length} color(s) selected</p>}
                   </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl mt-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1">
+                      <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Add color variation (flipkart-style)</label>
+                      <select
+                        value={formData.variation_base_color || ''}
+                        onChange={(e) => setFormData(prev => ({ ...prev, variation_base_color: e.target.value }))}
+                        className="w-full border border-slate-300 rounded-lg p-2.5 text-[12px] bg-white cursor-pointer"
+                      >
+                        <option value="">Select a color variant</option>
+                        {ALL_COLORS.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <button type="button" onClick={() => addColorVariation(formData.variation_base_color)} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-[11px] font-bold tracking-wider uppercase hover:bg-blue-700">Add Variation</button>
+                  </div>
+                  {formData.color_variations.length > 0 && (
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {formData.color_variations.map((v, idx) => (
+                        <div key={`${v.color}-${idx}`} className="border border-slate-200 rounded-xl p-3 bg-white">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-[12px] font-bold text-slate-700">{v.color}</p>
+                              <p className="text-[11px] text-slate-500">Images: {v.images.length}</p>
+                            </div>
+                            <button type="button" onClick={() => removeColorVariation(v.color)} className="text-red-500 text-[10px] font-bold uppercase">Remove</button>
+                          </div>
+                          {v.images.length === 0 ? <p className="mt-2 text-[10px] text-slate-400">Upload color-specific images in media and assign them below using the 'Assign to {v.color}' action.</p> : null}
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {formData.image_urls.map((url, i) => (
+                              <button key={`${v.color}-${i}`} type="button" onClick={() => assignColorImage(v.color, url)} className="border border-slate-300 px-2 py-1 rounded-md text-[10px] hover:bg-slate-100">Assign to {v.color} #{i+1}</button>
+                            ))}
+                          </div>
+                          {v.images.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {v.images.map((imgUrl, i) => <img key={`${v.color}-img-${i}`} src={imgUrl} alt={`${v.color}-${i}`} className="h-10 w-10 rounded-md object-cover border" />)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <button type="button" onClick={generateVariants} className="flex items-center justify-center gap-2 bg-slate-800 text-white px-6 py-3.5 rounded-xl text-[11px] font-bold tracking-widest uppercase hover:bg-slate-900 transition-colors w-full md:w-auto shadow-md">
