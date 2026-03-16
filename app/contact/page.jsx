@@ -30,7 +30,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-1">Email</h3>
-                <a href="mailto:support@creativekids.co.in" className="text-[14px] text-black/70 hover:text-black transition-colors">support@creativekids.co.in</a>
+                <a href="mailto:shrawan@creativeimpression.in" className="text-[14px] text-black/70 hover:text-black transition-colors">shrawan@creativeimpression.in</a>
               </div>
             </div>
 
@@ -40,7 +40,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-1">Phone / WhatsApp</h3>
-                <a href="tel:+919999999999" className="text-[14px] text-black/70 hover:text-black transition-colors">+91 99999 99999</a>
+                <a href="tel:+91 85279 10223" className="text-[14px] text-black/70 hover:text-black transition-colors">+91 85279 10223</a>
                 <p className="text-[11px] text-black/40 mt-1">Mon–Sat, 10am–6pm IST</p>
               </div>
             </div>
@@ -52,9 +52,9 @@ export default function ContactPage() {
               <div>
                 <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-1">Registered Address</h3>
                 <p className="text-[14px] text-black/70 leading-relaxed">
-                  Creative Kids<br />
-                  123, Business Park, Sector 5<br />
-                  Mumbai, Maharashtra – 400001<br />
+                  Creative Impression<br />
+                  Plot NO.-550A, Sector-37, Pace City-II<br />
+                  Gurugram, Haryana – 122001<br />
                   India
                 </p>
               </div>

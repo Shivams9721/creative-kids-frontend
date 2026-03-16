@@ -3,7 +3,7 @@ export default function TermsPage() {
     <main className="min-h-screen bg-white pt-[64px] md:pt-[72px] pb-24">
       <div className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="text-3xl font-light tracking-widest uppercase text-black mb-2">Terms & Conditions</h1>
-        <p className="text-[11px] text-black/40 tracking-widest uppercase mb-12">Last updated: January 2025</p>
+        <p className="text-[11px] text-black/40 tracking-widest uppercase mb-12">Last updated: March 2026</p>
 
         <div className="space-y-10 text-[14px] text-black/70 leading-relaxed">
           <section>
