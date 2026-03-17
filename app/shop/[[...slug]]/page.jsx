@@ -32,15 +32,18 @@ const PRICE_RANGES = [
   { label: 'Over ₹999', min: 999, max: 999999 }
 ];
 
+const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+
 export default function Shop() {
   const { addToCart } = useCart();
   const params = useParams();
   const router = useRouter();
-  
+
   // States
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [wishlist, setWishlist] = useState(new Set());
   
   // Filtering States
   const [activeCategory, setActiveCategory] = useState("All");
@@ -68,11 +71,39 @@ export default function Shop() {
     else setActiveItem(null);
   }, [params, slug0, slug1]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    fetch(`${API}/api/wishlist`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setWishlist(new Set(data.map(p => p.id))); })
+      .catch(() => {});
+  }, []);
+
+  const toggleWishlist = async (e, productId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const token = localStorage.getItem("token");
+    if (!token) { router.push("/login"); return; }
+    try {
+      await fetch(`${API}/api/wishlist/toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ productId })
+      });
+      setWishlist(prev => {
+        const next = new Set(prev);
+        next.has(productId) ? next.delete(productId) : next.add(productId);
+        return next;
+      });
+    } catch {}
+  };
+
   // Fetch Database
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products");
+        const response = await fetch(`${API}/api/products`);
         const rawData = await response.json();
         const data = rawData.map(p => ({
           ...p,
@@ -397,8 +428,8 @@ export default function Shop() {
                 >
                   {/* Image Container */}
                   <div className="w-full aspect-[3/4] bg-[#f6f5f3] relative overflow-hidden mb-5">
-                    <button className="absolute top-4 right-4 z-10 hover:scale-110 transition-transform">
-                      <Heart size={18} strokeWidth={1} className="text-black/50 hover:fill-black/10 transition-colors" />
+                    <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 hover:scale-110 transition-transform">
+                      <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
                     </button>
                     <img 
                       src={product.image_urls?.[0] || 'https://via.placeholder.com/400x500'} 

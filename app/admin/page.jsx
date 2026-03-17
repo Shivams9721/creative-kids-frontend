@@ -89,6 +89,7 @@ export default function AdminDashboard() {
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [dragOverIndex, setDragOverIndex] = useState(null);
   const dragSrcIndex = React.useRef(null);
+  const [uploadingVariantImage, setUploadingVariantImage] = useState(null); // stores index being uploaded
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
 
@@ -291,6 +292,26 @@ export default function AdminDashboard() {
   const removeVariant = useCallback((index) => {
     setFormData(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i !== index) }));
   }, []);
+
+  const handleVariantImageUpload = useCallback(async (e, index) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingVariantImage(index);
+    const fd = new FormData();
+    fd.append("image", file);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API}/api/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      if (res.ok && data.success) handleVariantChange(index, "image", data.imageUrl);
+      else alert(data.error || "Failed to upload.");
+    } catch { alert("Upload error."); }
+    finally { setUploadingVariantImage(null); e.target.value = ""; }
+  }, [handleVariantChange]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1122,8 +1143,8 @@ export default function AdminDashboard() {
                     <table className={`w-full min-w-[500px] text-left ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
                       <thead>
                         <tr className={`border-b ${darkMode ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
-                          {['Color','Size','Stock Qty','Variant SKU','Remove'].map((h, i) => (
-                            <th key={h} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 4 ? 'text-center' : ''}`}>{h}</th>
+                          {['Color','Size','Stock Qty','Variant SKU','Image','Remove'].map((h, i) => (
+                            <th key={h} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 5 ? 'text-center' : ''}`}>{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -1149,6 +1170,29 @@ export default function AdminDashboard() {
                                 <input type="text" value={variant.sku}
                                   onChange={e => handleVariantChange(index, "sku", e.target.value)}
                                   className={`border p-2.5 w-full rounded-lg text-[12px] outline-none font-mono ${darkMode ? 'bg-white/5 border-white/10 text-slate-300 focus:border-blue-400' : 'bg-white border-slate-300 text-slate-600 focus:border-blue-500'}`} />
+                              </td>
+                              <td className="p-4">
+                                <label className="cursor-pointer flex flex-col items-center gap-1">
+                                  {variant.image ? (
+                                    <div className="relative w-12 h-14 rounded-lg overflow-hidden border group">
+                                      <img src={variant.image} alt="variant" className="w-full h-full object-cover" />
+                                      <button type="button" onClick={() => handleVariantChange(index, 'image', '')} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                        <X size={14} className="text-white" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className={`w-12 h-14 rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${
+                                      uploadingVariantImage === index
+                                        ? darkMode ? 'border-blue-400 bg-blue-500/10' : 'border-blue-400 bg-blue-50'
+                                        : darkMode ? 'border-white/20 hover:border-blue-400' : 'border-slate-300 hover:border-blue-400'
+                                    }`}>
+                                      {uploadingVariantImage === index
+                                        ? <UploadCloud size={14} className="text-blue-400 animate-pulse" />
+                                        : <ImageIcon size={14} className={darkMode ? 'text-slate-500' : 'text-slate-400'} />}
+                                    </div>
+                                  )}
+                                  <input type="file" accept="image/*" className="hidden" disabled={uploadingVariantImage !== null} onChange={e => handleVariantImageUpload(e, index)} />
+                                </label>
                               </td>
                               <td className="p-4 text-center">
                                 <button type="button" onClick={() => removeVariant(index)} className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}>

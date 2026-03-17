@@ -1,13 +1,11 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function OrderSuccess() {
   return (
     <main className="min-h-screen bg-white">
-      <Navbar />
       
       <div className="flex flex-col items-center justify-center h-[75vh] px-4 text-center">
         <motion.div

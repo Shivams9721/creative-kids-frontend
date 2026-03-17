@@ -153,7 +153,7 @@ export default function CheckoutPage() {
                 setOrderSuccess(true);
                 setCart([]);
                 setTimeout(() => {
-                    router.push('/shop');
+                    router.push('/success');
                 }, 4000);
             } else {
                 alert("Failed to place order. Please try again.");
