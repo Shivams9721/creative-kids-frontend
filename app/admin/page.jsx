@@ -6,7 +6,7 @@ import {
   LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp,
   Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X,
   Image as ImageIcon, Menu, UploadCloud, MessageCircle, AlertTriangle, Barcode,
-  ShoppingBag, Printer, Command, LayoutGrid, List, Filter
+  ShoppingBag, Printer, Command, LayoutGrid, List, Filter, Sun, Moon
 } from "lucide-react";
 
 const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
@@ -50,6 +50,10 @@ export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('adminDarkMode') === 'true';
+    return false;
+  });
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') return localStorage.getItem('adminActiveTab') || 'dashboard';
@@ -65,7 +69,6 @@ export default function AdminDashboard() {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [orderView, setOrderView] = useState("table");
   const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
-  // Inline courier form state: { orderId, courier, awb, newStatus }
   const [shippingForm, setShippingForm] = useState(null);
 
   const [allProducts, setAllProducts] = useState([]);
@@ -86,15 +89,16 @@ export default function AdminDashboard() {
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
 
-  // Persist to localStorage
+  // Persist
   useEffect(() => { localStorage.setItem('adminFormDraft', JSON.stringify(formData)); }, [formData]);
   useEffect(() => { localStorage.setItem('adminActiveTab', activeTab); }, [activeTab]);
+  useEffect(() => { localStorage.setItem('adminDarkMode', darkMode); }, [darkMode]);
   useEffect(() => {
     if (editingId) localStorage.setItem('adminEditingId', editingId);
     else localStorage.removeItem('adminEditingId');
   }, [editingId]);
 
-  // Ctrl+K command center
+  // Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); setIsCommandOpen(true); }
@@ -104,14 +108,13 @@ export default function AdminDashboard() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Auth check
+  // Auth
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
     if (!token) { window.location.href = "/admin/login"; }
     else { setIsAuthenticated(true); setAuthChecking(false); }
   }, []);
 
-  // Data fetching
   const fetchAdminOrders = useCallback(async () => {
     setIsRefreshingOrders(true);
     try {
@@ -161,7 +164,6 @@ export default function AdminDashboard() {
     setIsMobileMenuOpen(false);
   }, []);
 
-  // Inline shipping form submit (replaces prompt())
   const submitShippingUpdate = useCallback(async () => {
     if (!shippingForm) return;
     const { orderId, newStatus, courier, awb } = shippingForm;
@@ -174,17 +176,12 @@ export default function AdminDashboard() {
       if (res.ok) {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, courier_name: courier, awb_number: awb } : o));
         setShippingForm(null);
-      } else {
-        alert("Failed to update status.");
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      } else { alert("Failed to update status."); }
+    } catch (err) { console.error(err); }
   }, [shippingForm]);
 
   const updateOrderStatus = useCallback(async (orderId, newStatus, courierName, awbNumber) => {
     if (newStatus === 'Shipped') {
-      // Open inline form instead of prompt()
       setShippingForm({ orderId, newStatus, courier: courierName || '', awb: awbNumber || '' });
       return;
     }
@@ -196,15 +193,10 @@ export default function AdminDashboard() {
       });
       if (res.ok) {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, courier_name: courierName, awb_number: awbNumber } : o));
-      } else {
-        alert("Failed to update status on server.");
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      } else { alert("Failed to update status on server."); }
+    } catch (err) { console.error(err); }
   }, []);
 
-  // Form logic
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => {
@@ -237,15 +229,9 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (res.ok && data.success) {
         setFormData(prev => ({ ...prev, image_urls: [...prev.image_urls, data.imageUrl] }));
-      } else {
-        alert(data.error || "Failed to upload image.");
-      }
-    } catch (err) {
-      alert("An error occurred while uploading.");
-    } finally {
-      setUploadingImage(false);
-      e.target.value = "";
-    }
+      } else { alert(data.error || "Failed to upload image."); }
+    } catch (err) { alert("An error occurred while uploading."); }
+    finally { setUploadingImage(false); e.target.value = ""; }
   }, []);
 
   const removeImageUrl = useCallback(async (indexToRemove) => {
@@ -257,9 +243,7 @@ export default function AdminDashboard() {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ imageUrl: urlToDelete })
       });
-    } catch (err) {
-      console.error("Failed to delete image from S3:", err);
-    }
+    } catch (err) { console.error("Failed to delete image from S3:", err); }
     setFormData(prev => ({ ...prev, image_urls: prev.image_urls.filter((_, idx) => idx !== indexToRemove) }));
   }, [formData.image_urls]);
 
@@ -267,10 +251,7 @@ export default function AdminDashboard() {
     const sizeList = Array.isArray(formData.sizes) ? formData.sizes : [];
     const colorList = Array.isArray(formData.colors) ? formData.colors : [];
     const baseSku = formData.sku || "SKU";
-    if (sizeList.length === 0 && colorList.length === 0) {
-      alert("Please select at least one Size or Color first!");
-      return;
-    }
+    if (sizeList.length === 0 && colorList.length === 0) { alert("Please select at least one Size or Color first!"); return; }
     setFormData(prev => {
       let matrix = [...prev.variants];
       const addVariant = (color, size) => {
@@ -328,19 +309,13 @@ export default function AdminDashboard() {
         localStorage.removeItem('adminEditingId');
         window.scrollTo(0, 0);
         setTimeout(() => { setSuccess(false); setActiveTab("products"); }, 2000);
-      } else {
-        alert("Failed to save product.");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+      } else { alert("Failed to save product."); }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const handleEdit = useCallback((product) => {
-    let parsedVariants = [];
-    let parsedImages = [];
+    let parsedVariants = [], parsedImages = [];
     try { parsedVariants = typeof product.variants === 'string' ? JSON.parse(product.variants) : (product.variants || []); } catch (e) {}
     try { parsedImages = typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : (product.image_urls || []); } catch (e) {}
     setFormData({
@@ -382,12 +357,13 @@ export default function AdminDashboard() {
 
   // Helpers
   const getStatusColor = (status) => {
+    const dm = darkMode;
     switch (status) {
-      case "Processing": return "bg-blue-50 text-blue-700 border-blue-200";
-      case "Shipped": return "bg-purple-50 text-purple-700 border-purple-200";
-      case "Delivered": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "Cancelled": return "bg-red-50 text-red-700 border-red-200";
-      default: return "bg-slate-50 text-slate-700 border-slate-200";
+      case "Processing": return dm ? "bg-blue-900/60 text-blue-300 border-blue-700" : "bg-blue-50 text-blue-700 border-blue-200";
+      case "Shipped": return dm ? "bg-purple-900/60 text-purple-300 border-purple-700" : "bg-purple-50 text-purple-700 border-purple-200";
+      case "Delivered": return dm ? "bg-emerald-900/60 text-emerald-300 border-emerald-700" : "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "Cancelled": return dm ? "bg-red-900/60 text-red-300 border-red-700" : "bg-red-50 text-red-700 border-red-200";
+      default: return dm ? "bg-slate-800 text-slate-300 border-slate-600" : "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
 
@@ -421,7 +397,6 @@ export default function AdminDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  // Inventory search also matches variant SKUs
   const filteredProducts = allProducts.filter(product => {
     const q = inventorySearch.toLowerCase();
     if (!q) return true;
@@ -449,24 +424,35 @@ export default function AdminDashboard() {
   const orderCounts = { All: orders.length, Processing: 0, Shipped: 0, Delivered: 0, Cancelled: 0 };
   orders.forEach(o => { if (orderCounts[o.status] !== undefined) orderCounts[o.status]++; });
 
+  // Shared input class
+  const inp = `border p-3.5 rounded-xl text-[14px] outline-none transition-all ${darkMode ? 'bg-white/5 border-white/10 text-white placeholder-white/30 focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500 focus:bg-white'}`;
+  const card = `rounded-2xl border shadow-sm ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`;
+  const label = `text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`;
+
   if (authChecking) return (
-    <div className="fixed inset-0 z-[100] bg-[#0f172a] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] bg-[#0a0f1e] flex items-center justify-center">
       <span className="text-white/50 animate-pulse tracking-widest text-sm">Verifying Access...</span>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-[100] min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans print:bg-white print:z-0 print:static print:h-auto print:overflow-visible">
+    <div className={darkMode ? 'dark' : ''}>
+    <div className={`fixed inset-0 z-[100] min-h-screen flex flex-col md:flex-row overflow-hidden font-sans print:bg-white print:z-0 print:static print:h-auto print:overflow-visible transition-colors duration-300 ${darkMode ? 'bg-[#0a0f1e]' : 'bg-slate-100'}`}>
 
       {/* MOBILE HEADER */}
-      <div className="md:hidden bg-[#0f172a] text-white p-4 flex justify-between items-center z-30 shadow-md print:hidden">
+      <div className={`md:hidden text-white p-4 flex justify-between items-center z-30 shadow-md print:hidden ${darkMode ? 'bg-[#0d1424]' : 'bg-[#0f172a]'}`}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><ShieldAlert size={16} /></div>
           <h2 className="text-sm font-bold tracking-widest uppercase">Workspace</h2>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
-          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setDarkMode(d => !d)} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -477,12 +463,19 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* SIDEBAR */}
-      <aside className={`absolute md:relative top-0 left-0 h-full w-72 bg-[#0f172a] text-slate-300 flex-shrink-0 flex flex-col overflow-y-auto border-r border-slate-800 shadow-2xl z-40 transition-transform duration-300 print:hidden ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+      {/* SIDEBAR — glassmorphism in dark, solid in light */}
+      <aside className={`absolute md:relative top-0 left-0 h-full w-72 flex-shrink-0 flex flex-col overflow-y-auto border-r shadow-2xl z-40 transition-all duration-300 print:hidden ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} ${darkMode ? 'bg-white/5 backdrop-blur-2xl border-white/10 text-slate-300' : 'bg-[#0f172a] border-slate-800 text-slate-300'}`}>
         <div className="p-8 pb-4">
-          <div className="hidden md:flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><ShieldAlert size={16} className="text-white" /></div>
-            <h2 className="text-sm font-bold tracking-widest uppercase text-white">Workspace</h2>
+          <div className="hidden md:flex items-center justify-between mb-10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center"><ShieldAlert size={16} className="text-white" /></div>
+              <h2 className="text-sm font-bold tracking-widest uppercase text-white">Workspace</h2>
+            </div>
+            <button onClick={() => setDarkMode(d => !d)}
+              className={`p-2 rounded-xl transition-colors ${darkMode ? 'bg-white/10 text-yellow-300 hover:bg-white/20' : 'bg-white/10 text-slate-400 hover:bg-white/20 hover:text-white'}`}
+              title="Toggle dark mode">
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
           </div>
           <nav className="flex flex-col gap-2 mt-4 md:mt-0">
             {[
@@ -492,19 +485,19 @@ export default function AdminDashboard() {
               { id: 'add_product', icon: <PackagePlus size={18} />, label: 'List Product' },
             ].map(item => (
               <button key={item.id} onClick={() => handleNavClick(item.id)}
-                className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'hover:text-white hover:bg-white/5'}`}>
+                className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'hover:text-white hover:bg-white/10'}`}>
                 {item.icon} {item.label}
               </button>
             ))}
             <div className="mt-6 mb-2">
-              <p className="px-4 text-[10px] font-bold tracking-widest uppercase text-slate-500 mb-2">Shortcuts</p>
-              <button onClick={() => setIsCommandOpen(true)} className="flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl text-slate-400 hover:text-white hover:bg-white/5 w-full text-left">
-                <Command size={18} /> Cmd Center <kbd className="ml-auto bg-slate-800 px-2 py-0.5 rounded text-[9px] border border-slate-700">Ctrl+K</kbd>
+              <p className={`px-4 text-[10px] font-bold tracking-widest uppercase mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Shortcuts</p>
+              <button onClick={() => setIsCommandOpen(true)} className="flex items-center gap-3 px-4 py-2.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl text-slate-400 hover:text-white hover:bg-white/10 w-full text-left">
+                <Command size={18} /> Cmd Center <kbd className={`ml-auto px-2 py-0.5 rounded text-[9px] border ${darkMode ? 'bg-white/10 border-white/20 text-slate-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>Ctrl+K</kbd>
               </button>
             </div>
           </nav>
         </div>
-        <div className="mt-auto p-8 border-t border-slate-800">
+        <div className={`mt-auto p-8 border-t ${darkMode ? 'border-white/10' : 'border-slate-800'}`}>
           <button onClick={handleLogout} className="flex items-center gap-3 text-[12px] font-semibold tracking-wider text-slate-400 hover:text-white transition-colors w-full">
             <LogOut size={18} /> Secure Logout
           </button>
@@ -514,21 +507,22 @@ export default function AdminDashboard() {
       {/* COMMAND CENTER */}
       <AnimatePresence>
         {isCommandOpen && (
-          <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-start justify-center pt-[10vh] print:hidden" onClick={() => setIsCommandOpen(false)}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              onClick={e => e.stopPropagation()} className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 mx-4">
-              <div className="flex items-center gap-3 p-4 border-b border-slate-100">
-                <Search className="text-slate-400" />
+          <div className="fixed inset-0 z-[200] bg-slate-900/70 backdrop-blur-md flex items-start justify-center pt-[10vh] print:hidden" onClick={() => setIsCommandOpen(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              onClick={e => e.stopPropagation()}
+              className={`w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden mx-4 border ${darkMode ? 'bg-[#0d1424]/90 backdrop-blur-2xl border-white/10' : 'bg-white border-slate-200'}`}>
+              <div className={`flex items-center gap-3 p-4 border-b ${darkMode ? 'border-white/10' : 'border-slate-100'}`}>
+                <Search className={darkMode ? 'text-slate-400' : 'text-slate-400'} />
                 <input autoFocus type="text" placeholder="Search orders, products, SKUs..." value={commandSearch}
                   onChange={e => setCommandSearch(e.target.value)}
-                  className="w-full outline-none text-[15px] text-slate-800 placeholder-slate-400 bg-transparent" />
-                <div className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">ESC</div>
+                  className={`w-full outline-none text-[15px] bg-transparent ${darkMode ? 'text-white placeholder-white/30' : 'text-slate-800 placeholder-slate-400'}`} />
+                <div className={`text-[10px] font-bold px-2 py-1 rounded ${darkMode ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-400'}`}>ESC</div>
               </div>
               <div className="max-h-[60vh] overflow-y-auto p-2">
                 {commandSearch.length < 2 ? (
-                  <div className="p-8 text-center text-slate-400 text-[13px]">Type at least 2 characters to search.</div>
+                  <div className={`p-8 text-center text-[13px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Type at least 2 characters to search.</div>
                 ) : commandResults.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400 text-[13px]">No results for "{commandSearch}"</div>
+                  <div className={`p-8 text-center text-[13px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No results for "{commandSearch}"</div>
                 ) : (
                   <div className="flex flex-col gap-1">
                     {commandResults.map((res, i) => (
@@ -536,17 +530,17 @@ export default function AdminDashboard() {
                         setIsCommandOpen(false);
                         if (res.type === 'order') { setActiveTab('orders'); setOrderSearch(res.data.order_number); setExpandedOrder(res.data.id); setOrderView('table'); }
                         else { setActiveTab('products'); setInventorySearch(res.data.sku || res.data.title); }
-                      }} className="p-3 hover:bg-slate-50 rounded-xl cursor-pointer flex items-center justify-between transition-colors border border-transparent hover:border-slate-200">
+                      }} className={`p-3 rounded-xl cursor-pointer flex items-center justify-between transition-colors border border-transparent ${darkMode ? 'hover:bg-white/5 hover:border-white/10' : 'hover:bg-slate-50 hover:border-slate-200'}`}>
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${res.type === 'order' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                          <div className={`p-2 rounded-lg ${res.type === 'order' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
                             {res.type === 'order' ? <Package size={16} /> : <Tag size={16} />}
                           </div>
                           <div>
-                            <p className="text-[13px] font-bold text-slate-800">{res.type === 'order' ? res.data.order_number : res.data.title}</p>
-                            <p className="text-[11px] text-slate-500">{res.type === 'order' ? `Customer: ${res.data.customer_name}` : `SKU: ${res.data.sku || 'N/A'}`}</p>
+                            <p className={`text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{res.type === 'order' ? res.data.order_number : res.data.title}</p>
+                            <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{res.type === 'order' ? `Customer: ${res.data.customer_name}` : `SKU: ${res.data.sku || 'N/A'}`}</p>
                           </div>
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{res.type}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{res.type}</span>
                       </div>
                     ))}
                   </div>
@@ -563,9 +557,9 @@ export default function AdminDashboard() {
         {/* DASHBOARD TAB */}
         {activeTab === "dashboard" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto">
-            <h1 className="text-2xl font-bold text-slate-800 mb-8 tracking-tight">Business Overview</h1>
+            <h1 className={`text-2xl font-bold mb-8 tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Business Overview</h1>
             {stats.lowStockProducts > 0 && (
-              <div className="mb-6 flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-800 px-5 py-4 rounded-xl">
+              <div className={`mb-6 flex items-center gap-3 px-5 py-4 rounded-xl border ${darkMode ? 'bg-amber-900/20 border-amber-700/40 text-amber-300' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
                 <AlertTriangle size={18} className="flex-shrink-0 animate-pulse" />
                 <p className="text-[13px] font-bold">{stats.lowStockProducts} product{stats.lowStockProducts > 1 ? 's are' : ' is'} running low on stock.{' '}
                   <button onClick={() => handleNavClick('products')} className="underline">View Inventory →</button>
@@ -573,29 +567,30 @@ export default function AdminDashboard() {
               </div>
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              <div className="bg-white p-6 border border-slate-200 shadow-sm rounded-2xl col-span-2 md:col-span-1">
+              {/* Glass stat cards */}
+              <div className={`p-6 rounded-2xl border col-span-2 md:col-span-1 shadow-lg ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-[12px] font-bold tracking-widest uppercase text-slate-400">Total Revenue</span>
-                  <div className="p-2.5 bg-emerald-50 rounded-xl"><TrendingUp size={20} className="text-emerald-600" /></div>
+                  <span className={label}>Total Revenue</span>
+                  <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}><TrendingUp size={20} className="text-emerald-500" /></div>
                 </div>
-                <h3 className="text-3xl font-bold text-slate-800">₹{(stats.totalRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-                <p className="text-[11px] text-emerald-600 font-bold mt-2">Today: ₹{(stats.todayRevenue || 0).toLocaleString()}</p>
+                <h3 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>₹{(stats.totalRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+                <p className="text-[11px] text-emerald-500 font-bold mt-2">Today: ₹{(stats.todayRevenue || 0).toLocaleString()}</p>
               </div>
-              <div className="bg-white p-6 border border-slate-200 shadow-sm rounded-2xl">
+              <div className={`p-6 rounded-2xl border shadow-lg ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-[12px] font-bold tracking-widest uppercase text-slate-400">Active Orders</span>
-                  <div className="p-2.5 bg-blue-50 rounded-xl"><Package size={20} className="text-blue-600" /></div>
+                  <span className={label}>Active Orders</span>
+                  <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-blue-500/20' : 'bg-blue-50'}`}><Package size={20} className="text-blue-500" /></div>
                 </div>
-                <h3 className="text-3xl font-bold text-slate-800">{stats.activeOrders}</h3>
-                <p className="text-[11px] text-blue-600 font-bold mt-2">Today: {stats.todayOrders || 0} new</p>
+                <h3 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{stats.activeOrders}</h3>
+                <p className="text-[11px] text-blue-500 font-bold mt-2">Today: {stats.todayOrders || 0} new</p>
               </div>
-              <div className="bg-white p-6 border border-slate-200 shadow-sm rounded-2xl">
+              <div className={`p-6 rounded-2xl border shadow-lg ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-[12px] font-bold tracking-widest uppercase text-slate-400">Total Products</span>
-                  <div className="p-2.5 bg-purple-50 rounded-xl"><ShoppingBag size={20} className="text-purple-600" /></div>
+                  <span className={label}>Total Products</span>
+                  <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-purple-500/20' : 'bg-purple-50'}`}><ShoppingBag size={20} className="text-purple-500" /></div>
                 </div>
-                <h3 className="text-3xl font-bold text-slate-800">{stats.totalProducts}</h3>
-                {stats.lowStockProducts > 0 && <p className="text-[11px] text-amber-600 font-bold mt-2">{stats.lowStockProducts} low stock</p>}
+                <h3 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{stats.totalProducts}</h3>
+                {stats.lowStockProducts > 0 && <p className="text-[11px] text-amber-500 font-bold mt-2">{stats.lowStockProducts} low stock</p>}
               </div>
             </div>
           </motion.div>
@@ -605,13 +600,13 @@ export default function AdminDashboard() {
         {activeTab === "orders" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto print:max-w-full">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-6">
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Order Management</h1>
+              <h1 className={`text-2xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Order Management</h1>
               <div className="flex items-center gap-3 print:hidden">
-                <div className="flex bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
-                  <button onClick={() => setOrderView('table')} className={`p-1.5 rounded-lg transition-colors ${orderView === 'table' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><List size={16} /></button>
-                  <button onClick={() => setOrderView('kanban')} className={`p-1.5 rounded-lg transition-colors ${orderView === 'kanban' ? 'bg-slate-100 text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={16} /></button>
+                <div className={`flex p-1 rounded-xl border shadow-sm ${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
+                  <button onClick={() => setOrderView('table')} className={`p-1.5 rounded-lg transition-colors ${orderView === 'table' ? 'bg-blue-600 text-white shadow-sm' : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-600'}`}><List size={16} /></button>
+                  <button onClick={() => setOrderView('kanban')} className={`p-1.5 rounded-lg transition-colors ${orderView === 'kanban' ? 'bg-blue-600 text-white shadow-sm' : darkMode ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={16} /></button>
                 </div>
-                <button onClick={fetchAdminOrders} className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-lg text-[11px] font-bold tracking-widest uppercase hover:bg-slate-50 transition-colors shadow-sm">
+                <button onClick={fetchAdminOrders} className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-bold tracking-widest uppercase transition-colors shadow-sm border ${darkMode ? 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
                   <RefreshCcw size={14} className={isRefreshingOrders ? "animate-spin" : ""} /> Refresh
                 </button>
               </div>
@@ -622,47 +617,49 @@ export default function AdminDashboard() {
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               <input type="text" placeholder="Search by order #, customer name, or phone..." value={orderSearch}
                 onChange={e => setOrderSearch(e.target.value)}
-                className="w-full bg-white border border-slate-200 text-slate-800 text-[13px] rounded-xl pl-11 pr-4 py-3.5 outline-none focus:border-blue-500 shadow-sm" />
+                className={`w-full text-[13px] rounded-xl pl-11 pr-4 py-3.5 outline-none border shadow-sm ${darkMode ? 'bg-white/5 border-white/10 text-white placeholder-white/30 focus:border-blue-400' : 'bg-white border-slate-200 text-slate-800 focus:border-blue-500'}`} />
             </div>
 
             {/* Status Filter Tabs */}
             <div className="flex gap-2 mb-6 overflow-x-auto pb-1 print:hidden">
               {['All', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(status => (
                 <button key={status} onClick={() => setOrderStatusFilter(status)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold tracking-wider whitespace-nowrap transition-all border ${orderStatusFilter === status ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold tracking-wider whitespace-nowrap transition-all border ${orderStatusFilter === status
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20'
+                    : darkMode ? 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20 hover:text-white' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>
                   <Filter size={11} />
                   {status}
-                  <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${orderStatusFilter === status ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${orderStatusFilter === status ? 'bg-white/20 text-white' : darkMode ? 'bg-white/10 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
                     {orderCounts[status]}
                   </span>
                 </button>
               ))}
             </div>
 
-            {/* Inline Shipping Form Modal */}
+            {/* Inline Shipping Modal */}
             <AnimatePresence>
               {shippingForm && (
-                <div className="fixed inset-0 z-[150] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
                   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200">
-                    <h3 className="text-[14px] font-bold text-slate-800 mb-1">Mark as Shipped</h3>
-                    <p className="text-[12px] text-slate-500 mb-5">Enter courier details for this order.</p>
+                    className={`rounded-2xl shadow-2xl p-6 w-full max-w-md border ${darkMode ? 'bg-[#0d1424]/95 backdrop-blur-2xl border-white/10' : 'bg-white border-slate-200'}`}>
+                    <h3 className={`text-[14px] font-bold mb-1 ${darkMode ? 'text-white' : 'text-slate-800'}`}>Mark as Shipped</h3>
+                    <p className={`text-[12px] mb-5 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Enter courier details for this order.</p>
                     <div className="flex flex-col gap-4">
                       <div>
-                        <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 block mb-1.5">Courier Name</label>
+                        <label className={`${label} block mb-1.5`}>Courier Name</label>
                         <input type="text" placeholder="e.g. Delhivery, BlueDart" value={shippingForm.courier}
                           onChange={e => setShippingForm(prev => ({ ...prev, courier: e.target.value }))}
-                          className="w-full border border-slate-200 p-3 rounded-xl text-[13px] outline-none focus:border-blue-500 bg-slate-50" />
+                          className={inp} />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 block mb-1.5">AWB / Tracking Number</label>
+                        <label className={`${label} block mb-1.5`}>AWB / Tracking Number</label>
                         <input type="text" placeholder="e.g. 1234567890" value={shippingForm.awb}
                           onChange={e => setShippingForm(prev => ({ ...prev, awb: e.target.value }))}
-                          className="w-full border border-slate-200 p-3 rounded-xl text-[13px] outline-none focus:border-blue-500 bg-slate-50" />
+                          className={inp} />
                       </div>
                     </div>
                     <div className="flex gap-3 mt-6">
-                      <button onClick={() => setShippingForm(null)} className="flex-1 py-3 rounded-xl border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+                      <button onClick={() => setShippingForm(null)} className={`flex-1 py-3 rounded-xl border text-[12px] font-bold transition-colors ${darkMode ? 'border-white/10 text-slate-300 hover:bg-white/5' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Cancel</button>
                       <button onClick={submitShippingUpdate} className="flex-1 py-3 rounded-xl bg-purple-600 text-white text-[12px] font-bold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-600/20">Confirm Shipped</button>
                     </div>
                   </motion.div>
@@ -671,34 +668,31 @@ export default function AdminDashboard() {
             </AnimatePresence>
 
             {orderView === "table" ? (
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm print:border-none">
+              <div className={`${card} print:border-none`}>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[800px] text-left border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Order ID</th>
-                        <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Date</th>
-                        <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Customer</th>
-                        <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Amount</th>
-                        <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 print:hidden">Status</th>
-                        <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 text-right print:hidden">Details</th>
+                      <tr className={`border-b ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                        {['Order ID','Date','Customer','Amount','Status','Details'].map((h, i) => (
+                          <th key={h} className={`p-5 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 5 ? 'text-right print:hidden' : ''} ${i >= 4 ? 'print:hidden' : ''}`}>{h}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 ? (
-                        <tr><td colSpan="6" className="p-12 text-center text-[13px] text-slate-400 font-medium">No orders match your search.</td></tr>
+                        <tr><td colSpan="6" className={`p-12 text-center text-[13px] font-medium ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No orders match your search.</td></tr>
                       ) : filteredOrders.map(order => (
                         <React.Fragment key={order.id}>
-                          <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                            <td className="p-5 text-[13px] font-bold text-slate-800">{order.order_number}</td>
-                            <td className="p-5 text-[13px] text-slate-500">{new Date(order.created_at).toLocaleDateString()}</td>
-                            <td className="p-5 text-[13px] text-slate-700 font-medium">
+                          <tr className={`border-b transition-colors ${darkMode ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
+                            <td className={`p-5 text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{order.order_number}</td>
+                            <td className={`p-5 text-[13px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{new Date(order.created_at).toLocaleDateString()}</td>
+                            <td className={`p-5 text-[13px] font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
                               {order.customer_name}
-                              <span className="block text-[11px] text-slate-400 font-normal mt-0.5">{order.phone}</span>
+                              <span className={`block text-[11px] font-normal mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{order.phone}</span>
                             </td>
-                            <td className="p-5 text-[13px] text-slate-800 font-bold">
+                            <td className={`p-5 text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>
                               ₹{parseFloat(order.total_amount || 0).toFixed(2)}
-                              <span className="text-[11px] text-slate-400 font-normal ml-1">({order.items_count} items)</span>
+                              <span className={`text-[11px] font-normal ml-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>({order.items_count} items)</span>
                             </td>
                             <td className="p-5 print:hidden">
                               <div className="flex flex-col gap-2">
@@ -710,13 +704,13 @@ export default function AdminDashboard() {
                                   <option value="Delivered">Delivered</option>
                                   <option value="Cancelled">Cancelled</option>
                                 </select>
-                                {order.awb_number && <span className="text-[9px] text-slate-500 font-medium">AWB: {order.awb_number}</span>}
-                                {order.courier_name && <span className="text-[9px] text-slate-400">{order.courier_name}</span>}
+                                {order.awb_number && <span className={`text-[9px] font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>AWB: {order.awb_number}</span>}
+                                {order.courier_name && <span className={`text-[9px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{order.courier_name}</span>}
                               </div>
                             </td>
                             <td className="p-5 text-right print:hidden">
                               <button onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
-                                className="text-[11px] font-bold tracking-widest uppercase text-blue-600 hover:text-blue-800 transition-colors">
+                                className="text-[11px] font-bold tracking-widest uppercase text-blue-500 hover:text-blue-400 transition-colors">
                                 {expandedOrder === order.id ? "Close" : "View"}
                               </button>
                             </td>
@@ -725,33 +719,33 @@ export default function AdminDashboard() {
                           <AnimatePresence>
                             {expandedOrder === order.id && (
                               <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                className="bg-slate-50 border-b border-slate-200 print:border-none print:bg-white">
+                                className={`border-b print:border-none ${darkMode ? 'border-white/5 bg-white/3' : 'border-slate-200 bg-slate-50'}`}>
                                 <td colSpan="6" className="p-0">
                                   <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
 
                                     {/* Shipping Address */}
-                                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                      <h4 className="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3 border-b border-slate-100 pb-2">Shipping Address</h4>
+                                    <div className={`p-5 rounded-xl border shadow-sm ${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
+                                      <h4 className={`text-[10px] font-bold tracking-widest uppercase mb-3 border-b pb-2 ${darkMode ? 'text-slate-400 border-white/10' : 'text-slate-400 border-slate-100'}`}>Shipping Address</h4>
                                       {(() => {
                                         const addr = order.shipping_address ? (typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address) : null;
                                         return addr ? (
-                                          <div className="text-[13px] text-slate-700 leading-relaxed">
-                                            <p className="font-bold text-slate-900 mb-1">{addr.fullName || order.customer_name}</p>
+                                          <div className={`text-[13px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                            <p className={`font-bold mb-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{addr.fullName || order.customer_name}</p>
                                             <p>{addr.houseNo}, {addr.roadName}</p>
                                             {addr.landmark && <p>Landmark: {addr.landmark}</p>}
                                             <p>{addr.city}, {addr.state} - {addr.pincode}</p>
-                                            <p className="mt-2 pt-2 border-t border-slate-100 text-[12px] font-medium">
-                                              Payment: <span className="uppercase text-blue-600 font-bold">{order.payment_method || 'N/A'}</span>
+                                            <p className={`mt-2 pt-2 border-t text-[12px] font-medium ${darkMode ? 'border-white/10' : 'border-slate-100'}`}>
+                                              Payment: <span className="uppercase text-blue-500 font-bold">{order.payment_method || 'N/A'}</span>
                                             </p>
                                           </div>
-                                        ) : <p className="text-[12px] text-slate-400">No address data.</p>;
+                                        ) : <p className={`text-[12px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No address data.</p>;
                                       })()}
                                     </div>
 
                                     {/* SKU Packing List */}
-                                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-slate-100 pb-2">
-                                        <h4 className="text-[10px] font-bold tracking-widest uppercase text-slate-400 flex items-center gap-1">
+                                    <div className={`p-5 rounded-xl border shadow-sm ${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
+                                      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b pb-2 ${darkMode ? 'border-white/10' : 'border-slate-100'}`}>
+                                        <h4 className={`text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 ${darkMode ? 'text-slate-400' : 'text-slate-400'}`}>
                                           <CheckCircle2 size={12} className="text-emerald-500" /> Packing List — SKU Verified
                                         </h4>
                                         <div className="flex items-center gap-2 print:hidden">
@@ -771,18 +765,18 @@ export default function AdminDashboard() {
                                           const itemSize = item.size || item.selectedSize;
                                           const variantSku = getVariantSku(item);
                                           return (
-                                            <div key={idx} className="flex gap-3 items-start bg-slate-50 p-3 rounded-xl border border-slate-200 print:bg-white">
+                                            <div key={idx} className={`flex gap-3 items-start p-3 rounded-xl border print:bg-white ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
                                               <div className="w-14 bg-slate-200 rounded-lg overflow-hidden flex-shrink-0 border border-slate-300" style={{ minHeight: '72px' }}>
                                                 <img src={item.image || (item.image_urls && item.image_urls[0])} alt="item" className="w-full h-full object-cover" />
                                               </div>
                                               <div className="flex-1 min-w-0">
-                                                <p className="text-[13px] font-bold text-slate-800 leading-tight mb-2">{item.title}</p>
+                                                <p className={`text-[13px] font-bold leading-tight mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{item.title}</p>
                                                 <div className="flex flex-wrap items-center gap-1.5 mb-2">
                                                   {itemSize && itemSize !== 'Default' && (
                                                     <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-wider">{itemSize}</span>
                                                   )}
                                                   {itemColor && itemColor !== 'Default' && (
-                                                    <span className="flex items-center gap-1 bg-white border border-slate-200 text-[10px] font-bold px-2 py-0.5 rounded tracking-wider text-slate-700">
+                                                    <span className={`flex items-center gap-1 border text-[10px] font-bold px-2 py-0.5 rounded tracking-wider ${darkMode ? 'bg-white/10 border-white/20 text-slate-300' : 'bg-white border-slate-200 text-slate-700'}`}>
                                                       <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: getColorHex(itemColor) }} />
                                                       {itemColor}
                                                     </span>
@@ -791,10 +785,10 @@ export default function AdminDashboard() {
                                                     <Barcode size={12} /> {variantSku}
                                                   </span>
                                                 </div>
-                                                <p className="text-[11px] text-slate-500">Qty: <span className="font-bold text-slate-700">{item.quantity || 1}</span></p>
+                                                <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Qty: <span className={`font-bold ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{item.quantity || 1}</span></p>
                                               </div>
                                               <div className="text-right flex-shrink-0">
-                                                <p className="text-[14px] font-bold text-slate-800">₹{item.price}</p>
+                                                <p className={`text-[14px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>₹{item.price}</p>
                                               </div>
                                             </div>
                                           );
@@ -816,24 +810,24 @@ export default function AdminDashboard() {
               /* KANBAN VIEW */
               <div className="flex gap-4 overflow-x-auto pb-6 snap-x">
                 {['Processing', 'Shipped', 'Delivered', 'Cancelled'].map(status => (
-                  <div key={status} className="flex-1 min-w-[300px] w-[300px] bg-slate-100/80 rounded-2xl p-4 flex flex-col gap-4 snap-center border border-slate-200">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                      <h3 className="font-bold text-slate-700 uppercase tracking-widest text-[11px] flex items-center gap-2">
+                  <div key={status} className={`flex-1 min-w-[300px] w-[300px] rounded-2xl p-4 flex flex-col gap-4 snap-center border ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-100/80 border-slate-200'}`}>
+                    <div className={`flex items-center justify-between border-b pb-2 ${darkMode ? 'border-white/10' : 'border-slate-200'}`}>
+                      <h3 className={`font-bold uppercase tracking-widest text-[11px] flex items-center gap-2 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                         <div className={`w-2 h-2 rounded-full ${status === 'Processing' ? 'bg-blue-500' : status === 'Shipped' ? 'bg-purple-500' : status === 'Delivered' ? 'bg-emerald-500' : 'bg-red-500'}`} />
                         {status}
                       </h3>
-                      <span className="bg-white text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-200">{filteredOrders.filter(o => o.status === status).length}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${darkMode ? 'bg-white/10 text-slate-400 border-white/10' : 'bg-white text-slate-500 border-slate-200'}`}>{filteredOrders.filter(o => o.status === status).length}</span>
                     </div>
                     <div className="flex flex-col gap-3">
                       {filteredOrders.filter(o => o.status === status).map(order => (
                         <div key={order.id} onClick={() => { setOrderView('table'); setOrderSearch(order.order_number); setExpandedOrder(order.id); }}
-                          className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-blue-300 transition-colors group">
+                          className={`p-4 rounded-xl border shadow-sm cursor-pointer transition-colors ${darkMode ? 'bg-white/5 border-white/10 hover:border-blue-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
                           <div className="flex justify-between items-start mb-2">
-                            <span className="text-[11px] font-bold text-blue-600">{order.order_number}</span>
-                            <span className="text-[10px] text-slate-400">{new Date(order.created_at).toLocaleDateString()}</span>
+                            <span className="text-[11px] font-bold text-blue-500">{order.order_number}</span>
+                            <span className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{new Date(order.created_at).toLocaleDateString()}</span>
                           </div>
-                          <p className="text-[13px] font-bold text-slate-800">{order.customer_name}</p>
-                          <p className="text-[12px] text-slate-500 mb-3">{order.items_count} items • ₹{parseFloat(order.total_amount).toFixed(2)}</p>
+                          <p className={`text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{order.customer_name}</p>
+                          <p className={`text-[12px] mb-3 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{order.items_count} items • ₹{parseFloat(order.total_amount).toFixed(2)}</p>
                           <div onClick={e => e.stopPropagation()}>
                             <select value={order.status}
                               onChange={e => updateOrderStatus(order.id, e.target.value, order.courier_name, order.awb_number)}
@@ -859,15 +853,15 @@ export default function AdminDashboard() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-8">
               <div>
-                <h1 className="text-2xl font-bold text-slate-800 mb-2 tracking-tight">Inventory Management</h1>
-                <p className="text-[13px] text-slate-500">Search by product title, base SKU, or variant SKU.</p>
+                <h1 className={`text-2xl font-bold mb-2 tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Inventory Management</h1>
+                <p className={`text-[13px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Search by product title, base SKU, or variant SKU.</p>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
                 <div className="relative w-full sm:w-64">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input type="text" placeholder="Search title or any SKU..." value={inventorySearch}
                     onChange={e => setInventorySearch(e.target.value)}
-                    className="w-full bg-white border border-slate-200 text-slate-800 text-[12px] rounded-xl pl-9 pr-4 py-3 outline-none focus:border-blue-500 shadow-sm" />
+                    className={`w-full text-[12px] rounded-xl pl-9 pr-4 py-3 outline-none border shadow-sm ${darkMode ? 'bg-white/5 border-white/10 text-white placeholder-white/30 focus:border-blue-400' : 'bg-white border-slate-200 text-slate-800 focus:border-blue-500'}`} />
                 </div>
                 <button onClick={() => { setActiveTab("add_product"); setEditingId(null); setFormData(DEFAULT_FORM_STATE); }}
                   className="w-full sm:w-auto flex-shrink-0 bg-blue-600 text-white px-6 py-3 rounded-xl text-[12px] font-bold tracking-wider hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20">
@@ -876,37 +870,38 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className={`${card} overflow-hidden`}>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[800px] text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 w-20">Preview</th>
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Product Details</th>
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Pricing</th>
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Stock</th>
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500">Category</th>
-                      <th className="p-5 text-[11px] font-bold tracking-widest uppercase text-slate-500 text-right">Actions</th>
+                    <tr className={`border-b ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                      {['Preview','Product Details','Pricing','Stock','Category','Actions'].map((h, i) => (
+                        <th key={h} className={`p-5 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 0 ? 'w-20' : ''} ${i === 5 ? 'text-right' : ''}`}>{h}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredProducts.length === 0 ? (
                       <tr>
                         <td colSpan="6" className="p-16 text-center">
-                          <Package className="mx-auto text-slate-300 mb-4" size={32} />
-                          <p className="text-[14px] text-slate-500 font-medium">No products match your search.</p>
+                          <Package className={`mx-auto mb-4 ${darkMode ? 'text-slate-600' : 'text-slate-300'}`} size={32} />
+                          <p className={`text-[14px] font-medium ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>No products match your search.</p>
                         </td>
                       </tr>
                     ) : filteredProducts.map(product => {
                       const totalStock = calculateTotalStock(product.variants);
                       const isOutOfStock = totalStock === 0;
                       const isLowStock = totalStock > 0 && totalStock < 10;
-                      const statusColor = isOutOfStock ? "bg-red-50 text-red-700 border-red-200" : isLowStock ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200";
+                      const statusColor = isOutOfStock
+                        ? darkMode ? "bg-red-900/40 text-red-400 border-red-700/50" : "bg-red-50 text-red-700 border-red-200"
+                        : isLowStock
+                        ? darkMode ? "bg-amber-900/40 text-amber-400 border-amber-700/50" : "bg-amber-50 text-amber-700 border-amber-200"
+                        : darkMode ? "bg-emerald-900/40 text-emerald-400 border-emerald-700/50" : "bg-emerald-50 text-emerald-700 border-emerald-200";
                       const statusText = isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock";
                       return (
-                        <tr key={product.id} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${isLowStock || isOutOfStock ? 'bg-amber-50/30' : ''}`}>
+                        <tr key={product.id} className={`border-b transition-colors ${darkMode ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'} ${(isLowStock || isOutOfStock) && !darkMode ? 'bg-amber-50/30' : ''}`}>
                           <td className="p-5">
-                            <div className="w-14 h-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm relative">
+                            <div className={`w-14 h-16 rounded-lg overflow-hidden border shadow-sm relative ${darkMode ? 'bg-white/10 border-white/10' : 'bg-slate-100 border-slate-200'}`}>
                               {product.image_urls?.[0] && <img src={product.image_urls[0]} alt={product.title} className="w-full h-full object-cover" />}
                               {product.image_urls?.length > 1 && (
                                 <div className="absolute bottom-0 right-0 bg-black/50 text-white text-[8px] px-1 rounded-tl">+{product.image_urls.length - 1}</div>
@@ -914,41 +909,37 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="p-5">
-                            <p className="text-[14px] font-bold text-slate-800">{product.title}</p>
-                            <p className="text-[11px] text-slate-400 mt-1 font-medium tracking-wider uppercase">Base SKU: {product.sku || 'N/A'}</p>
-                            <div className="flex gap-2 mt-2">
-                              {product.is_draft && <span className="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">Draft</span>}
-                              {product.is_featured && <span className="bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">Homepage</span>}
-                              {product.is_new_arrival && <span className="bg-purple-50 text-purple-600 border border-purple-200 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded">New</span>}
+                            <p className={`text-[14px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{product.title}</p>
+                            <p className={`text-[11px] mt-1 font-medium tracking-wider uppercase ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Base SKU: {product.sku || 'N/A'}</p>
+                            <div className="flex gap-2 mt-2 flex-wrap">
+                              {product.is_draft && <span className={`px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded border ${darkMode ? 'bg-white/10 text-slate-400 border-white/10' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>Draft</span>}
+                              {product.is_featured && <span className={`px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded border ${darkMode ? 'bg-blue-900/40 text-blue-400 border-blue-700/50' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>Homepage</span>}
+                              {product.is_new_arrival && <span className={`px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded border ${darkMode ? 'bg-purple-900/40 text-purple-400 border-purple-700/50' : 'bg-purple-50 text-purple-600 border-purple-200'}`}>New</span>}
                               {(isLowStock || isOutOfStock) && (
-                                <span className="flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded bg-red-50 text-red-600 border border-red-200">
+                                <span className="flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded bg-red-900/40 text-red-400 border border-red-700/50">
                                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Alert
                                 </span>
                               )}
                             </div>
                           </td>
                           <td className="p-5">
-                            <span className="text-[15px] text-slate-800 font-bold">₹{parseFloat(product.price).toFixed(2)}</span>
+                            <span className={`text-[15px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>₹{parseFloat(product.price).toFixed(2)}</span>
                             {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
-                              <span className="block text-[12px] text-slate-400 line-through">₹{parseFloat(product.mrp).toFixed(2)}</span>
+                              <span className={`block text-[12px] line-through ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>₹{parseFloat(product.mrp).toFixed(2)}</span>
                             )}
                           </td>
                           <td className="p-5">
                             <span className={`px-2.5 py-1 text-[9px] font-bold tracking-widest uppercase border rounded-md ${statusColor}`}>{statusText}</span>
-                            <p className="text-[11px] text-slate-500 mt-2 font-medium">{totalStock} units</p>
+                            <p className={`text-[11px] mt-2 font-medium ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{totalStock} units</p>
                           </td>
                           <td className="p-5">
-                            <p className="text-[13px] text-slate-800 font-medium">{product.main_category}</p>
-                            <p className="text-[11px] text-slate-500 mt-0.5">{product.sub_category}</p>
+                            <p className={`text-[13px] font-medium ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>{product.main_category}</p>
+                            <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>{product.sub_category}</p>
                           </td>
                           <td className="p-5 text-right">
                             <div className="flex justify-end gap-3">
-                              <button onClick={() => handleEdit(product)} className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100" title="Edit">
-                                <Edit size={18} />
-                              </button>
-                              <button onClick={() => handleDelete(product.id)} className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" title="Delete">
-                                <Trash2 size={18} />
-                              </button>
+                              <button onClick={() => handleEdit(product)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-100'}`} title="Edit"><Edit size={18} /></button>
+                              <button onClick={() => handleDelete(product.id)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100'}`} title="Delete"><Trash2 size={18} /></button>
                             </div>
                           </td>
                         </tr>
@@ -966,11 +957,11 @@ export default function AdminDashboard() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pb-20">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
               <div>
-                <h1 className="text-2xl font-bold text-slate-800 mb-2 tracking-tight">{editingId ? "Edit Product" : "List New Product"}</h1>
-                <p className="text-[13px] text-slate-500">{editingId ? "Update product details and variations." : "Complete item details, variations, and storefront routing."}</p>
+                <h1 className={`text-2xl font-bold mb-2 tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>{editingId ? "Edit Product" : "List New Product"}</h1>
+                <p className={`text-[13px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{editingId ? "Update product details and variations." : "Complete item details, variations, and storefront routing."}</p>
               </div>
               {editingId && (
-                <button onClick={cancelEdit} className="w-full sm:w-auto text-[12px] font-bold tracking-wider uppercase text-red-500 border border-red-200 bg-red-50 px-6 py-3 rounded-xl hover:bg-red-100 transition-colors">
+                <button onClick={cancelEdit} className="w-full sm:w-auto text-[12px] font-bold tracking-wider uppercase text-red-400 border border-red-500/30 bg-red-500/10 px-6 py-3 rounded-xl hover:bg-red-500/20 transition-colors">
                   Cancel Edit
                 </button>
               )}
@@ -979,7 +970,7 @@ export default function AdminDashboard() {
             <AnimatePresence>
               {success && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-8 overflow-hidden">
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-bold tracking-wider uppercase flex items-center gap-2 rounded-xl">
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[12px] font-bold tracking-wider uppercase flex items-center gap-2 rounded-xl">
                     <CheckCircle2 size={18} /> {editingId ? "Product Updated!" : "Product Published!"}
                   </div>
                 </motion.div>
@@ -989,134 +980,126 @@ export default function AdminDashboard() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-8">
 
               {/* 1. Core Details */}
-              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
-                <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">1. Core Details</h3>
+              <div className={`${card} p-6 md:p-8 space-y-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>1. Core Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="md:col-span-2 flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Product Title *</label>
-                    <input required type="text" name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Noir Velvet Dress" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-all" />
+                    <label className={label}>Product Title *</label>
+                    <input required type="text" name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Noir Velvet Dress" className={inp} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Original MRP (₹)</label>
-                    <input type="number" step="0.01" name="mrp" value={formData.mrp} onChange={handleChange} placeholder="150.00" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-all" />
+                    <label className={label}>Original MRP (₹)</label>
+                    <input type="number" step="0.01" name="mrp" value={formData.mrp} onChange={handleChange} placeholder="150.00" className={inp} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Selling Price (₹) *</label>
-                    <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleChange} placeholder="120.00" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-all" />
+                    <label className={label}>Selling Price (₹) *</label>
+                    <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleChange} placeholder="120.00" className={inp} />
                   </div>
                   <div className="md:col-span-2 flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Base SKU ID *</label>
-                    <input required type="text" name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g. BBY-GRL-DRS" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-all" />
-                    <p className="text-[10px] text-slate-400">Variant SKUs will be auto-generated as: <span className="font-bold text-slate-600">{formData.sku || 'BBY-GRL-DRS'}-RED-3M</span></p>
+                    <label className={label}>Base SKU ID *</label>
+                    <input required type="text" name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g. BBY-GRL-DRS" className={inp} />
+                    <p className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Variant SKUs auto-generated as: <span className={`font-bold ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{formData.sku || 'BBY-GRL-DRS'}-RED-3M</span></p>
                   </div>
                   <div className="md:col-span-2 flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">HSN Code</label>
-                    <input type="text" name="hsn_code" value={formData.hsn_code} onChange={handleChange} placeholder="e.g. 6111" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 focus:bg-white transition-all" />
+                    <label className={label}>HSN Code</label>
+                    <input type="text" name="hsn_code" value={formData.hsn_code} onChange={handleChange} placeholder="e.g. 6111" className={inp} />
                   </div>
                 </div>
               </div>
 
               {/* 2. Store Routing */}
-              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
-                <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">2. Store Routing Path</h3>
+              <div className={`${card} p-6 md:p-8 space-y-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>2. Store Routing Path</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Main Category</label>
-                    <select name="main_category" value={formData.main_category} onChange={handleChange} className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 cursor-pointer">
-                      {Object.keys(CATEGORY_TREE).map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Sub Category</label>
-                    <select name="sub_category" value={formData.sub_category} onChange={handleChange} className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 cursor-pointer">
-                      {Object.keys(CATEGORY_TREE[formData.main_category]).map(sub => <option key={sub} value={sub}>{sub}</option>)}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Item Type</label>
-                    <select name="item_type" value={formData.item_type} onChange={handleChange} className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 cursor-pointer">
-                      {CATEGORY_TREE[formData.main_category][formData.sub_category].map(item => <option key={item} value={item}>{item}</option>)}
-                    </select>
-                  </div>
+                  {[
+                    { name: 'main_category', label: 'Main Category', options: Object.keys(CATEGORY_TREE) },
+                    { name: 'sub_category', label: 'Sub Category', options: Object.keys(CATEGORY_TREE[formData.main_category]) },
+                    { name: 'item_type', label: 'Item Type', options: CATEGORY_TREE[formData.main_category][formData.sub_category] },
+                  ].map(sel => (
+                    <div key={sel.name} className="flex flex-col gap-2">
+                      <label className={label}>{sel.label}</label>
+                      <select name={sel.name} value={formData[sel.name]} onChange={handleChange}
+                        className={`${inp} cursor-pointer`}>
+                        {sel.options.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               {/* 3. Attributes */}
-              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
-                <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">3. Product Attributes</h3>
+              <div className={`${card} p-6 md:p-8 space-y-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>3. Product Attributes</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Fabric</label>
-                    <input type="text" name="fabric" value={formData.fabric} onChange={handleChange} placeholder="e.g. 100% Cotton" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Pattern</label>
-                    <input type="text" name="pattern" value={formData.pattern} onChange={handleChange} placeholder="e.g. Floral Print" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Neck Type</label>
-                    <input type="text" name="neck_type" value={formData.neck_type} onChange={handleChange} placeholder="e.g. Round Neck" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50" />
-                  </div>
+                  {[
+                    { name: 'fabric', placeholder: 'e.g. 100% Cotton' },
+                    { name: 'pattern', placeholder: 'e.g. Floral Print' },
+                    { name: 'neck_type', placeholder: 'e.g. Round Neck' },
+                  ].map(f => (
+                    <div key={f.name} className="flex flex-col gap-2">
+                      <label className={label}>{f.name.replace('_', ' ')}</label>
+                      <input type="text" name={f.name} value={formData[f.name]} onChange={handleChange} placeholder={f.placeholder} className={inp} />
+                    </div>
+                  ))}
                   <div className="flex items-center gap-3 pt-2 md:pt-8">
                     <input type="checkbox" name="belt_included" checked={formData.belt_included} onChange={handleChange} className="w-5 h-5 accent-blue-600 cursor-pointer rounded" id="beltCheck" />
-                    <label htmlFor="beltCheck" className="text-[12px] font-bold tracking-widest uppercase text-slate-700 cursor-pointer">Belt Included?</label>
+                    <label htmlFor="beltCheck" className={`text-[12px] font-bold tracking-widest uppercase cursor-pointer ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Belt Included?</label>
                   </div>
                 </div>
               </div>
 
               {/* 4. Inventory Matrix */}
-              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
-                <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">4. Inventory Variations Matrix</h3>
+              <div className={`${card} p-6 md:p-8 space-y-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>4. Inventory Variations Matrix</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Select Sizes</label>
-                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex flex-wrap gap-2 min-h-[52px]">
+                    <label className={label}>Select Sizes</label>
+                    <div className={`border rounded-xl p-3 flex flex-wrap gap-2 min-h-[52px] ${darkMode ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
                       {ALL_SIZES.map(size => {
                         const selected = formData.sizes.includes(size);
                         return (
                           <button type="button" key={size}
                             onClick={() => setFormData(prev => ({ ...prev, sizes: selected ? prev.sizes.filter(s => s !== size) : [...prev.sizes, size] }))}
-                            className={`px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-lg border transition-colors ${selected ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>
+                            className={`px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-lg border transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : darkMode ? 'bg-white/5 text-slate-400 border-white/10 hover:border-white/30' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'}`}>
                             {size}
                           </button>
                         );
                       })}
                     </div>
-                    {formData.sizes.length > 0 && <p className="text-[10px] text-blue-600 font-medium">{formData.sizes.length} size(s) selected</p>}
+                    {formData.sizes.length > 0 && <p className="text-[10px] text-blue-500 font-medium">{formData.sizes.length} size(s) selected</p>}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Select Colors</label>
-                    <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 flex flex-wrap gap-2 min-h-[52px]">
+                    <label className={label}>Select Colors</label>
+                    <div className={`border rounded-xl p-3 flex flex-wrap gap-2 min-h-[52px] ${darkMode ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
                       {ALL_COLORS.map(color => {
                         const selected = formData.colors.includes(color.name);
                         return (
                           <button type="button" key={color.name}
                             onClick={() => setFormData(prev => ({ ...prev, colors: selected ? prev.colors.filter(c => c !== color.name) : [...prev.colors, color.name] }))}
-                            className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-lg border transition-all ${selected ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'}`}>
+                            className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-wider rounded-lg border transition-all ${selected ? 'border-blue-600 bg-blue-600 text-white' : darkMode ? 'border-white/10 bg-white/5 text-slate-400 hover:border-white/30' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'}`}>
                             <span className="w-3 h-3 rounded-full flex-shrink-0 border border-black/10" style={{ backgroundColor: color.hex }} />
                             {color.name}
                           </button>
                         );
                       })}
                     </div>
-                    {formData.colors.length > 0 && <p className="text-[10px] text-blue-600 font-medium">{formData.colors.length} color(s) selected</p>}
+                    {formData.colors.length > 0 && <p className="text-[10px] text-blue-500 font-medium">{formData.colors.length} color(s) selected</p>}
                   </div>
                 </div>
 
-                <button type="button" onClick={generateVariants} className="flex items-center justify-center gap-2 bg-slate-800 text-white px-6 py-3.5 rounded-xl text-[11px] font-bold tracking-widest uppercase hover:bg-slate-900 transition-colors w-full md:w-auto shadow-md">
+                <button type="button" onClick={generateVariants}
+                  className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-[11px] font-bold tracking-widest uppercase transition-colors w-full md:w-auto shadow-md ${darkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-800 text-white hover:bg-slate-900'}`}>
                   <Wand2 size={16} /> Generate Inventory Grid
                 </button>
 
                 {formData.variants.length > 0 && (
-                  <div className="mt-6 border border-slate-200 rounded-xl overflow-x-auto">
-                    <table className="w-full min-w-[500px] text-left bg-white">
+                  <div className={`mt-6 border rounded-xl overflow-x-auto ${darkMode ? 'border-white/10' : 'border-slate-200'}`}>
+                    <table className={`w-full min-w-[500px] text-left ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
                       <thead>
-                        <tr className="border-b border-slate-200 bg-slate-50">
-                          <th className="p-4 text-[11px] font-bold tracking-widest uppercase text-slate-500">Color</th>
-                          <th className="p-4 text-[11px] font-bold tracking-widest uppercase text-slate-500">Size</th>
-                          <th className="p-4 text-[11px] font-bold tracking-widest uppercase text-slate-500">Stock Qty</th>
-                          <th className="p-4 text-[11px] font-bold tracking-widest uppercase text-slate-500">Variant SKU</th>
-                          <th className="p-4 text-[11px] font-bold tracking-widest uppercase text-slate-500 text-center">Remove</th>
+                        <tr className={`border-b ${darkMode ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
+                          {['Color','Size','Stock Qty','Variant SKU','Remove'].map((h, i) => (
+                            <th key={h} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 4 ? 'text-center' : ''}`}>{h}</th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
@@ -1124,28 +1107,26 @@ export default function AdminDashboard() {
                           {formData.variants.map((variant, index) => (
                             <motion.tr key={`${variant.color}-${variant.size}-${index}`}
                               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                              className="border-b border-slate-100 hover:bg-slate-50">
+                              className={`border-b ${darkMode ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
                               <td className="p-4">
                                 <div className="flex items-center gap-2">
-                                  {variant.color !== 'Default' && (
-                                    <span className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: getColorHex(variant.color) }} />
-                                  )}
-                                  <span className="text-[13px] font-bold text-slate-800">{variant.color}</span>
+                                  {variant.color !== 'Default' && <span className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: getColorHex(variant.color) }} />}
+                                  <span className={`text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{variant.color}</span>
                                 </div>
                               </td>
-                              <td className="p-4 text-[13px] text-slate-600">{variant.size}</td>
+                              <td className={`p-4 text-[13px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{variant.size}</td>
                               <td className="p-4">
                                 <input type="number" value={variant.stock}
                                   onChange={e => handleVariantChange(index, "stock", parseInt(e.target.value))}
-                                  className="border border-slate-300 p-2.5 w-20 md:w-24 rounded-lg text-[13px] outline-none focus:border-blue-500 bg-white" />
+                                  className={`border p-2.5 w-20 md:w-24 rounded-lg text-[13px] outline-none ${darkMode ? 'bg-white/5 border-white/10 text-white focus:border-blue-400' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500'}`} />
                               </td>
                               <td className="p-4">
                                 <input type="text" value={variant.sku}
                                   onChange={e => handleVariantChange(index, "sku", e.target.value)}
-                                  className="border border-slate-300 p-2.5 w-full rounded-lg text-[12px] outline-none focus:border-blue-500 bg-white font-mono text-slate-600" />
+                                  className={`border p-2.5 w-full rounded-lg text-[12px] outline-none font-mono ${darkMode ? 'bg-white/5 border-white/10 text-slate-300 focus:border-blue-400' : 'bg-white border-slate-300 text-slate-600 focus:border-blue-500'}`} />
                               </td>
                               <td className="p-4 text-center">
-                                <button type="button" onClick={() => removeVariant(index)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                                <button type="button" onClick={() => removeVariant(index)} className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}>
                                   <Trash2 size={18} />
                                 </button>
                               </td>
@@ -1159,17 +1140,17 @@ export default function AdminDashboard() {
               </div>
 
               {/* 5. Media Gallery */}
-              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
-                <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <div className={`${card} p-6 md:p-8 space-y-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 flex items-center gap-2 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>
                   <ImageIcon size={18} /> 5. Product Media Gallery (AWS S3) *
                 </h3>
-                <label className={`w-full md:w-auto self-start px-8 py-4 rounded-xl text-[12px] font-bold tracking-widest uppercase transition-colors shadow-md cursor-pointer flex items-center justify-center gap-3 ${uploadingImage ? 'bg-slate-400 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                <label className={`w-full md:w-auto self-start px-8 py-4 rounded-xl text-[12px] font-bold tracking-widest uppercase transition-colors shadow-md cursor-pointer flex items-center justify-center gap-3 ${uploadingImage ? 'bg-slate-600 text-white/50 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
                   <UploadCloud size={20} />
                   {uploadingImage ? "Uploading to Cloud..." : "Upload Image from PC"}
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
                 </label>
                 {formData.image_urls.length === 0 ? (
-                  <div className="w-full border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center text-slate-400 text-center">
+                  <div className={`w-full border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center ${darkMode ? 'border-white/10 text-slate-500' : 'border-slate-200 text-slate-400'}`}>
                     <ImageIcon size={40} className="mb-4 opacity-50" />
                     <p className="text-[13px] font-medium">No images uploaded yet.</p>
                   </div>
@@ -1178,7 +1159,7 @@ export default function AdminDashboard() {
                     <AnimatePresence>
                       {formData.image_urls.map((url, idx) => (
                         <motion.div key={idx} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-                          className="relative aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-sm group">
+                          className={`relative aspect-[3/4] rounded-xl overflow-hidden border shadow-sm group ${darkMode ? 'bg-white/10 border-white/10' : 'bg-slate-100 border-slate-200'}`}>
                           <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
                           <button type="button" onClick={() => removeImageUrl(idx)}
                             className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all shadow-md">
@@ -1195,71 +1176,75 @@ export default function AdminDashboard() {
               </div>
 
               {/* 6. Description */}
-              <div className="bg-white p-6 md:p-8 border border-slate-200 rounded-2xl shadow-sm space-y-6">
-                <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-100 pb-3">6. Description & Manufacturing</h3>
+              <div className={`${card} p-6 md:p-8 space-y-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>6. Description & Manufacturing</h3>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Main Description *</label>
-                  <textarea required name="description" value={formData.description} onChange={handleChange} rows="4" placeholder="Enter engaging product description..." className="border border-slate-200 p-4 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 resize-none" />
+                  <label className={label}>Main Description *</label>
+                  <textarea required name="description" value={formData.description} onChange={handleChange} rows="4"
+                    placeholder="Enter engaging product description..."
+                    className={`${inp} resize-none`} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Manufacturer Details</label>
-                    <textarea name="manufacturer_details" value={formData.manufacturer_details} onChange={handleChange} rows="2" placeholder="Creative Impression..." className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 resize-none" />
+                    <label className={label}>Manufacturer Details</label>
+                    <textarea name="manufacturer_details" value={formData.manufacturer_details} onChange={handleChange} rows="2"
+                      placeholder="Creative Impression..." className={`${inp} resize-none`} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500">Care Instructions</label>
-                    <textarea name="care_instructions" value={formData.care_instructions} onChange={handleChange} rows="2" className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 resize-none" />
+                    <label className={label}>Care Instructions</label>
+                    <textarea name="care_instructions" value={formData.care_instructions} onChange={handleChange} rows="2"
+                      className={`${inp} resize-none`} />
                   </div>
                 </div>
               </div>
 
               {/* 7. Storefront Controls */}
-              <div className="space-y-4 bg-slate-50 p-6 md:p-8 rounded-2xl border border-slate-200 shadow-inner">
-                <h3 className="text-[13px] font-bold tracking-wider uppercase text-slate-800 border-b border-slate-200 pb-3">7. Storefront & Homepage Controls</h3>
+              <div className={`p-6 md:p-8 rounded-2xl border space-y-4 ${darkMode ? 'bg-white/3 border-white/10' : 'bg-slate-50 border-slate-200 shadow-inner'}`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-200'}`}>7. Storefront & Homepage Controls</h3>
 
                 {[
                   { key: 'is_draft', label: 'Save as Draft', desc: 'Keep hidden from customers until ready to publish.' },
                   { key: 'is_new_arrival', label: 'Tag as New Arrival', desc: 'Show inside the "New Arrivals" shop category.' },
                 ].map(toggle => (
-                  <div key={toggle.key} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
+                  <div key={toggle.key} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 border rounded-xl shadow-sm ${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
                     <div>
-                      <h3 className="text-[13px] font-bold tracking-wide text-slate-800">{toggle.label}</h3>
-                      <p className="text-[12px] text-slate-500 mt-1">{toggle.desc}</p>
+                      <h3 className={`text-[13px] font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-800'}`}>{toggle.label}</h3>
+                      <p className={`text-[12px] mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{toggle.desc}</p>
                     </div>
                     <button type="button" onClick={() => setFormData(prev => ({ ...prev, [toggle.key]: !prev[toggle.key] }))}
-                      className={`w-14 h-7 rounded-full transition-colors relative shadow-inner flex-shrink-0 ${formData[toggle.key] ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                      className={`w-14 h-7 rounded-full transition-colors relative shadow-inner flex-shrink-0 ${formData[toggle.key] ? 'bg-blue-600' : darkMode ? 'bg-white/20' : 'bg-slate-300'}`}>
                       <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${formData[toggle.key] ? 'left-8' : 'left-1'}`} />
                     </button>
                   </div>
                 ))}
 
-                <div className="flex flex-col bg-white p-6 border border-slate-200 rounded-xl shadow-sm">
+                <div className={`flex flex-col p-6 border rounded-xl shadow-sm ${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-slate-200'}`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-[13px] font-bold tracking-wide text-slate-800">Display on Homepage</h3>
-                      <p className="text-[12px] text-slate-500 mt-1">Select which grid and card position this product appears in.</p>
+                      <h3 className={`text-[13px] font-bold tracking-wide ${darkMode ? 'text-white' : 'text-slate-800'}`}>Display on Homepage</h3>
+                      <p className={`text-[12px] mt-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>Select which grid and card position this product appears in.</p>
                     </div>
                     <button type="button" onClick={() => setFormData(prev => ({ ...prev, is_featured: !prev.is_featured }))}
-                      className={`w-14 h-7 rounded-full transition-colors relative shadow-inner flex-shrink-0 ${formData.is_featured ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                      className={`w-14 h-7 rounded-full transition-colors relative shadow-inner flex-shrink-0 ${formData.is_featured ? 'bg-blue-600' : darkMode ? 'bg-white/20' : 'bg-slate-300'}`}>
                       <div className={`w-5 h-5 bg-white rounded-full absolute top-1 shadow-sm transition-transform ${formData.is_featured ? 'left-8' : 'left-1'}`} />
                     </button>
                   </div>
                   <AnimatePresence>
                     {formData.is_featured && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                        <div className="pt-6 mt-6 border-t border-slate-100 flex flex-col md:flex-row gap-6">
-                          <div className="flex-1">
-                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 block mb-2">Select Section</label>
-                            <select name="homepage_section" value={formData.homepage_section} onChange={handleChange} className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 w-full cursor-pointer">
+                        <div className={`pt-6 mt-6 border-t flex flex-col md:flex-row gap-6 ${darkMode ? 'border-white/10' : 'border-slate-100'}`}>
+                          <div className="flex-1 flex flex-col gap-2">
+                            <label className={label}>Select Section</label>
+                            <select name="homepage_section" value={formData.homepage_section} onChange={handleChange} className={`${inp} cursor-pointer`}>
                               <option value="None">-- Select Section --</option>
                               <option value="New Arrivals">Girl's New Arrivals</option>
                               <option value="Season Bestsellers">Season Bestsellers Grid</option>
                               <option value="Featured Collection">Featured Collection</option>
                             </select>
                           </div>
-                          <div className="w-full md:w-56">
-                            <label className="text-[11px] font-bold tracking-widest uppercase text-slate-500 block mb-2">Card Position</label>
-                            <select name="homepage_card_slot" value={formData.homepage_card_slot} onChange={handleChange} className="border border-slate-200 p-3.5 rounded-xl text-[14px] outline-none focus:border-blue-500 bg-slate-50 w-full cursor-pointer">
+                          <div className="w-full md:w-56 flex flex-col gap-2">
+                            <label className={label}>Card Position</label>
+                            <select name="homepage_card_slot" value={formData.homepage_card_slot} onChange={handleChange} className={`${inp} cursor-pointer`}>
                               <option value="1">Card 1 (Far Left)</option>
                               <option value="2">Card 2 (Middle Left)</option>
                               <option value="3">Card 3 (Middle Right)</option>
@@ -1284,6 +1269,7 @@ export default function AdminDashboard() {
         )}
 
       </main>
+    </div>
     </div>
   );
 }
