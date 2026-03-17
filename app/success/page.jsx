@@ -24,7 +24,7 @@ export default function OrderSuccess() {
     const subtotal = parseFloat(order.total);
     // Indian GST: 5% for kids clothing (HSN 6111/6209)
     const gstRate = 0.05;
-    const isIntraState = addr.state?.toLowerCase().includes("maharashtra"); // adjust to your state
+    const isIntraState = addr.state?.toLowerCase().includes("haryana");
     const gstAmount = subtotal * gstRate;
     const cgst = isIntraState ? gstAmount / 2 : 0;
     const sgst = isIntraState ? gstAmount / 2 : 0;
@@ -36,7 +36,7 @@ export default function OrderSuccess() {
 
     // Header
     doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, 28, "F");
+    doc.rect(0, 0, pageW, 33, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
@@ -44,6 +44,7 @@ export default function OrderSuccess() {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text("creativekids.co.in  |  India", 14, 20);
+    doc.text("GSTIN: 06AAJPM1384L1ZE  |  PAN: AAJPM1384L", 14, 25);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("TAX INVOICE", pageW - 14, 13, { align: "right" });
@@ -51,7 +52,7 @@ export default function OrderSuccess() {
     doc.setFont("helvetica", "normal");
     doc.text(`Date: ${new Date(order.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`, pageW - 14, 20, { align: "right" });
 
-    y = 38;
+    y = 43;
     doc.setTextColor(0, 0, 0);
 
     // Order number
