@@ -464,7 +464,10 @@ export default function AdminDashboard() {
       </AnimatePresence>
 
       {/* SIDEBAR — glassmorphism in dark, solid in light */}
-      <aside className={`absolute md:relative top-0 left-0 h-full w-72 flex-shrink-0 flex flex-col overflow-y-auto border-r shadow-2xl z-40 transition-all duration-300 print:hidden ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} ${darkMode ? 'bg-white/5 backdrop-blur-2xl border-white/10 text-slate-300' : 'bg-[#0f172a] border-slate-800 text-slate-300'}`}>
+      <motion.aside
+        initial={false}
+        animate={{ x: isMobileMenuOpen ? 0 : undefined }}
+        className={`absolute md:relative top-0 left-0 h-full w-72 flex-shrink-0 flex flex-col overflow-y-auto border-r shadow-2xl z-40 print:hidden max-md:transition-transform max-md:duration-300 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"} ${darkMode ? 'bg-white/5 backdrop-blur-2xl border-white/10 text-slate-300' : 'bg-[#0f172a] border-slate-800 text-slate-300'}`}>
         <div className="p-8 pb-4">
           <div className="hidden md:flex items-center justify-between mb-10">
             <div className="flex items-center gap-3">
@@ -484,10 +487,12 @@ export default function AdminDashboard() {
               { id: 'products', icon: <Tag size={18} />, label: 'Inventory' },
               { id: 'add_product', icon: <PackagePlus size={18} />, label: 'List Product' },
             ].map(item => (
-              <button key={item.id} onClick={() => handleNavClick(item.id)}
+              <motion.button key={item.id} onClick={() => handleNavClick(item.id)}
+                whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className={`flex items-center gap-3 px-4 py-3.5 text-[12px] font-semibold tracking-wider transition-all rounded-xl ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' : 'hover:text-white hover:bg-white/10'}`}>
                 {item.icon} {item.label}
-              </button>
+              </motion.button>
             ))}
             <div className="mt-6 mb-2">
               <p className={`px-4 text-[10px] font-bold tracking-widest uppercase mb-2 ${darkMode ? 'text-slate-500' : 'text-slate-500'}`}>Shortcuts</p>
@@ -498,11 +503,11 @@ export default function AdminDashboard() {
           </nav>
         </div>
         <div className={`mt-auto p-8 border-t ${darkMode ? 'border-white/10' : 'border-slate-800'}`}>
-          <button onClick={handleLogout} className="flex items-center gap-3 text-[12px] font-semibold tracking-wider text-slate-400 hover:text-white transition-colors w-full">
+          <motion.button whileHover={{ x: 2 }} whileTap={{ scale: 0.97 }} onClick={handleLogout} className="flex items-center gap-3 text-[12px] font-semibold tracking-wider text-slate-400 hover:text-white transition-colors w-full">
             <LogOut size={18} /> Secure Logout
-          </button>
+          </motion.button>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* COMMAND CENTER */}
       <AnimatePresence>
@@ -568,30 +573,30 @@ export default function AdminDashboard() {
             )}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {/* Glass stat cards */}
-              <div className={`p-6 rounded-2xl border col-span-2 md:col-span-1 shadow-lg ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
+              <motion.div whileHover={{ y: -4, scale: 1.01 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} className={`p-6 rounded-2xl border col-span-2 md:col-span-1 shadow-lg cursor-default ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-4">
                   <span className={label}>Total Revenue</span>
                   <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-50'}`}><TrendingUp size={20} className="text-emerald-500" /></div>
                 </div>
                 <h3 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>₹{(stats.totalRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
                 <p className="text-[11px] text-emerald-500 font-bold mt-2">Today: ₹{(stats.todayRevenue || 0).toLocaleString()}</p>
-              </div>
-              <div className={`p-6 rounded-2xl border shadow-lg ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
+              </motion.div>
+              <motion.div whileHover={{ y: -4, scale: 1.01 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} className={`p-6 rounded-2xl border shadow-lg cursor-default ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-4">
                   <span className={label}>Active Orders</span>
                   <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-blue-500/20' : 'bg-blue-50'}`}><Package size={20} className="text-blue-500" /></div>
                 </div>
                 <h3 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{stats.activeOrders}</h3>
                 <p className="text-[11px] text-blue-500 font-bold mt-2">Today: {stats.todayOrders || 0} new</p>
-              </div>
-              <div className={`p-6 rounded-2xl border shadow-lg ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
+              </motion.div>
+              <motion.div whileHover={{ y: -4, scale: 1.01 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }} className={`p-6 rounded-2xl border shadow-lg cursor-default ${darkMode ? 'bg-white/5 backdrop-blur-xl border-white/10' : 'bg-white border-slate-200'}`}>
                 <div className="flex justify-between items-start mb-4">
                   <span className={label}>Total Products</span>
                   <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-purple-500/20' : 'bg-purple-50'}`}><ShoppingBag size={20} className="text-purple-500" /></div>
                 </div>
                 <h3 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{stats.totalProducts}</h3>
                 {stats.lowStockProducts > 0 && <p className="text-[11px] text-amber-500 font-bold mt-2">{stats.lowStockProducts} low stock</p>}
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -820,7 +825,10 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex flex-col gap-3">
                       {filteredOrders.filter(o => o.status === status).map(order => (
-                        <div key={order.id} onClick={() => { setOrderView('table'); setOrderSearch(order.order_number); setExpandedOrder(order.id); }}
+                        <motion.div key={order.id}
+                          whileHover={{ y: -2, scale: 1.01 }} whileTap={{ scale: 0.98 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                          onClick={() => { setOrderView('table'); setOrderSearch(order.order_number); setExpandedOrder(order.id); }}
                           className={`p-4 rounded-xl border shadow-sm cursor-pointer transition-colors ${darkMode ? 'bg-white/5 border-white/10 hover:border-blue-500/50' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
                           <div className="flex justify-between items-start mb-2">
                             <span className="text-[11px] font-bold text-blue-500">{order.order_number}</span>
@@ -838,7 +846,7 @@ export default function AdminDashboard() {
                               <option value="Cancelled">Cancelled</option>
                             </select>
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   </div>
@@ -938,8 +946,8 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-5 text-right">
                             <div className="flex justify-end gap-3">
-                              <button onClick={() => handleEdit(product)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-100'}`} title="Edit"><Edit size={18} /></button>
-                              <button onClick={() => handleDelete(product.id)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100'}`} title="Delete"><Trash2 size={18} /></button>
+                              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }} onClick={() => handleEdit(product)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-100'}`} title="Edit"><Edit size={18} /></motion.button>
+                              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }} onClick={() => handleDelete(product.id)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100'}`} title="Delete"><Trash2 size={18} /></motion.button>
                             </div>
                           </td>
                         </tr>
@@ -1259,10 +1267,11 @@ export default function AdminDashboard() {
               </div>
 
               <div className="pt-6 pb-12 flex justify-end">
-                <button type="submit" disabled={loading}
+                <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  type="submit" disabled={loading}
                   className="w-full md:w-auto px-16 bg-blue-600 text-white rounded-xl py-4 text-[13px] font-bold tracking-widest uppercase hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 disabled:opacity-50">
                   {loading ? "Saving..." : editingId ? "Update Product" : formData.is_draft ? "Save Draft" : "Publish to Storefront"}
-                </button>
+                </motion.button>
               </div>
             </form>
           </motion.div>
