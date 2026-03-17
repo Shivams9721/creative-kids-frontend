@@ -40,11 +40,11 @@ export default function OrderSuccess() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("CREATIVE KIDS", 14, 13);
-    doc.setFontSize(8);
+    doc.text("CREATIVE KIDS", 14, 11);
+    doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
-    doc.text("creativekids.co.in  |  India", 14, 20);
-    doc.text("GSTIN: 06AAJPM1384L1ZE  |  PAN: AAJPM1384L", 14, 25);
+    doc.text("Creative Impression | Plot No.-667, Pace City - II, Sector - 37, Gurugram, Haryana - 122001", 14, 17);
+    doc.text("creativekids.co.in  |  GSTIN: 06AAJPM1384L1ZE  |  PAN: AAJPM1384L", 14, 22);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("TAX INVOICE", pageW - 14, 13, { align: "right" });
