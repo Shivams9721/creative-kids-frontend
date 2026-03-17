@@ -121,7 +121,8 @@ export default function AdminDashboard() {
   const fetchAdminOrders = useCallback(async () => {
     setIsRefreshingOrders(true);
     try {
-      const res = await fetch(`${API}/api/admin/orders`);
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API}/api/admin/orders`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -1020,9 +1021,13 @@ export default function AdminDashboard() {
                     <input required type="text" name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g. BBY-GRL-DRS" className={inp} />
                     <p className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Variant SKUs auto-generated as: <span className={`font-bold ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{formData.sku || 'BBY-GRL-DRS'}-RED-3M</span></p>
                   </div>
-                  <div className="md:col-span-2 flex flex-col gap-2">
+                  <div className="flex flex-col gap-2">
                     <label className={label}>HSN Code</label>
                     <input type="text" name="hsn_code" value={formData.hsn_code} onChange={handleChange} placeholder="e.g. 6111" className={inp} />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className={label}>Country of Origin</label>
+                    <input type="text" name="origin_country" value={formData.origin_country} onChange={handleChange} placeholder="e.g. India" className={inp} />
                   </div>
                 </div>
               </div>

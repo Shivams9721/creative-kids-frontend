@@ -167,6 +167,9 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product) return;
     
+    const matchedVariant = product.parsedVariants.find(v =>
+      v.color === (selectedColor || "Default") && v.size === (selectedSize || "Default")
+    );
     const cartItem = {
       id: product.id,
       title: product.title,
@@ -174,6 +177,8 @@ export default function ProductPage() {
       image: mainImage,
       selectedColor: selectedColor || "Default",
       selectedSize: selectedSize || "Default",
+      sku: matchedVariant?.sku || null,
+      baseSku: product.sku || null,
       quantity: 1
     };
     
