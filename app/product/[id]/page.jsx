@@ -18,6 +18,7 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [mainImage, setMainImage] = useState("");
+  const [colorImageMap, setColorImageMap] = useState({});
   const [openSection, setOpenSection] = useState("description");
   
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -50,6 +51,15 @@ export default function ProductPage() {
           parsedVariants = data.variants;
         }
         data.parsedVariants = parsedVariants;
+
+        // Build color → image map from variant images
+        const imgMap = {};
+        parsedVariants.forEach(v => {
+          if (v.color && v.color !== 'Default' && v.image && !imgMap[v.color]) {
+            imgMap[v.color] = v.image;
+          }
+        });
+        setColorImageMap(imgMap);
 
         setProduct(data);
         
@@ -184,6 +194,33 @@ export default function ProductPage() {
     
     addToCart(cartItem);
   };
+
+  const handleColorSelect = (color) => {
+    setSelectedColor(color);
+    if (colorImageMap[color]) setMainImage(colorImageMap[color]);
+  };
+
+  const getVariantStock = (color, size) => {
+    if (!product) return 0;
+    const v = product.parsedVariants.find(
+      v => v.color === (color || 'Default') && v.size === (size || 'Default')
+    );
+    return v ? (parseInt(v.stock) || 0) : 0;
+  };
+
+  const isSizeAvailableForColor = (size) => {
+    if (!product || !selectedColor) return true;
+    const v = product.parsedVariants.find(v => v.color === selectedColor && v.size === size);
+    return v ? (parseInt(v.stock) || 0) > 0 : false;
+  };
+
+  const isColorAvailable = (color) => {
+    if (!product) return true;
+    return product.parsedVariants.some(v => v.color === color && (parseInt(v.stock) || 0) > 0);
+  };
+
+  const currentStock = getVariantStock(selectedColor, selectedSize);
+  const isOutOfStock = product && product.parsedVariants.length > 0 && currentStock === 0;
 
   const toggleSection = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -347,15 +384,25 @@ export default function ProductPage() {
                   <span className="text-[11px] font-bold tracking-widest uppercase text-black">Color: <span className="text-black/60 font-medium">{selectedColor}</span></span>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {availableColors.map(color => (
-                    <button 
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
-                      className={`px-6 py-3 border rounded-full text-[11px] font-bold tracking-widest uppercase transition-all ${selectedColor === color ? 'border-black bg-black text-white' : 'border-black/20 text-black/70 hover:border-black/50'}`}
-                    >
-                      {color}
-                    </button>
-                  ))}
+                  {availableColors.map(color => {
+                    const available = isColorAvailable(color);
+                    return (
+                      <button
+                        key={color}
+                        onClick={() => available && handleColorSelect(color)}
+                        disabled={!available}
+                        className={`px-6 py-3 border rounded-full text-[11px] font-bold tracking-widest uppercase transition-all ${
+                          selectedColor === color
+                            ? 'border-black bg-black text-white'
+                            : available
+                            ? 'border-black/20 text-black/70 hover:border-black/50'
+                            : 'border-black/10 text-black/25 line-through cursor-not-allowed'
+                        }`}
+                      >
+                        {color}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -368,27 +415,43 @@ export default function ProductPage() {
                   <button onClick={() => setShowSizeGuide(true)} className="text-[10px] tracking-widest uppercase text-black/50 hover:text-black border-b border-black/20 pb-0.5">Size Guide</button>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {availableSizes.map(size => (
-                    <button 
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`min-w-[60px] h-[45px] flex items-center justify-center border rounded-full text-[11px] font-bold tracking-widest uppercase transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-black/20 text-black/70 hover:border-black/50'}`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+                  {availableSizes.map(size => {
+                    const available = isSizeAvailableForColor(size);
+                    return (
+                      <button
+                        key={size}
+                        onClick={() => available && setSelectedSize(size)}
+                        disabled={!available}
+                        className={`min-w-[60px] h-[45px] flex items-center justify-center border rounded-full text-[11px] font-bold tracking-widest uppercase transition-all ${
+                          selectedSize === size
+                            ? 'border-black bg-black text-white'
+                            : available
+                            ? 'border-black/20 text-black/70 hover:border-black/50'
+                            : 'border-black/10 text-black/25 line-through cursor-not-allowed'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* ADD TO CART BUTTON */}
             <div className="flex flex-col gap-4 mb-10">
-              <button 
+              {isOutOfStock && (
+                <div className="w-full py-3 text-center bg-red-50 border border-red-100 rounded-full text-[11px] font-bold tracking-widest uppercase text-red-500">
+                  Out of Stock
+                </div>
+              )}
+              <button
                 onClick={handleAddToCart}
-                className="w-full bg-black text-white h-[54px] flex items-center justify-center gap-3 text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-xl rounded-full"
+                disabled={isOutOfStock}
+                className="w-full bg-black text-white h-[54px] flex items-center justify-center gap-3 text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-xl rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <ShoppingBag size={18} strokeWidth={1.5} />
-                Add to Cart
+                {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
               </button>
               <div className="flex items-center justify-center gap-8 py-4 border border-black/5 rounded-lg bg-[#fafafa]">
                 <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-black/70">

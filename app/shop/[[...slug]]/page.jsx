@@ -149,9 +149,13 @@ export default function Shop() {
 
   if (activeItem) {
     displayedProducts = displayedProducts.filter((p) => {
-      const searchStr = `${p.title} ${p.category} ${p.sub_category} ${p.item_type} ${p.description || ''}`.toLowerCase();
-      const searchWords = activeItem.split(" ");
-      return searchWords.some(word => word.length > 2 && (searchStr.includes(word) || searchStr.includes(word.replace(/s$/, ''))));
+      const itemType = (p.item_type || '').toLowerCase();
+      const searchItem = activeItem.toLowerCase();
+      return (
+        itemType === searchItem ||
+        itemType.replace(/[^a-z0-9]/g, '-') === searchItem.replace(/[^a-z0-9]/g, '-') ||
+        itemType.replace(/[^a-z0-9]/g, '') === searchItem.replace(/[^a-z0-9]/g, '')
+      );
     });
   }
 
@@ -420,43 +424,45 @@ export default function Shop() {
             // GAP-0 creates the seamless luxury layout. Grid borders ensure items don't bleed.
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0 border-b border-black/10">
               
-              {displayedProducts.map((product) => (
-                <Link 
-                  href={`/product/${product.id}`} 
-                  key={product.id} 
-                  className="group flex flex-col relative border-r border-b border-black/10 hover:bg-[#fcfcfc] transition-colors pb-8"
-                >
-                  {/* Image Container */}
-                  <div className="w-full aspect-[3/4] bg-[#f6f5f3] relative overflow-hidden mb-5">
-                    <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 hover:scale-110 transition-transform">
-                      <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
-                    </button>
-                    <img 
-                      src={product.image_urls?.[0] || 'https://via.placeholder.com/400x500'} 
-                      alt={product.title} 
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                    />
-                  </div>
-                  
-                  {/* Text Container */}
-                  <div className="px-5 flex flex-col">
-                    <h4 className="text-[12px] font-medium text-black mb-1.5 capitalize truncate">
-                      {product.title}
-                    </h4>
-                    
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[12px] font-bold ${product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? 'text-[#D32F2F]' : 'text-black'}`}>
-                        ₹{parseFloat(product.price).toFixed(2)}
-                      </span>
-                      {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
-                        <span className="text-[10px] text-black/30 line-through">
-                          ₹{parseFloat(product.mrp).toFixed(2)}
-                        </span>
+              {displayedProducts.map((product) => {
+                const variants = (() => { try { return typeof product.variants === 'string' ? JSON.parse(product.variants) : (product.variants || []); } catch { return []; } })();
+                const totalStock = variants.reduce((s, v) => s + (parseInt(v.stock) || 0), 0);
+                const soldOut = variants.length > 0 && totalStock === 0;
+                return (
+                  <Link
+                    href={`/product/${product.id}`}
+                    key={product.id}
+                    className="group flex flex-col relative border-r border-b border-black/10 hover:bg-[#fcfcfc] transition-colors pb-8"
+                  >
+                    <div className="w-full aspect-[3/4] bg-[#f6f5f3] relative overflow-hidden mb-5">
+                      <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 hover:scale-110 transition-transform">
+                        <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
+                      </button>
+                      <img
+                        src={product.image_urls?.[0] || 'https://via.placeholder.com/400x500'}
+                        alt={product.title}
+                        className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${soldOut ? 'opacity-50' : ''}`}
+                      />
+                      {soldOut && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="bg-white/90 text-black text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 border border-black/20">Sold Out</span>
+                        </div>
                       )}
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    <div className="px-5 flex flex-col">
+                      <h4 className="text-[12px] font-medium text-black mb-1.5 capitalize truncate">{product.title}</h4>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[12px] font-bold ${product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? 'text-[#D32F2F]' : 'text-black'}`}>
+                          ₹{parseFloat(product.price).toFixed(2)}
+                        </span>
+                        {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
+                          <span className="text-[10px] text-black/30 line-through">₹{parseFloat(product.mrp).toFixed(2)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
 
             </div>
           )}
