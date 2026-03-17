@@ -151,6 +151,14 @@ export default function CheckoutPage() {
 
             if (data.success) {
                 setOrderSuccess(true);
+                localStorage.setItem('lastOrder', JSON.stringify({
+                  orderNumber: data.orderNumber,
+                  items: cart,
+                  total: cartTotal,
+                  address,
+                  paymentMethod,
+                  date: new Date().toISOString()
+                }));
                 setCart([]);
                 setTimeout(() => {
                     router.push('/success');

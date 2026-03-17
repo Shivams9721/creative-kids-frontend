@@ -30,6 +30,8 @@ export default function ProductPage() {
   const [alreadyReviewed, setAlreadyReviewed] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [pincode, setPincode] = useState("");
+  const [pincodeStatus, setPincodeStatus] = useState(null); // null | 'checking' | 'available' | 'unavailable'
 
   // 2. FETCH PRODUCT DATA (Now Crash-Proof)
   useEffect(() => {
@@ -222,6 +224,18 @@ export default function ProductPage() {
 
   const currentStock = getVariantStock(selectedColor, selectedSize);
   const isOutOfStock = product && product.parsedVariants.length > 0 && currentStock === 0;
+
+  const checkPincode = async () => {
+    if (pincode.length !== 6) return;
+    setPincodeStatus('checking');
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await res.json();
+      setPincodeStatus(data[0]?.Status === 'Success' ? 'available' : 'unavailable');
+    } catch {
+      setPincodeStatus('unavailable');
+    }
+  };
 
   const toggleSection = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -438,6 +452,33 @@ export default function ProductPage() {
                 </div>
               </div>
             )}
+
+            {/* PINCODE CHECKER */}
+            <div className="mb-6">
+              <p className="text-[11px] font-bold tracking-widest uppercase text-black mb-3">Check Delivery</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={pincode}
+                  onChange={e => { if (/^\d*$/.test(e.target.value) && e.target.value.length <= 6) { setPincode(e.target.value); setPincodeStatus(null); } }}
+                  placeholder="Enter 6-digit pincode"
+                  className="flex-1 border border-black/20 rounded-full px-4 py-2.5 text-[13px] outline-none focus:border-black"
+                />
+                <button
+                  onClick={checkPincode}
+                  disabled={pincode.length !== 6 || pincodeStatus === 'checking'}
+                  className="px-5 py-2.5 bg-black text-white rounded-full text-[11px] font-bold tracking-widest uppercase disabled:opacity-40 transition-colors hover:bg-black/80"
+                >
+                  {pincodeStatus === 'checking' ? '...' : 'Check'}
+                </button>
+              </div>
+              {pincodeStatus === 'available' && (
+                <p className="text-[12px] text-green-600 font-medium mt-2">✓ Delivery available to {pincode}</p>
+              )}
+              {pincodeStatus === 'unavailable' && (
+                <p className="text-[12px] text-red-500 font-medium mt-2">✗ Delivery not available for this pincode</p>
+              )}
+            </div>
 
             {/* ADD TO CART BUTTON */}
             <div className="flex flex-col gap-4 mb-10">

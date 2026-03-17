@@ -166,9 +166,10 @@ export default function AdminDashboard() {
     if (!shippingForm) return;
     const { orderId, newStatus, courier, awb } = shippingForm;
     try {
+      const token = localStorage.getItem("adminToken");
       const res = await fetch(`${API}/api/admin/orders/${orderId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus, courier_name: courier, awb_number: awb })
       });
       if (res.ok) {
@@ -184,9 +185,10 @@ export default function AdminDashboard() {
       return;
     }
     try {
+      const token = localStorage.getItem("adminToken");
       const res = await fetch(`${API}/api/admin/orders/${orderId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus, courier_name: courierName, awb_number: awbNumber })
       });
       if (res.ok) {
