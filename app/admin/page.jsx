@@ -86,6 +86,9 @@ export default function AdminDashboard() {
   });
 
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const dragSrcIndex = React.useRef(null);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
 
@@ -214,24 +217,33 @@ export default function AdminDashboard() {
   }, []);
 
   const handleImageUpload = useCallback(async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploadingImage(true);
-    const uploadData = new FormData();
-    uploadData.append("image", file);
-    try {
-      const token = localStorage.getItem("adminToken");
+    setUploadProgress({ done: 0, total: files.length });
+    const token = localStorage.getItem("adminToken");
+    const uploadOne = async (file) => {
+      const fd = new FormData();
+      fd.append("image", file);
       const res = await fetch(`${API}/api/upload`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
-        body: uploadData
+        body: fd
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setFormData(prev => ({ ...prev, image_urls: [...prev.image_urls, data.imageUrl] }));
-      } else { alert(data.error || "Failed to upload image."); }
+        setUploadProgress(p => ({ ...p, done: p.done + 1 }));
+        return data.imageUrl;
+      }
+      return null;
+    };
+    try {
+      const urls = await Promise.all(files.map(uploadOne));
+      const valid = urls.filter(Boolean);
+      if (valid.length) setFormData(prev => ({ ...prev, image_urls: [...prev.image_urls, ...valid] }));
+      if (valid.length < files.length) alert(`${files.length - valid.length} image(s) failed to upload.`);
     } catch (err) { alert("An error occurred while uploading."); }
-    finally { setUploadingImage(false); e.target.value = ""; }
+    finally { setUploadingImage(false); setUploadProgress({ done: 0, total: 0 }); e.target.value = ""; }
   }, []);
 
   const removeImageUrl = useCallback(async (indexToRemove) => {
@@ -1152,33 +1164,97 @@ export default function AdminDashboard() {
                 <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 flex items-center gap-2 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>
                   <ImageIcon size={18} /> 5. Product Media Gallery (AWS S3) *
                 </h3>
-                <label className={`w-full md:w-auto self-start px-8 py-4 rounded-xl text-[12px] font-bold tracking-widest uppercase transition-colors shadow-md cursor-pointer flex items-center justify-center gap-3 ${uploadingImage ? 'bg-slate-600 text-white/50 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
-                  <UploadCloud size={20} />
-                  {uploadingImage ? "Uploading to Cloud..." : "Upload Image from PC"}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
-                </label>
-                {formData.image_urls.length === 0 ? (
-                  <div className={`w-full border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center ${darkMode ? 'border-white/10 text-slate-500' : 'border-slate-200 text-slate-400'}`}>
-                    <ImageIcon size={40} className="mb-4 opacity-50" />
-                    <p className="text-[13px] font-medium">No images uploaded yet.</p>
+
+                {/* Upload zone — accepts multiple */}
+                <label className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer ${
+                  uploadingImage
+                    ? darkMode ? 'border-blue-500/40 bg-blue-500/5' : 'border-blue-300 bg-blue-50'
+                    : darkMode ? 'border-white/10 hover:border-blue-500/40 hover:bg-white/5' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/30'
+                }`}>
+                  <UploadCloud size={28} className={uploadingImage ? 'text-blue-400 animate-pulse' : darkMode ? 'text-slate-500' : 'text-slate-400'} />
+                  <div className="text-center">
+                    <p className={`text-[13px] font-bold ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                      {uploadingImage
+                        ? `Uploading ${uploadProgress.done} / ${uploadProgress.total}...`
+                        : 'Click or drag images here'}
+                    </p>
+                    <p className={`text-[11px] mt-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                      {uploadingImage ? 'Please wait' : 'Select multiple images at once — all upload in parallel'}
+                    </p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    <AnimatePresence>
-                      {formData.image_urls.map((url, idx) => (
-                        <motion.div key={idx} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-                          className={`relative aspect-[3/4] rounded-xl overflow-hidden border shadow-sm group ${darkMode ? 'bg-white/10 border-white/10' : 'bg-slate-100 border-slate-200'}`}>
-                          <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
-                          <button type="button" onClick={() => removeImageUrl(idx)}
-                            className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all shadow-md">
-                            <X size={14} strokeWidth={2.5} />
-                          </button>
-                          <div className={`absolute bottom-2 left-2 px-2 py-1 rounded text-[9px] font-bold tracking-widest shadow-sm backdrop-blur-md ${idx === 0 ? 'bg-blue-600/90 text-white' : 'bg-black/60 text-white'}`}>
-                            {idx === 0 ? "MAIN" : `GAL ${idx}`}
-                          </div>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+                  {uploadingImage && (
+                    <div className={`w-full max-w-xs h-1.5 rounded-full overflow-hidden ${darkMode ? 'bg-white/10' : 'bg-slate-200'}`}>
+                      <div
+                        className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                        style={{ width: uploadProgress.total ? `${(uploadProgress.done / uploadProgress.total) * 100}%` : '0%' }}
+                      />
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+                </label>
+
+                {/* Thumbnails — draggable to reorder */}
+                {formData.image_urls.length > 0 && (
+                  <div>
+                    <p className={`text-[11px] font-bold tracking-widest uppercase mb-3 flex items-center gap-2 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      Drag thumbnails to reorder — leftmost = main cover photo
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      <AnimatePresence>
+                        {formData.image_urls.map((url, idx) => (
+                          <motion.div
+                            key={url}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            draggable
+                            onDragStart={() => { dragSrcIndex.current = idx; }}
+                            onDragOver={(e) => { e.preventDefault(); setDragOverIndex(idx); }}
+                            onDragLeave={() => setDragOverIndex(null)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const from = dragSrcIndex.current;
+                              const to = idx;
+                              if (from === null || from === to) { setDragOverIndex(null); return; }
+                              setFormData(prev => {
+                                const arr = [...prev.image_urls];
+                                const [moved] = arr.splice(from, 1);
+                                arr.splice(to, 0, moved);
+                                return { ...prev, image_urls: arr };
+                              });
+                              dragSrcIndex.current = null;
+                              setDragOverIndex(null);
+                            }}
+                            onDragEnd={() => { dragSrcIndex.current = null; setDragOverIndex(null); }}
+                            className={`relative aspect-[3/4] rounded-xl overflow-hidden border shadow-sm group cursor-grab active:cursor-grabbing transition-all ${
+                              dragOverIndex === idx
+                                ? darkMode ? 'border-blue-400 scale-105 ring-2 ring-blue-500/40' : 'border-blue-400 scale-105 ring-2 ring-blue-300'
+                                : darkMode ? 'bg-white/10 border-white/10' : 'bg-slate-100 border-slate-200'
+                            }`}>
+                            <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover pointer-events-none" />
+                            <button type="button" onClick={() => removeImageUrl(idx)}
+                              className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-1.5 rounded-full opacity-100 md:opacity-0 group-hover:opacity-100 transition-all shadow-md z-10">
+                              <X size={14} strokeWidth={2.5} />
+                            </button>
+                            <div className={`absolute bottom-2 left-2 px-2 py-1 rounded text-[9px] font-bold tracking-widest shadow-sm backdrop-blur-md ${
+                              idx === 0 ? 'bg-blue-600/90 text-white' : 'bg-black/60 text-white'
+                            }`}>
+                              {idx === 0 ? 'MAIN' : `GAL ${idx}`}
+                            </div>
+                            {/* drag handle indicator */}
+                            <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className={`p-1 rounded backdrop-blur-md ${darkMode ? 'bg-white/20' : 'bg-black/30'}`}>
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+                                  <circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/>
+                                  <circle cx="3" cy="7" r="1"/><circle cx="7" cy="7" r="1"/>
+                                </svg>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 )}
               </div>
