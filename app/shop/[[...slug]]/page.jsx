@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -67,7 +68,11 @@ export default function Shop() {
     else if (slug0.includes('girl')) setActiveCategory('Girls');
     else setActiveCategory("All");
 
-    if (slug1) setActiveItem(slug1.replace(/-/g, " ")); 
+    // Auto-set size tab based on category
+    if (slug0.includes('baby')) setActiveSizeTab('BABY');
+    else if (slug0.includes('boy') || slug0.includes('girl')) setActiveSizeTab('KIDS');
+
+    if (slug1) setActiveItem(slug1.replace(/-/g, " "));
     else setActiveItem(null);
   }, [params, slug0, slug1]);
 
@@ -438,10 +443,12 @@ export default function Shop() {
                       <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 hover:scale-110 transition-transform">
                         <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
                       </button>
-                      <img
+                      <Image
                         src={product.image_urls?.[0] || 'https://via.placeholder.com/400x500'}
                         alt={product.title}
-                        className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${soldOut ? 'opacity-50' : ''}`}
+                        fill
+                        className={`object-cover transition-transform duration-1000 group-hover:scale-105 ${soldOut ? 'opacity-50' : ''}`}
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                       {soldOut && (
                         <div className="absolute inset-0 flex items-center justify-center">

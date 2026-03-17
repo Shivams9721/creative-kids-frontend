@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { ShoppingBag, ChevronDown, ChevronUp, Heart, Share2, Truck, ShieldCheck, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -267,7 +268,7 @@ export default function ProductPage() {
                   <h3 className="text-[12px] font-bold tracking-widest uppercase">Size Guide</h3>
                   <button onClick={() => setShowSizeGuide(false)} className="p-1 hover:bg-gray-100 rounded-full"><X size={20} /></button>
                 </div>
-                <img src="https://i.postimg.cc/nrj3wLGL/image.png" alt="Size Guide" className="w-full rounded-lg" />
+                <Image src="https://i.postimg.cc/nrj3wLGL/image.png" alt="Size Guide" width={800} height={600} className="w-full rounded-lg" />
               </div>
             </motion.div>
           </>
@@ -326,16 +327,16 @@ export default function ProductPage() {
                   <button 
                     key={idx} 
                     onClick={() => setMainImage(url)}
-                    className={`w-16 h-20 md:w-full md:h-24 flex-shrink-0 bg-gray-100 overflow-hidden border transition-all ${mainImage === url ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    className={`w-16 h-20 md:w-full md:h-24 flex-shrink-0 bg-gray-100 overflow-hidden border transition-all relative ${mainImage === url ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'}`}
                   >
-                    <img src={url} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                    <Image src={url} alt={`Thumbnail ${idx}`} fill className="object-cover" sizes="80px" />
                   </button>
                 ))}
               </div>
             )}
             
             <div className="w-full aspect-[3/4] bg-[#f6f5f3] relative overflow-hidden flex-1">
-              <img src={mainImage} alt={product.title} className="w-full h-full object-cover object-center" />
+              <Image src={mainImage} alt={product.title} fill priority className="object-cover object-center" sizes="(max-width: 1024px) 100vw, 50vw" />
               
               {/* WISHLIST BUTTON */}
               <button 

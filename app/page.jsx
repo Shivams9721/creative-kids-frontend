@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -107,7 +108,7 @@ export default function Home() {
             <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
           </button>
           <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-            <img src={product.image_urls?.[0] || "https://via.placeholder.com/400x500"} alt={product.title} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" />
+            <Image src={product.image_urls?.[0] || "https://via.placeholder.com/400x500"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
           </Link>
         </div>
         <Link href={`/product/${product.id}`} className="flex flex-col px-1">
@@ -130,7 +131,7 @@ export default function Home() {
     <main className="min-h-screen bg-white">
       {/* 1. HERO BANNER */}
       <section className="relative w-full h-[85vh] md:h-screen flex items-end justify-center overflow-hidden pb-16 md:pb-24">
-        <img src="/images/321.png" alt="Spring Collection Campaign" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <Image src="/images/321.png" alt="Spring Collection Campaign" fill priority className="object-cover object-center" sizes="100vw" />
         <div className="absolute inset-0 bg-black/30"></div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="relative z-10 flex flex-col items-center text-center px-4 text-white">
           <span className="text-[9px] md:text-[10px] tracking-[0.3em] font-medium uppercase text-white/90 mb-2">Baby & Kids</span>
@@ -152,22 +153,22 @@ export default function Home() {
           </div>
           <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-8 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             <Link href="/shop/kids-girl/dresses" className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <img src="/images/Dress.png" alt="Girls Dresses" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" />
+              <Image src="/images/Dress.png" alt="Girls Dresses" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute bottom-8 inset-x-0 text-center"><h3 className="text-white text-[15px] tracking-[0.15em] uppercase font-medium">Dress</h3></div>
             </Link>
             <Link href="/shop/kids-girl/bottomwear" className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <img src="/images/shorts.jpg" alt="Bottom Wears" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" />
+              <Image src="/images/shorts.jpg" alt="Bottom Wears" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute bottom-8 inset-x-0 text-center"><h3 className="text-white text-[15px] tracking-[0.15em] uppercase font-medium">Bottom Wears</h3></div>
             </Link>
             <Link href="/shop/baby-boy/onesies-rompers" className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <img src="/images/infant.png" alt="Infants" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" />
+              <Image src="/images/infant.png" alt="Infants" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute bottom-8 inset-x-0 text-center"><h3 className="text-white text-[15px] tracking-[0.15em] uppercase font-medium">Infants</h3></div>
             </Link>
             <Link href="/shop/baby-girl/clothing-sets" className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <img src="/images/clothing set.png" alt="Clothing Sets" className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" />
+              <Image src="/images/clothing set.png" alt="Clothing Sets" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute bottom-8 inset-x-0 text-center"><h3 className="text-white text-[15px] tracking-[0.15em] uppercase font-medium">Clothing Sets</h3></div>
             </Link>
@@ -240,7 +241,7 @@ export default function Home() {
                             <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
                           </button>
                           <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-                            <img src={product.image_urls?.[0]} alt={product.title} className="w-full h-full object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" />
+                            <Image src={product.image_urls?.[0] || "https://via.placeholder.com/400x500"} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 30vw" />
                           </Link>
                         </div>
                         <Link href={`/product/${product.id}`} className="flex flex-col px-1">
