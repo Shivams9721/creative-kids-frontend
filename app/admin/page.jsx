@@ -994,7 +994,7 @@ export default function AdminDashboard() {
                     <input required type="text" name="title" value={formData.title} onChange={handleChange} placeholder="e.g. Noir Velvet Dress" className={inp} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={label}>Original MRP (₹)</label>
+                    <label className={label}> MRP (₹)</label>
                     <input type="number" step="0.01" name="mrp" value={formData.mrp} onChange={handleChange} placeholder="150.00" className={inp} />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1002,7 +1002,7 @@ export default function AdminDashboard() {
                     <input required type="number" step="0.01" name="price" value={formData.price} onChange={handleChange} placeholder="120.00" className={inp} />
                   </div>
                   <div className="md:col-span-2 flex flex-col gap-2">
-                    <label className={label}>Base SKU ID *</label>
+                    <label className={label}>Parent SKU ID *</label>
                     <input required type="text" name="sku" value={formData.sku} onChange={handleChange} placeholder="e.g. BBY-GRL-DRS" className={inp} />
                     <p className={`text-[10px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Variant SKUs auto-generated as: <span className={`font-bold ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{formData.sku || 'BBY-GRL-DRS'}-RED-3M</span></p>
                   </div>
