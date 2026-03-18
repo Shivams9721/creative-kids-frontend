@@ -37,6 +37,7 @@ const DEFAULT_FORM_STATE = {
   description: "", manufacturer_details: "", care_instructions: "Dry clean or gentle hand wash", origin_country: "India",
   variants: [],
   is_featured: false, is_new_arrival: false, homepage_section: "None", homepage_card_slot: "1", is_draft: false,
+  extra_categories: [],
 };
 
 export default function AdminDashboard() {
@@ -321,6 +322,7 @@ export default function AdminDashboard() {
       homepage_section: product.homepage_section || "None",
       homepage_card_slot: product.homepage_card_slot ? String(product.homepage_card_slot) : "1",
       is_draft: product.is_draft || false,
+      extra_categories: (() => { try { return typeof product.extra_categories === 'string' ? JSON.parse(product.extra_categories) : (product.extra_categories || []); } catch(e) { return []; } })()
     });
     setEditingId(product.id);
     setActiveTab("add_product");
@@ -1020,20 +1022,60 @@ export default function AdminDashboard() {
               {/* 2. Store Routing */}
               <div className={`${card} p-6 md:p-8 space-y-6`}>
                 <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>2. Store Routing Path</h3>
+
+                {/* Primary selectors */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    { name: 'main_category', label: 'Main Category', options: Object.keys(CATEGORY_TREE) },
-                    { name: 'sub_category', label: 'Sub Category', options: Object.keys(CATEGORY_TREE[formData.main_category]) },
+                    { name: 'main_category', label: 'Primary Main Category', options: Object.keys(CATEGORY_TREE) },
+                    { name: 'sub_category', label: 'Primary Sub Category', options: Object.keys(CATEGORY_TREE[formData.main_category]) },
                     { name: 'item_type', label: 'Item Type', options: CATEGORY_TREE[formData.main_category][formData.sub_category] },
                   ].map(sel => (
                     <div key={sel.name} className="flex flex-col gap-2">
                       <label className={label}>{sel.label}</label>
-                      <select name={sel.name} value={formData[sel.name]} onChange={handleChange}
-                        className={`${inp} cursor-pointer`}>
+                      <select name={sel.name} value={formData[sel.name]} onChange={handleChange} className={`${inp} cursor-pointer`}>
                         {sel.options.map(o => <option key={o} value={o}>{o}</option>)}
                       </select>
                     </div>
                   ))}
+                </div>
+
+                {/* Also List In */}
+                <div className={`p-5 rounded-xl border ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                  <p className={`text-[11px] font-bold tracking-widest uppercase mb-1 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Also List In <span className={`font-normal normal-case tracking-normal ml-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>— for unisex or multi-age products</span>
+                  </p>
+                  <p className={`text-[11px] mb-4 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Product will appear in all checked sections automatically.</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(CATEGORY_TREE).flatMap(([main, subs]) =>
+                      Object.keys(subs).map(sub => ({ main, sub }))
+                    ).filter(({ sub }) => sub !== formData.sub_category).map(({ main, sub }) => {
+                      const isChecked = (formData.extra_categories || []).some(e => e.main_category === main && e.sub_category === sub);
+                      return (
+                        <label key={`${main}||${sub}`} className={`flex items-center gap-2.5 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          isChecked
+                            ? darkMode ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-blue-50 border-blue-300 text-blue-700'
+                            : darkMode ? 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}>
+                          <input type="checkbox" checked={isChecked} className="accent-blue-600 w-3.5 h-3.5"
+                            onChange={() => setFormData(prev => {
+                              const current = prev.extra_categories || [];
+                              const exists = current.some(e => e.main_category === main && e.sub_category === sub);
+                              return {
+                                ...prev,
+                                extra_categories: exists
+                                  ? current.filter(e => !(e.main_category === main && e.sub_category === sub))
+                                  : [...current, { main_category: main, sub_category: sub }]
+                              };
+                            })}
+                          />
+                          <span className="text-[11px] font-medium leading-tight">
+                            {sub}
+                            <span className={`block text-[9px] font-normal ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{main}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 

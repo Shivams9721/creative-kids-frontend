@@ -143,11 +143,13 @@ export default function Shop() {
 
   if (activeCategory !== "All") {
     displayedProducts = displayedProducts.filter((p) => {
-      const dbCat = `${p.category || ''} ${p.sub_category || ''} ${p.main_category || ''}`.toLowerCase();
-      if (activeCategory === 'Baby Boy') return dbCat.includes('baby') && dbCat.includes('boy');
-      if (activeCategory === 'Baby Girl') return dbCat.includes('baby') && dbCat.includes('girl');
-      if (activeCategory === 'Boys') return dbCat.includes('boy') && !dbCat.includes('baby');
-      if (activeCategory === 'Girls') return dbCat.includes('girl') && !dbCat.includes('baby');
+      const extra = (() => { try { return typeof p.extra_categories === 'string' ? JSON.parse(p.extra_categories) : (p.extra_categories || []); } catch { return []; } })();
+      const allSubs = [p.sub_category, ...extra.map(e => e.sub_category)].map(s => (s || '').toLowerCase());
+      const allMains = [p.main_category, ...extra.map(e => e.main_category)].map(m => (m || '').toLowerCase());
+      if (activeCategory === 'Baby Boy') return allSubs.some(s => s.includes('baby') && s.includes('boy')) || (allMains.some(m => m === 'baby') && allSubs.some(s => s.includes('boy')));
+      if (activeCategory === 'Baby Girl') return allSubs.some(s => s.includes('baby') && s.includes('girl')) || (allMains.some(m => m === 'baby') && allSubs.some(s => s.includes('girl')));
+      if (activeCategory === 'Boys') return allSubs.some(s => s.includes('boy') && !s.includes('baby'));
+      if (activeCategory === 'Girls') return allSubs.some(s => s.includes('girl') && !s.includes('baby'));
       return true;
     });
   }
