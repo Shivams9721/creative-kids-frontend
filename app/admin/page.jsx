@@ -34,7 +34,7 @@ const DEFAULT_FORM_STATE = {
   main_category: "Baby", sub_category: "Baby Boy", item_type: "Onesies & Rompers",
   fabric: "", pattern: "", neck_type: "", belt_included: false,
   image_urls: [], sizes: [], colors: [],
-  description: "", manufacturer_details: "", care_instructions: "Dry clean or gentle hand wash", origin_country: "India",
+  description: "", manufacturer_details: "", care_instructions: "Machine Wash", origin_country: "India",
   variants: [],
   is_featured: false, is_new_arrival: false, homepage_section: "None", homepage_card_slot: "1", is_draft: false,
   extra_categories: [],
@@ -1266,8 +1266,11 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className={label}>Care Instructions</label>
-                    <textarea name="care_instructions" value={formData.care_instructions} onChange={handleChange} rows="2"
-                      className={`${inp} resize-none`} />
+                    <select name="care_instructions" value={formData.care_instructions} onChange={handleChange} className={`${inp} cursor-pointer`}>
+                      <option value="Machine Wash">Machine Wash</option>
+                      <option value="Hand Wash">Hand Wash</option>
+                      <option value="Dry Clean">Dry Clean</option>
+                    </select>
                   </div>
                 </div>
               </div>
