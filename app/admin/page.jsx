@@ -38,6 +38,7 @@ const DEFAULT_FORM_STATE = {
   variants: [],
   is_featured: false, is_new_arrival: false, homepage_section: "None", homepage_card_slot: "1", is_draft: false,
   extra_categories: [],
+  color_images: {},
 };
 
 export default function AdminDashboard() {
@@ -322,7 +323,8 @@ export default function AdminDashboard() {
       homepage_section: product.homepage_section || "None",
       homepage_card_slot: product.homepage_card_slot ? String(product.homepage_card_slot) : "1",
       is_draft: product.is_draft || false,
-      extra_categories: (() => { try { return typeof product.extra_categories === 'string' ? JSON.parse(product.extra_categories) : (product.extra_categories || []); } catch(e) { return []; } })()
+      extra_categories: (() => { try { return typeof product.extra_categories === 'string' ? JSON.parse(product.extra_categories) : (product.extra_categories || []); } catch(e) { return []; } })(),
+      color_images: (() => { try { return typeof product.color_images === 'string' ? JSON.parse(product.color_images) : (product.color_images || {}); } catch(e) { return {}; } })()
     });
     setEditingId(product.id);
     setActiveTab("add_product");

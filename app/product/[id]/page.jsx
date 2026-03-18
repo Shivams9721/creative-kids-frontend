@@ -55,13 +55,17 @@ export default function ProductPage() {
         }
         data.parsedVariants = parsedVariants;
 
-        // Build color → image map from variant images
+        // Build color → image map from variant images + color_images gallery
         const imgMap = {};
         parsedVariants.forEach(v => {
           if (v.color && v.color !== 'Default' && v.image && !imgMap[v.color]) {
             imgMap[v.color] = v.image;
           }
         });
+        // color_images overrides variant.image if present
+        let parsedColorImages = {};
+        try { parsedColorImages = typeof data.color_images === 'string' ? JSON.parse(data.color_images) : (data.color_images || {}); } catch(e) {}
+        data.color_images = parsedColorImages;
         setColorImageMap(imgMap);
 
         setProduct(data);
@@ -200,8 +204,22 @@ export default function ProductPage() {
 
   const handleColorSelect = (color) => {
     setSelectedColor(color);
-    if (colorImageMap[color]) setMainImage(colorImageMap[color]);
+    // Prefer color_images gallery (first image), fall back to variant.image
+    const gallery = product.color_images?.[color];
+    if (gallery && gallery.length > 0) {
+      setMainImage(gallery[0]);
+    } else if (colorImageMap[color]) {
+      setMainImage(colorImageMap[color]);
+    }
   };
+
+  // Thumbnails to show: if selected color has a gallery, show those; else show product image_urls
+  const displayThumbnails = (() => {
+    if (selectedColor && product?.color_images?.[selectedColor]?.length > 0) {
+      return product.color_images[selectedColor];
+    }
+    return product?.image_urls || [];
+  })();
 
   const getVariantStock = (color, size) => {
     if (!product) return 0;
@@ -335,9 +353,9 @@ export default function ProductPage() {
           
           {/* LEFT: IMAGE GALLERY */}
           <div className="w-full lg:w-1/2 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-[100px] lg:h-[calc(100vh-120px)]">
-            {product.image_urls && product.image_urls.length > 1 && (
+            {displayThumbnails.length > 1 && (
               <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:w-20 flex-shrink-0 [&::-webkit-scrollbar]:hidden">
-                {product.image_urls.map((url, idx) => (
+                {displayThumbnails.map((url, idx) => (
                   <button 
                     key={idx} 
                     onClick={() => setMainImage(url)}

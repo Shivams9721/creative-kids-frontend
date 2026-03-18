@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Wand2, Trash2, Image as ImageIcon, UploadCloud, CheckCircle2 } from "lucide-react";
+import { X, Wand2, Trash2, Image as ImageIcon, UploadCloud, CheckCircle2, Plus } from "lucide-react";
 
 const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
 
@@ -25,7 +25,7 @@ const getColorHex = (colorName) => ALL_COLORS.find(c => c.name === colorName)?.h
 export default function VariantDrawer({ isOpen, onClose, formData, setFormData, darkMode }) {
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
-  const [uploadingVariantImage, setUploadingVariantImage] = useState(null);
+  const [uploadingVariantImage, setUploadingVariantImage] = useState(null); // "variant-{index}" | "color-{color}-{imgIdx}"
 
   const inp = `border p-3 rounded-xl text-[13px] outline-none transition-all ${darkMode ? 'bg-white/5 border-white/10 text-white placeholder-white/30 focus:border-blue-400' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-blue-500 focus:bg-white'}`;
   const label = `text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`;
@@ -42,7 +42,7 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
         if (matrix.some(v => v.color === color && v.size === size)) return;
         const skuColor = color !== "Default" ? `-${color.toUpperCase().replace(/\s+/g, '')}` : "";
         const skuSize = size !== "Default" ? `-${size.toUpperCase().replace(/\s+/g, '')}` : "";
-        matrix.push({ color, size, stock: 10, sku: `${baseSku}${skuColor}${skuSize}` });
+        matrix.push({ color, size, stock: 10, sku: `${baseSku}${skuColor}${skuSize}`, cost_price: "" });
       };
       if (selectedSizes.length > 0 && selectedColors.length > 0)
         selectedColors.forEach(c => selectedSizes.forEach(s => addVariant(c, s)));
@@ -66,44 +66,83 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
     setFormData(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i !== index) }));
   }, [setFormData]);
 
+  // Upload helper — used for both variant thumbnail and color gallery images
+  const uploadToS3 = useCallback(async (file) => {
+    const fd = new FormData();
+    fd.append("image", file);
+    const token = localStorage.getItem("adminToken");
+    const res = await fetch(`${API}/api/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd
+    });
+    const data = await res.json();
+    if (res.ok && data.success) return data.imageUrl;
+    throw new Error(data.error || "Upload failed");
+  }, []);
+
+  // Variant thumbnail (single image per row)
   const handleVariantImageUpload = useCallback(async (e, index) => {
     const file = e.target.files[0];
     if (!file) return;
-    setUploadingVariantImage(index);
-    const fd = new FormData();
-    fd.append("image", file);
+    setUploadingVariantImage(`variant-${index}`);
     try {
-      const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${API}/api/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd
-      });
-      const data = await res.json();
-      if (res.ok && data.success) handleVariantChange(index, "image", data.imageUrl);
-      else alert(data.error || "Failed to upload.");
+      const url = await uploadToS3(file);
+      handleVariantChange(index, "image", url);
     } catch { alert("Upload error."); }
     finally { setUploadingVariantImage(null); e.target.value = ""; }
-  }, [handleVariantChange]);
+  }, [uploadToS3, handleVariantChange]);
+
+  // Color gallery — add multiple images per color
+  const handleColorGalleryUpload = useCallback(async (e, color) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadingVariantImage(`color-${color}`);
+    try {
+      const urls = await Promise.all(files.map(uploadToS3));
+      const valid = urls.filter(Boolean);
+      setFormData(prev => {
+        const existing = (prev.color_images || {})[color] || [];
+        return { ...prev, color_images: { ...(prev.color_images || {}), [color]: [...existing, ...valid] } };
+      });
+    } catch { alert("Upload error."); }
+    finally { setUploadingVariantImage(null); e.target.value = ""; }
+  }, [uploadToS3, setFormData]);
+
+  const removeColorGalleryImage = useCallback((color, imgIndex) => {
+    setFormData(prev => {
+      const existing = [...((prev.color_images || {})[color] || [])];
+      existing.splice(imgIndex, 1);
+      return { ...prev, color_images: { ...(prev.color_images || {}), [color]: existing } };
+    });
+  }, [setFormData]);
 
   const totalStock = formData.variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0);
+
+  // Unique colors that have variants (excluding Default)
+  const uniqueColors = [...new Set(formData.variants.map(v => v.color))].filter(c => c !== 'Default');
+
+  const getMargin = (variant) => {
+    const cost = parseFloat(variant.cost_price);
+    const sell = parseFloat(formData.price);
+    if (!cost || !sell || sell === 0) return null;
+    return Math.round(((sell - cost) / sell) * 100);
+  };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-sm"
           />
 
-          {/* Drawer */}
           <motion.div
             initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className={`fixed top-0 right-0 h-full z-[160] w-full max-w-3xl flex flex-col shadow-2xl border-l ${darkMode ? 'bg-[#0d1424] border-white/10' : 'bg-white border-slate-200'}`}
+            className={`fixed top-0 right-0 h-full z-[160] w-full max-w-4xl flex flex-col shadow-2xl border-l ${darkMode ? 'bg-[#0d1424] border-white/10' : 'bg-white border-slate-200'}`}
           >
             {/* Header */}
             <div className={`flex items-center justify-between px-6 py-5 border-b flex-shrink-0 ${darkMode ? 'border-white/10' : 'border-slate-200'}`}>
@@ -119,7 +158,7 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
 
               {/* Size + Color Selectors */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -167,65 +206,83 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
               {/* Variants Table */}
               {formData.variants.length > 0 ? (
                 <div className={`border rounded-xl overflow-x-auto ${darkMode ? 'border-white/10' : 'border-slate-200'}`}>
-                  <table className={`w-full min-w-[500px] text-left ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
+                  <table className={`w-full min-w-[700px] text-left ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
                     <thead>
                       <tr className={`border-b ${darkMode ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
-                        {['Color', 'Size', 'Stock Qty', 'Variant SKU', 'Image', 'Remove'].map((h, i) => (
-                          <th key={h} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 5 ? 'text-center' : ''}`}>{h}</th>
+                        {['Color', 'Size', 'Stock', 'Cost Price (₹)', 'Margin', 'Variant SKU', 'Thumb', ''].map((h, i) => (
+                          <th key={i} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 7 ? 'text-center' : ''}`}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       <AnimatePresence>
-                        {formData.variants.map((variant, index) => (
-                          <motion.tr key={`${variant.color}-${variant.size}-${index}`}
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className={`border-b ${darkMode ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                {variant.color !== 'Default' && <span className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: getColorHex(variant.color) }} />}
-                                <span className={`text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{variant.color}</span>
-                              </div>
-                            </td>
-                            <td className={`p-4 text-[13px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{variant.size}</td>
-                            <td className="p-4">
-                              <input type="number" value={variant.stock}
-                                onChange={e => handleVariantChange(index, "stock", parseInt(e.target.value) || 0)}
-                                className={`border p-2.5 w-20 rounded-lg text-[13px] outline-none ${darkMode ? 'bg-white/5 border-white/10 text-white focus:border-blue-400' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500'}`} />
-                            </td>
-                            <td className="p-4">
-                              <input type="text" value={variant.sku}
-                                onChange={e => handleVariantChange(index, "sku", e.target.value)}
-                                className={`border p-2.5 w-full rounded-lg text-[12px] outline-none font-mono ${darkMode ? 'bg-white/5 border-white/10 text-slate-300 focus:border-blue-400' : 'bg-white border-slate-300 text-slate-600 focus:border-blue-500'}`} />
-                            </td>
-                            <td className="p-4">
-                              <label className="cursor-pointer flex flex-col items-center gap-1">
-                                {variant.image ? (
-                                  <div className="relative w-12 h-14 rounded-lg overflow-hidden border group">
-                                    <img src={variant.image} alt="variant" className="w-full h-full object-cover" />
-                                    <button type="button" onClick={() => handleVariantChange(index, 'image', '')}
-                                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                      <X size={14} className="text-white" />
-                                    </button>
-                                  </div>
+                        {formData.variants.map((variant, index) => {
+                          const margin = getMargin(variant);
+                          return (
+                            <motion.tr key={`${variant.color}-${variant.size}-${index}`}
+                              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                              className={`border-b ${darkMode ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
+                              <td className="p-4">
+                                <div className="flex items-center gap-2">
+                                  {variant.color !== 'Default' && <span className="w-3 h-3 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: getColorHex(variant.color) }} />}
+                                  <span className={`text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{variant.color}</span>
+                                </div>
+                              </td>
+                              <td className={`p-4 text-[13px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{variant.size}</td>
+                              <td className="p-4">
+                                <input type="number" value={variant.stock}
+                                  onChange={e => handleVariantChange(index, "stock", parseInt(e.target.value) || 0)}
+                                  className={`border p-2.5 w-20 rounded-lg text-[13px] outline-none ${darkMode ? 'bg-white/5 border-white/10 text-white focus:border-blue-400' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500'}`} />
+                              </td>
+                              <td className="p-4">
+                                <input type="number" step="0.01" placeholder="0.00"
+                                  value={variant.cost_price || ""}
+                                  onChange={e => handleVariantChange(index, "cost_price", e.target.value)}
+                                  className={`border p-2.5 w-24 rounded-lg text-[13px] outline-none ${darkMode ? 'bg-white/5 border-white/10 text-white focus:border-blue-400' : 'bg-white border-slate-300 text-slate-800 focus:border-blue-500'}`} />
+                              </td>
+                              <td className="p-4">
+                                {margin !== null ? (
+                                  <span className={`text-[12px] font-bold px-2 py-1 rounded-lg ${margin >= 40 ? 'bg-emerald-500/20 text-emerald-500' : margin >= 20 ? 'bg-yellow-500/20 text-yellow-600' : 'bg-red-500/20 text-red-500'}`}>
+                                    {margin}%
+                                  </span>
                                 ) : (
-                                  <div className={`w-12 h-14 rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${uploadingVariantImage === index ? darkMode ? 'border-blue-400 bg-blue-500/10' : 'border-blue-400 bg-blue-50' : darkMode ? 'border-white/20 hover:border-blue-400' : 'border-slate-300 hover:border-blue-400'}`}>
-                                    {uploadingVariantImage === index
-                                      ? <UploadCloud size={14} className="text-blue-400 animate-pulse" />
-                                      : <ImageIcon size={14} className={darkMode ? 'text-slate-500' : 'text-slate-400'} />}
-                                  </div>
+                                  <span className={`text-[11px] ${darkMode ? 'text-slate-600' : 'text-slate-300'}`}>—</span>
                                 )}
-                                <input type="file" accept="image/*" className="hidden" disabled={uploadingVariantImage !== null} onChange={e => handleVariantImageUpload(e, index)} />
-                              </label>
-                            </td>
-                            <td className="p-4 text-center">
-                              <button type="button" onClick={() => removeVariant(index)}
-                                className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}>
-                                <Trash2 size={18} />
-                              </button>
-                            </td>
-                          </motion.tr>
-                        ))}
+                              </td>
+                              <td className="p-4">
+                                <input type="text" value={variant.sku}
+                                  onChange={e => handleVariantChange(index, "sku", e.target.value)}
+                                  className={`border p-2.5 w-full rounded-lg text-[12px] outline-none font-mono ${darkMode ? 'bg-white/5 border-white/10 text-slate-300 focus:border-blue-400' : 'bg-white border-slate-300 text-slate-600 focus:border-blue-500'}`} />
+                              </td>
+                              <td className="p-4">
+                                <label className="cursor-pointer flex flex-col items-center gap-1">
+                                  {variant.image ? (
+                                    <div className="relative w-12 h-14 rounded-lg overflow-hidden border group">
+                                      <img src={variant.image} alt="variant" className="w-full h-full object-cover" />
+                                      <button type="button" onClick={() => handleVariantChange(index, 'image', '')}
+                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                        <X size={14} className="text-white" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className={`w-12 h-14 rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${uploadingVariantImage === `variant-${index}` ? darkMode ? 'border-blue-400 bg-blue-500/10' : 'border-blue-400 bg-blue-50' : darkMode ? 'border-white/20 hover:border-blue-400' : 'border-slate-300 hover:border-blue-400'}`}>
+                                      {uploadingVariantImage === `variant-${index}`
+                                        ? <UploadCloud size={14} className="text-blue-400 animate-pulse" />
+                                        : <ImageIcon size={14} className={darkMode ? 'text-slate-500' : 'text-slate-400'} />}
+                                    </div>
+                                  )}
+                                  <input type="file" accept="image/*" className="hidden" disabled={uploadingVariantImage !== null} onChange={e => handleVariantImageUpload(e, index)} />
+                                </label>
+                              </td>
+                              <td className="p-4 text-center">
+                                <button type="button" onClick={() => removeVariant(index)}
+                                  className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}>
+                                  <Trash2 size={18} />
+                                </button>
+                              </td>
+                            </motion.tr>
+                          );
+                        })}
                       </AnimatePresence>
                     </tbody>
                   </table>
@@ -235,6 +292,49 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
                   <p className={`text-[13px] font-medium ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No variants yet. Select sizes/colors above and click Generate.</p>
                 </div>
               )}
+
+              {/* Color Image Gallery */}
+              {uniqueColors.length > 0 && (
+                <div className="space-y-4">
+                  <div>
+                    <p className={`text-[13px] font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Color Image Galleries</p>
+                    <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Upload multiple images per color — storefront will show these when customer selects that color.</p>
+                  </div>
+                  {uniqueColors.map(color => {
+                    const images = (formData.color_images || {})[color] || [];
+                    const isUploading = uploadingVariantImage === `color-${color}`;
+                    return (
+                      <div key={color} className={`p-4 rounded-xl border ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="w-3.5 h-3.5 rounded-full border border-black/10 flex-shrink-0" style={{ backgroundColor: getColorHex(color) }} />
+                          <span className={`text-[12px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{color}</span>
+                          <span className={`text-[10px] ml-1 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{images.length} image{images.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                          {images.map((url, imgIdx) => (
+                            <div key={imgIdx} className="relative w-16 h-20 rounded-lg overflow-hidden border group flex-shrink-0">
+                              <img src={url} alt={`${color} ${imgIdx}`} className="w-full h-full object-cover" />
+                              <button type="button" onClick={() => removeColorGalleryImage(color, imgIdx)}
+                                className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <X size={14} className="text-white" />
+                              </button>
+                            </div>
+                          ))}
+                          {/* Add more button */}
+                          <label className={`w-16 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${isUploading ? darkMode ? 'border-blue-400 bg-blue-500/10' : 'border-blue-400 bg-blue-50' : darkMode ? 'border-white/20 hover:border-blue-400' : 'border-slate-300 hover:border-blue-400'}`}>
+                            {isUploading
+                              ? <UploadCloud size={16} className="text-blue-400 animate-pulse" />
+                              : <Plus size={16} className={darkMode ? 'text-slate-500' : 'text-slate-400'} />}
+                            <span className={`text-[9px] mt-1 font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{isUploading ? '...' : 'Add'}</span>
+                            <input type="file" accept="image/*" multiple className="hidden" disabled={uploadingVariantImage !== null} onChange={e => handleColorGalleryUpload(e, color)} />
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
             </div>
 
             {/* Footer */}
