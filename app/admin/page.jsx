@@ -6,8 +6,9 @@ import {
   LayoutDashboard, PackagePlus, ListOrdered, CheckCircle2, Package, TrendingUp,
   Wand2, Trash2, Edit, Tag, LogOut, ShieldAlert, RefreshCcw, Search, X,
   Image as ImageIcon, Menu, UploadCloud, MessageCircle, AlertTriangle, Barcode,
-  ShoppingBag, Printer, Command, LayoutGrid, List, Filter, Sun, Moon, Layers
+  ShoppingBag, Printer, Command, LayoutGrid, List, Filter, Sun, Moon, Layers, BarChart2, Ticket
 } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import VariantDrawer from "@/components/VariantDrawer";
 
 const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
@@ -87,6 +88,9 @@ export default function AdminDashboard() {
   const [isVariantDrawerOpen, setIsVariantDrawerOpen] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [commandSearch, setCommandSearch] = useState("");
+  const [analyticsData, setAnalyticsData] = useState({ revenue: [], topProducts: [], funnel: [] });
+  const [coupons, setCoupons] = useState([]);
+  const [couponForm, setCouponForm] = useState({ code: '', discount_type: 'percent', discount_value: '', min_order_amount: '', max_uses: '', expires_at: '' });
 
   // Persist
   useEffect(() => { localStorage.setItem('adminFormDraft', JSON.stringify(formData)); }, [formData]);
@@ -145,6 +149,17 @@ export default function AdminDashboard() {
           image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch (e) { return []; } })()
         }))))
         .catch(console.error);
+    } else if (activeTab === "analytics") {
+      Promise.all([
+        fetch(`${API}/api/admin/analytics/revenue`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+        fetch(`${API}/api/admin/analytics/top-products`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+        fetch(`${API}/api/admin/analytics/order-funnel`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      ]).then(([revenue, topProducts, funnel]) => {
+        setAnalyticsData({ revenue: Array.isArray(revenue) ? revenue : [], topProducts: Array.isArray(topProducts) ? topProducts : [], funnel: Array.isArray(funnel) ? funnel : [] });
+      }).catch(console.error);
+    } else if (activeTab === "coupons") {
+      fetch(`${API}/api/admin/coupons`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json()).then(data => setCoupons(Array.isArray(data) ? data : [])).catch(console.error);
     }
   }, [activeTab, isAuthenticated, fetchAdminOrders]);
 
@@ -479,6 +494,8 @@ export default function AdminDashboard() {
               { id: 'orders', icon: <ListOrdered size={18} />, label: 'Orders' },
               { id: 'products', icon: <Tag size={18} />, label: 'Inventory' },
               { id: 'add_product', icon: <PackagePlus size={18} />, label: 'List Product' },
+              { id: 'analytics', icon: <BarChart2 size={18} />, label: 'Analytics' },
+              { id: 'coupons', icon: <Ticket size={18} />, label: 'Coupons' },
             ].map(item => (
               <motion.button key={item.id} onClick={() => handleNavClick(item.id)}
                 whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
@@ -949,6 +966,161 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {activeTab === "analytics" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto space-y-8">
+            <h1 className={`text-2xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Analytics</h1>
+
+            {/* Revenue Chart */}
+            <div className={`${card} p-6`}>
+              <h3 className={`text-[13px] font-bold tracking-wider uppercase mb-6 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>Revenue — Last 30 Days</h3>
+              {analyticsData.revenue.length === 0 ? (
+                <p className={`text-[13px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No data yet.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={analyticsData.revenue}>
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={v => new Date(v).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} stroke={darkMode ? '#475569' : '#cbd5e1'} />
+                    <YAxis tick={{ fontSize: 10 }} stroke={darkMode ? '#475569' : '#cbd5e1'} tickFormatter={v => `₹${v}`} />
+                    <Tooltip formatter={(v) => [`₹${parseFloat(v).toFixed(2)}`, 'Revenue']} contentStyle={{ background: darkMode ? '#0d1424' : '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12 }} />
+                    <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Order Funnel */}
+              <div className={`${card} p-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase mb-6 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>Order Status Breakdown</h3>
+                {analyticsData.funnel.length === 0 ? <p className={`text-[13px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No data yet.</p> : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={analyticsData.funnel}>
+                      <XAxis dataKey="status" tick={{ fontSize: 10 }} stroke={darkMode ? '#475569' : '#cbd5e1'} />
+                      <YAxis tick={{ fontSize: 10 }} stroke={darkMode ? '#475569' : '#cbd5e1'} />
+                      <Tooltip contentStyle={{ background: darkMode ? '#0d1424' : '#fff', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 12 }} />
+                      <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              {/* Top Products */}
+              <div className={`${card} p-6`}>
+                <h3 className={`text-[13px] font-bold tracking-wider uppercase mb-4 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>Top Selling Products</h3>
+                <div className="space-y-3 max-h-[220px] overflow-y-auto">
+                  {analyticsData.topProducts.length === 0 ? <p className={`text-[13px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No data yet.</p> :
+                    analyticsData.topProducts.map((p, i) => (
+                      <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                        <span className={`text-[11px] font-bold w-5 text-center ${darkMode ? 'text-slate-400' : 'text-slate-400'}`}>{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-[13px] font-bold truncate ${darkMode ? 'text-white' : 'text-slate-800'}`}>{p.title}</p>
+                          <p className={`text-[11px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{p.order_count} orders · ₹{parseFloat(p.total_revenue || 0).toFixed(0)}</p>
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* COUPONS TAB */}
+        {activeTab === "coupons" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-8">
+            <h1 className={`text-2xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Coupon Management</h1>
+
+            {/* Create Coupon Form */}
+            <div className={`${card} p-6 space-y-4`}>
+              <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>Create New Coupon</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className={label}>Code</label>
+                  <input type="text" placeholder="e.g. SAVE20" value={couponForm.code} onChange={e => setCouponForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} className={inp} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={label}>Type</label>
+                  <select value={couponForm.discount_type} onChange={e => setCouponForm(p => ({ ...p, discount_type: e.target.value }))} className={`${inp} cursor-pointer`}>
+                    <option value="percent">Percent (%)</option>
+                    <option value="flat">Flat (₹)</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={label}>Value</label>
+                  <input type="number" placeholder={couponForm.discount_type === 'percent' ? '20' : '100'} value={couponForm.discount_value} onChange={e => setCouponForm(p => ({ ...p, discount_value: e.target.value }))} className={inp} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={label}>Min Order (₹)</label>
+                  <input type="number" placeholder="0" value={couponForm.min_order_amount} onChange={e => setCouponForm(p => ({ ...p, min_order_amount: e.target.value }))} className={inp} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={label}>Max Uses</label>
+                  <input type="number" placeholder="Unlimited" value={couponForm.max_uses} onChange={e => setCouponForm(p => ({ ...p, max_uses: e.target.value }))} className={inp} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={label}>Expires At</label>
+                  <input type="date" value={couponForm.expires_at} onChange={e => setCouponForm(p => ({ ...p, expires_at: e.target.value }))} className={inp} />
+                </div>
+              </div>
+              <button onClick={async () => {
+                if (!couponForm.code || !couponForm.discount_value) return alert('Code and value required.');
+                const token = localStorage.getItem('adminToken');
+                const res = await fetch(`${API}/api/admin/coupons`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify(couponForm)
+                });
+                if (res.ok) {
+                  const data = await res.json();
+                  setCoupons(prev => [data, ...prev]);
+                  setCouponForm({ code: '', discount_type: 'percent', discount_value: '', min_order_amount: '', max_uses: '', expires_at: '' });
+                } else alert('Failed to create coupon.');
+              }} className="bg-blue-600 text-white px-6 py-3 rounded-xl text-[12px] font-bold tracking-widest uppercase hover:bg-blue-700 transition-colors">
+                Create Coupon
+              </button>
+            </div>
+
+            {/* Coupons List */}
+            <div className={`${card} overflow-hidden`}>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className={`border-b ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                    {['Code', 'Type', 'Value', 'Min Order', 'Uses', 'Expires', 'Status'].map(h => (
+                      <th key={h} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {coupons.length === 0 ? (
+                    <tr><td colSpan="7" className={`p-8 text-center text-[13px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No coupons yet.</td></tr>
+                  ) : coupons.map(c => (
+                    <tr key={c.id} className={`border-b ${darkMode ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
+                      <td className={`p-4 text-[13px] font-bold font-mono ${darkMode ? 'text-white' : 'text-slate-800'}`}>{c.code}</td>
+                      <td className={`p-4 text-[12px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{c.discount_type}</td>
+                      <td className={`p-4 text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{c.discount_type === 'percent' ? `${c.discount_value}%` : `₹${c.discount_value}`}</td>
+                      <td className={`p-4 text-[12px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>₹{c.min_order_amount}</td>
+                      <td className={`p-4 text-[12px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{c.uses}{c.max_uses ? `/${c.max_uses}` : ''}</td>
+                      <td className={`p-4 text-[12px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{c.expires_at ? new Date(c.expires_at).toLocaleDateString() : '—'}</td>
+                      <td className="p-4">
+                        <button onClick={async () => {
+                          const token = localStorage.getItem('adminToken');
+                          const res = await fetch(`${API}/api/admin/coupons/${c.id}`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
+                          if (res.ok) { const data = await res.json(); setCoupons(prev => prev.map(x => x.id === c.id ? data : x)); }
+                        }} className={`px-3 py-1 rounded-lg text-[10px] font-bold tracking-widest uppercase border transition-colors ${
+                          c.is_active
+                            ? darkMode ? 'bg-emerald-900/40 text-emerald-400 border-emerald-700/50 hover:bg-red-900/40 hover:text-red-400 hover:border-red-700/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200'
+                            : darkMode ? 'bg-red-900/40 text-red-400 border-red-700/50 hover:bg-emerald-900/40 hover:text-emerald-400 hover:border-emerald-700/50' : 'bg-red-50 text-red-700 border-red-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200'
+                        }`}>
+                          {c.is_active ? 'Active' : 'Disabled'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </motion.div>
         )}

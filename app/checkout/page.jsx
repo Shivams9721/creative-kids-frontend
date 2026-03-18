@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ChevronLeft, MapPin, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronLeft, MapPin, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -44,6 +44,9 @@ export default function CheckoutPage() {
 
     const [errors, setErrors] = useState({});
     const [paymentMethod, setPaymentMethod] = useState("COD");
+    const [coupon, setCoupon] = useState("");
+    const [couponStatus, setCouponStatus] = useState(null); // null | 'checking' | { discount, code } | 'error'
+    const [couponError, setCouponError] = useState("");
 
     // UI States
     const [showAltPhone, setShowAltPhone] = useState(false);
@@ -128,6 +131,25 @@ export default function CheckoutPage() {
         }
     };
 
+    const applyCoupon = async () => {
+        if (!coupon.trim()) return;
+        setCouponStatus('checking');
+        setCouponError("");
+        try {
+            const res = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/coupons/validate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: coupon, orderAmount: cartTotal })
+            });
+            const data = await res.json();
+            if (res.ok) setCouponStatus(data);
+            else { setCouponStatus(null); setCouponError(data.error || "Invalid coupon."); }
+        } catch { setCouponStatus(null); setCouponError("Failed to validate coupon."); }
+    };
+
+    const discountAmount = couponStatus?.discount || 0;
+    const finalTotal = Math.max(0, cartTotal - discountAmount);
+
     const handlePlaceOrder = async () => {
         setLoading(true);
         try {
@@ -141,9 +163,11 @@ export default function CheckoutPage() {
                 body: JSON.stringify({
                     cartItems: cart,
                     totalAmount: cartTotal,
-                    address: address,
-                    paymentMethod: paymentMethod,
-                    userEmail: userEmail 
+                    address,
+                    paymentMethod,
+                    userEmail,
+                    couponCode: couponStatus?.code || null,
+                    discountAmount 
                 })
             });
 
@@ -152,14 +176,14 @@ export default function CheckoutPage() {
             if (data.success) {
                 setOrderSuccess(true);
                 localStorage.setItem('lastOrder', JSON.stringify({
-                  orderNumber: data.orderNumber,
+                  orderNumber: data.order_number,
                   items: cart,
-                  total: cartTotal,
+                  total: finalTotal,
                   address,
                   paymentMethod,
                   date: new Date().toISOString()
                 }));
-                setCart([]);
+                clearCart();
                 setTimeout(() => {
                     router.push('/success');
                 }, 4000);
@@ -385,7 +409,7 @@ export default function CheckoutPage() {
                                     </div>
 
                                     <button onClick={handlePlaceOrder} disabled={loading} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-4 text-[12px] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 rounded-full">
-                                        {loading ? "Processing Securely..." : `Confirm & Pay ₹${cartTotal.toFixed(2)}`}
+                                        {loading ? "Processing Securely..." : `Confirm & Pay ₹${finalTotal.toFixed(2)}`}
                                     </button>
                                 </motion.div>
                             )}
@@ -400,14 +424,40 @@ export default function CheckoutPage() {
                                         <span>Cart Value ({cart.length} items)</span>
                                         <span>₹{cartTotal.toFixed(2)}</span>
                                     </div>
+                                    {discountAmount > 0 && (
+                                        <div className="flex justify-between text-green-600 font-medium">
+                                            <span>Coupon ({couponStatus.code})</span>
+                                            <span>- ₹{discountAmount.toFixed(2)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-black/70">
                                         <span>Delivery Charges</span>
                                         <span className="text-black font-medium tracking-widest uppercase text-[10px] bg-black/5 px-2 py-1 rounded">Free</span>
                                     </div>
                                 </div>
+                                {/* Coupon Input */}
+                                <div className="mb-6">
+                                    <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-2">Coupon Code</p>
+                                    {couponStatus && couponStatus.discount ? (
+                                        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                            <span className="text-[12px] font-bold text-green-700">{couponStatus.code} applied — ₹{discountAmount} off</span>
+                                            <button onClick={() => { setCouponStatus(null); setCoupon(""); }} className="text-green-600 hover:text-red-500 transition-colors"><X size={14} /></button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <input type="text" value={coupon} onChange={e => { setCoupon(e.target.value.toUpperCase()); setCouponError(""); }}
+                                                placeholder="Enter code" className="flex-1 border border-black/20 rounded-lg px-3 py-2 text-[12px] outline-none focus:border-black uppercase" />
+                                            <button onClick={applyCoupon} disabled={couponStatus === 'checking'}
+                                                className="px-4 py-2 bg-black text-white rounded-lg text-[11px] font-bold tracking-widest uppercase disabled:opacity-50">
+                                                {couponStatus === 'checking' ? '...' : 'Apply'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {couponError && <p className="text-[11px] text-red-500 mt-1">{couponError}</p>}
+                                </div>
                                 <div className="flex justify-between text-[16px] font-bold text-black mb-6">
                                     <span>Total Amount</span>
-                                    <span>₹{cartTotal.toFixed(2)}</span>
+                                    <span>₹{finalTotal.toFixed(2)}</span>
                                 </div>
 
                                 <div className="bg-black/5 rounded-lg p-4 flex items-start gap-3">

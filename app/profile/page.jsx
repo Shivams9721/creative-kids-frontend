@@ -225,12 +225,31 @@ export default function UserProfile() {
                             </span>
                           </td>
                           <td className="p-4 text-right">
-                            <button 
-                              onClick={() => setSelectedOrder(order)}
-                              className="text-[11px] font-bold tracking-widest uppercase text-black hover:text-black/50 transition-colors border-b border-black pb-0.5"
-                            >
-                              View Details
-                            </button>
+                            <div className="flex items-center justify-end gap-3">
+                              <button 
+                                onClick={() => setSelectedOrder(order)}
+                                className="text-[11px] font-bold tracking-widest uppercase text-black hover:text-black/50 transition-colors border-b border-black pb-0.5"
+                              >
+                                View
+                              </button>
+                              {order.status === 'Processing' && (
+                                <button
+                                  onClick={async () => {
+                                    if (!window.confirm('Cancel this order?')) return;
+                                    const token = localStorage.getItem('token');
+                                    const res = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/orders/${order.id}/cancel`, {
+                                      method: 'POST',
+                                      headers: { Authorization: `Bearer ${token}` }
+                                    });
+                                    if (res.ok) setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Cancelled' } : o));
+                                    else alert('Could not cancel order.');
+                                  }}
+                                  className="text-[11px] font-bold tracking-widest uppercase text-red-500 hover:text-red-700 transition-colors border-b border-red-300 pb-0.5"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))

@@ -1,39 +1,74 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
-// 1. Create the Context
 const CartContext = createContext();
 
-// 2. Create the Provider (The Wrapper)
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState([]);
+  const [cart, setCartState] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Function to add an item
-  const addToCart = (product, size) => {
-    // We add a unique cartId in case they buy two of the same dress in different sizes
-    setCart((prevCart) => [
-      ...prevCart, 
-      { ...product, cartId: Math.random().toString(), selectedSize: size }
-    ]);
-    setIsCartOpen(true); // Automatically open the cart drawer when an item is added
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ck_cart");
+      if (saved) setCartState(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  // Persist to localStorage on every change
+  const setCart = (updater) => {
+    setCartState(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      try { localStorage.setItem("ck_cart", JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
 
-  // Function to remove an item
+  const addToCart = (product) => {
+    setCart(prev => {
+      // If same product + color + size already in cart, increment quantity
+      const existing = prev.findIndex(
+        i => i.id === product.id &&
+             i.selectedColor === product.selectedColor &&
+             i.selectedSize === product.selectedSize
+      );
+      let next;
+      if (existing >= 0) {
+        next = prev.map((item, idx) =>
+          idx === existing ? { ...item, quantity: (item.quantity || 1) + 1 } : item
+        );
+      } else {
+        next = [...prev, { ...product, cartId: Math.random().toString(), quantity: product.quantity || 1 }];
+      }
+      try { localStorage.setItem("ck_cart", JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setIsCartOpen(true);
+  };
+
   const removeFromCart = (cartId) => {
-    setCart((prevCart) => prevCart.filter((item) => item.cartId !== cartId));
+    setCart(prev => prev.filter(item => item.cartId !== cartId));
   };
 
-  const cartCount = cart.length;
-  const cartTotal = cart.reduce((total, item) => total + parseFloat(item.price), 0);
+  const updateQuantity = (cartId, quantity) => {
+    if (quantity < 1) { removeFromCart(cartId); return; }
+    setCart(prev => prev.map(item => item.cartId === cartId ? { ...item, quantity } : item));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+    try { localStorage.removeItem("ck_cart"); } catch {}
+  };
+
+  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const cartTotal = cart.reduce((total, item) => total + parseFloat(item.price) * (item.quantity || 1), 0);
 
   return (
-    <CartContext.Provider value={{ cart,setCart, addToCart, removeFromCart, cartCount, cartTotal, isCartOpen, setIsCartOpen }}>
+    <CartContext.Provider value={{ cart, setCart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, isCartOpen, setIsCartOpen }}>
       {children}
     </CartContext.Provider>
   );
 }
 
-// 3. Create a custom hook for easy access
 export const useCart = () => useContext(CartContext);
