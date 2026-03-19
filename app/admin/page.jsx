@@ -1268,6 +1268,8 @@ export default function AdminDashboard() {
               <div className={`${card} p-6 md:p-8 space-y-6`}>
                 <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>3. Product Attributes</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { name: 'fabric', placeholder: 'e.g. Cotton' },
                     { name: 'pattern', placeholder: 'e.g. Floral Print' },
                     { name: 'neck_type', placeholder: 'e.g. Round Neck' },
                   ].map(f => (
