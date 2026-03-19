@@ -9,10 +9,6 @@ import { csrfHeaders } from "@/lib/csrf";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-const DEMO_RETURNS = [
-  { id: "#RET-0012", orderId: "#ORD-0041", item: "Classic Blue Romper", date: "Aug 15, 2023", status: "Refunded" }
-];
-
 // The timeline steps your admin panel uses
 const TRACKING_STEPS = ["Processing", "Shipped", "Delivered"];
 
@@ -21,6 +17,8 @@ export default function UserProfile() {
 
   // Real data states
   const [user, setUser] = useState({ name: "Loading...", email: "...", phone: "", address: "", points: 0 });
+  const [savedAddress, setSavedAddress] = useState({ houseNo: "", roadName: "", city: "", state: "", pincode: "", landmark: "" });
+  const [savingAddress, setSavingAddress] = useState(false);
 
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -38,11 +36,13 @@ export default function UserProfile() {
     const savedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
 
-    // If no user data is found, send them to login
     if (!savedUser) {
       window.location.href = "/login";
       return;
     }
+
+    // Load saved address
+    try { const a = localStorage.getItem('ck_address'); if (a) setSavedAddress(JSON.parse(a)); } catch {}
 
     const parsedUser = JSON.parse(savedUser);
     setUser(prev => ({ ...prev, name: parsedUser.name, email: parsedUser.email }));
@@ -180,9 +180,15 @@ export default function UserProfile() {
               <div className="bg-white p-8 rounded-xl border border-black/10 shadow-sm relative">
                 <button onClick={() => setActiveTab("settings")} className="absolute top-6 right-6 text-[10px] font-bold uppercase tracking-widest text-blue-500 hover:underline">Edit</button>
                 <h3 className="text-[11px] font-bold tracking-widest uppercase text-black/50 mb-6 flex items-center gap-2"><MapPin size={16} /> Default Shipping Address</h3>
-                <p className="text-[13px] text-black/50 leading-relaxed italic">
-                  No address saved yet. Update in settings.
-                </p>
+                {savedAddress.houseNo ? (
+                  <div className="text-[13px] text-black/70 leading-relaxed space-y-1">
+                    <p>{savedAddress.houseNo}, {savedAddress.roadName}</p>
+                    {savedAddress.landmark && <p>Near {savedAddress.landmark}</p>}
+                    <p>{savedAddress.city}, {savedAddress.state} — {savedAddress.pincode}</p>
+                  </div>
+                ) : (
+                  <p className="text-[13px] text-black/50 leading-relaxed italic">No address saved yet. Update in settings.</p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -321,41 +327,13 @@ export default function UserProfile() {
         {/* TAB 4: RETURNS */}
         {activeTab === "returns" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex justify-between items-end mb-8">
-              <h1 className="text-2xl font-light tracking-widest uppercase text-black">Returns & Refunds</h1>
-              <button className="text-[11px] font-bold uppercase tracking-widest border border-black px-4 py-2 rounded-full hover:bg-black hover:text-white transition-colors">
-                Initiate New Return
-              </button>
-            </div>
-            <div className="bg-white border border-black/10 rounded-xl overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-[#fafafa] border-b border-black/10">
-                      <th className="p-4 text-[10px] font-bold tracking-widest uppercase text-black/60">Return ID</th>
-                      <th className="p-4 text-[10px] font-bold tracking-widest uppercase text-black/60">Original Order</th>
-                      <th className="p-4 text-[10px] font-bold tracking-widest uppercase text-black/60">Item</th>
-                      <th className="p-4 text-[10px] font-bold tracking-widest uppercase text-black/60">Request Date</th>
-                      <th className="p-4 text-[10px] font-bold tracking-widest uppercase text-black/60">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {DEMO_RETURNS.map((ret, idx) => (
-                      <tr key={idx} className="border-b border-black/5 hover:bg-gray-50">
-                        <td className="p-4 text-[12px] font-medium text-black">{ret.id}</td>
-                        <td className="p-4 text-[12px] text-black/70">{ret.orderId}</td>
-                        <td className="p-4 text-[12px] text-black">{ret.item}</td>
-                        <td className="p-4 text-[12px] text-black/70">{ret.date}</td>
-                        <td className="p-4">
-                          <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border bg-gray-100 text-gray-700 border-gray-200">
-                            {ret.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <h1 className="text-2xl font-light tracking-widest uppercase text-black mb-8">Returns & Refunds</h1>
+            <div className="bg-white border border-black/10 rounded-xl p-12 text-center">
+              <p className="text-[13px] text-black/50 mb-4">No return requests yet.</p>
+              <p className="text-[12px] text-black/40">To initiate a return, please contact us via WhatsApp or email within 7 days of delivery.</p>
+              <a href="https://wa.me/918527910223" target="_blank" rel="noreferrer" className="inline-block mt-6 bg-[#25D366] text-white px-8 py-3 rounded-full text-[11px] font-bold tracking-widest uppercase hover:opacity-90 transition-opacity">
+                Contact on WhatsApp
+              </a>
             </div>
           </motion.div>
         )}
@@ -402,6 +380,51 @@ export default function UserProfile() {
               <div className="pt-6 border-t border-black/10 flex justify-end">
                 <button type="submit" className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-lg">
                   Save Changes
+                </button>
+              </div>
+            </form>
+
+            {/* Saved Address Form */}
+            <form className="bg-white p-8 border border-black/10 rounded-xl shadow-sm space-y-6 mt-6" onSubmit={async (e) => {
+              e.preventDefault();
+              setSavingAddress(true);
+              const fd = new FormData(e.target);
+              const addr = { houseNo: fd.get('houseNo'), roadName: fd.get('roadName'), city: fd.get('city'), state: fd.get('state'), pincode: fd.get('pincode'), landmark: fd.get('landmark') };
+              setSavedAddress(addr);
+              localStorage.setItem('ck_address', JSON.stringify(addr));
+              setSavingAddress(false);
+              alert('Address saved!');
+            }}>
+              <h3 className="text-[12px] font-bold tracking-widest uppercase text-black border-b border-black/10 pb-2">Default Shipping Address</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">House No., Building</label>
+                  <input type="text" name="houseNo" defaultValue={savedAddress.houseNo} placeholder="Flat/House No." className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Road Name, Area</label>
+                  <input type="text" name="roadName" defaultValue={savedAddress.roadName} placeholder="Street, Sector, Area" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">City</label>
+                  <input type="text" name="city" defaultValue={savedAddress.city} placeholder="City" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">State</label>
+                  <input type="text" name="state" defaultValue={savedAddress.state} placeholder="State" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Pincode</label>
+                  <input type="text" name="pincode" defaultValue={savedAddress.pincode} placeholder="6-digit pincode" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Landmark (Optional)</label>
+                  <input type="text" name="landmark" defaultValue={savedAddress.landmark} placeholder="Near Apollo Hospital" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
+                </div>
+              </div>
+              <div className="pt-6 border-t border-black/10 flex justify-end">
+                <button type="submit" disabled={savingAddress} className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-lg disabled:opacity-50">
+                  Save Address
                 </button>
               </div>
             </form>

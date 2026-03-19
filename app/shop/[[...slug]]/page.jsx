@@ -270,6 +270,14 @@ export default function Shop() {
             <button onClick={() => setIsMobileFilterOpen(true)} className="md:hidden flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase border border-black/20 px-4 py-2">
               <SlidersHorizontal size={14} /> Filters {hasActiveFilters && <span className="w-2 h-2 bg-black rounded-full"></span>}
             </button>
+            {/* Mobile Sort */}
+            <div className="md:hidden">
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-[11px] font-bold tracking-widest uppercase border border-black/20 px-3 py-2 outline-none bg-white">
+                <option value="newest">Newest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>

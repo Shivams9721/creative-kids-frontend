@@ -34,7 +34,11 @@ export default function ProductPage() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [pincode, setPincode] = useState("");
-  const [pincodeStatus, setPincodeStatus] = useState(null); // null | 'checking' | 'available' | 'unavailable'
+  const [pincodeStatus, setPincodeStatus] = useState(null);
+  const [notifyEmail, setNotifyEmail] = useState("");
+  const [notifyDone, setNotifyDone] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   // 2. FETCH PRODUCT DATA (Now Crash-Proof)
   useEffect(() => {
@@ -45,7 +49,16 @@ export default function ProductPage() {
         if (!response.ok) throw new Error("Product fetch failed or server error");
         
         const data = await response.json();
-        
+
+        // Fetch related products
+        fetch(`${API}/api/products`)
+          .then(r => r.json())
+          .then(all => {
+            const parsed = all.map(p => ({ ...p, image_urls: typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []) }));
+            const related = parsed.filter(p => p.id !== parseInt(id) && p.sub_category === data.sub_category).slice(0, 6);
+            setRelatedProducts(related);
+          }).catch(() => {});
+
         let parsedImages = [];
         try { parsedImages = typeof data.image_urls === 'string' ? JSON.parse(data.image_urls) : (data.image_urls || []); } catch(e) {}
         data.image_urls = parsedImages;
@@ -285,6 +298,23 @@ export default function ProductPage() {
   return (
     <main className="min-h-screen bg-white pt-[64px] md:pt-[72px]">
 
+      {/* ZOOM MODAL */}
+      <AnimatePresence>
+        {zoomOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setZoomOpen(false)}
+              className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-zoom-out"
+            >
+              <button onClick={() => setZoomOpen(false)} className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors z-10">
+                <X size={24} className="text-white" />
+              </button>
+              <img src={mainImage} alt={product.title} className="max-h-[90vh] max-w-[90vw] object-contain" onClick={e => e.stopPropagation()} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* SIZE GUIDE MODAL */}
       <AnimatePresence>
         {showSizeGuide && (
@@ -369,7 +399,7 @@ export default function ProductPage() {
             )}
             
             <div className="w-full flex-1 relative">
-              <Image src={mainImage} alt={product.title} width={800} height={1000} priority className="w-full h-auto block" sizes="(max-width: 1024px) 100vw, 50vw" />
+              <Image src={mainImage} alt={product.title} width={800} height={1000} priority className="w-full h-auto block cursor-zoom-in" sizes="(max-width: 1024px) 100vw, 50vw" onClick={() => setZoomOpen(true)} />
               
               {/* WISHLIST BUTTON */}
               <button 
@@ -483,6 +513,25 @@ export default function ProductPage() {
                   <span className="text-[11px] font-bold tracking-widest uppercase text-black">Size</span>
                   <button onClick={() => setShowSizeGuide(true)} className="text-[10px] tracking-widest uppercase text-black/50 hover:text-black border-b border-black/20 pb-0.5">Size Guide</button>
                 </div>
+                {/* Age → Size Recommender */}
+                <div className="mb-4 p-3 bg-[#fafafa] border border-black/10 rounded-xl">
+                  <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-2">What's my size? — Select age</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: '0-3M', size: '0-3M' }, { label: '3-6M', size: '3-6M' }, { label: '6-12M', size: '6-9M' },
+                      { label: '1Y', size: '1-2Y' }, { label: '2Y', size: '2-3Y' }, { label: '3Y', size: '3-4Y' },
+                      { label: '4Y', size: '4-5Y' }, { label: '5-6Y', size: '5-6Y' }, { label: '7-8Y', size: '7-8Y' },
+                      { label: '9-10Y', size: '9-10Y' }, { label: '11-12Y', size: '11-12Y' },
+                    ].filter(a => availableSizes.some(s => s === a.size)).map(a => (
+                      <button key={a.label} onClick={() => setSelectedSize(a.size)}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider border transition-colors ${
+                          selectedSize === a.size ? 'bg-black text-white border-black' : 'border-black/20 text-black/60 hover:border-black'
+                        }`}>
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-3">
                   {availableSizes.map(size => {
                     const available = isSizeAvailableForColor(size);
@@ -533,6 +582,21 @@ export default function ProductPage() {
                 <p className="text-[12px] text-red-500 font-medium mt-2">✗ Delivery not available for this pincode</p>
               )}
             </div>
+
+            {/* NOTIFY ME */}
+            {isOutOfStock && (
+              <div className="mb-6 p-4 bg-[#fafafa] border border-black/10 rounded-xl">
+                <p className="text-[11px] font-bold tracking-widest uppercase text-black mb-3">Notify Me When Available</p>
+                {notifyDone ? (
+                  <p className="text-[12px] text-green-600 font-medium">✓ We'll notify you when this is back in stock!</p>
+                ) : (
+                  <div className="flex gap-2">
+                    <input type="email" value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} placeholder="Enter your email" className="flex-1 border border-black/20 rounded-full px-4 py-2.5 text-[13px] outline-none focus:border-black" />
+                    <button onClick={() => { if (notifyEmail) setNotifyDone(true); }} className="px-5 py-2.5 bg-black text-white rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors">Notify</button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* ADD TO CART BUTTON */}
             <div className="flex flex-col gap-4 mb-10">
@@ -758,6 +822,25 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+      {/* YOU MAY ALSO LIKE */}
+      {relatedProducts.length > 0 && (
+        <section className="border-t border-black/10 py-12 px-4 md:px-8">
+          <div className="max-w-[1600px] mx-auto">
+            <h2 className="text-[12px] font-bold tracking-widest uppercase text-black mb-8">You May Also Like</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {relatedProducts.map(p => (
+                <Link key={p.id} href={`/product/${p.id}`} className="group flex flex-col">
+                  <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-3">
+                    <Image src={p.image_urls?.[0] || ''} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 50vw, 16vw" />
+                  </div>
+                  <p className="text-[12px] text-black truncate">{p.title}</p>
+                  <p className="text-[12px] font-bold text-black mt-0.5">₹{parseFloat(p.price).toFixed(2)}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

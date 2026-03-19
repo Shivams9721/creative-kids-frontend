@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
@@ -8,14 +8,26 @@ import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
+const HERO_SLIDES = [
+  { image: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", href: "/shop" },
+  { image: "/images/Dress.png", tag: "Girls", title: "New Arrivals", href: "/shop/new" },
+  { image: "/images/infant.png", tag: "Baby", title: "Infants & Toddlers", href: "/shop/baby" },
+];
+
 export default function Home() {
   const [girlsProducts, setGirlsProducts] = useState([null, null, null, null]);
   const [bestsellerProducts, setBestsellerProducts] = useState([null, null, null, null]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(new Set());
+  const [heroIndex, setHeroIndex] = useState(0);
 
   const carouselRef = useRef(null);
+
+  useEffect(() => {
+    const t = setInterval(() => setHeroIndex(i => (i + 1) % HERO_SLIDES.length), 5000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -129,19 +141,27 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* 1. HERO BANNER */}
+      {/* 1. HERO BANNER — Auto-rotating carousel */}
       <section className="relative w-full h-[85vh] md:h-screen flex items-end justify-center overflow-hidden pb-16 md:pb-24">
-        <Image src="/images/321.png" alt="Spring Collection Campaign" fill priority className="object-cover object-center" sizes="100vw" />
+        <AnimatePresence mode="wait">
+          <motion.div key={heroIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.8 }} className="absolute inset-0">
+            <Image src={HERO_SLIDES[heroIndex].image} alt={HERO_SLIDES[heroIndex].title} fill priority className="object-cover object-center" sizes="100vw" />
+          </motion.div>
+        </AnimatePresence>
         <div className="absolute inset-0 bg-black/30"></div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="relative z-10 flex flex-col items-center text-center px-4 text-white">
-          <span className="text-[9px] md:text-[10px] tracking-[0.3em] font-medium uppercase text-white/90 mb-2">Baby & Kids</span>
+          <span className="text-[9px] md:text-[10px] tracking-[0.3em] font-medium uppercase text-white/90 mb-2">{HERO_SLIDES[heroIndex].tag}</span>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-[0.15em] uppercase mb-4 max-w-4xl leading-[1.1]" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>
-            The Spring Collection
+            {HERO_SLIDES[heroIndex].title}
           </h1>
-          <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center">
-            <Link href="/shop" className="text-[11px] md:text-[12px] font-bold tracking-[0.2em] uppercase hover:text-white/70 transition-colors">Explore Collection</Link>
-          </div>
+          <Link href={HERO_SLIDES[heroIndex].href} className="text-[11px] md:text-[12px] font-bold tracking-[0.2em] uppercase hover:text-white/70 transition-colors">Explore Collection</Link>
         </motion.div>
+        {/* Slide dots */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {HERO_SLIDES.map((_, i) => (
+            <button key={i} onClick={() => setHeroIndex(i)} className={`w-1.5 h-1.5 rounded-full transition-all ${i === heroIndex ? 'bg-white w-4' : 'bg-white/40'}`} />
+          ))}
+        </div>
       </section>
 
       {/* 2. SHOP BY CATEGORY */}
