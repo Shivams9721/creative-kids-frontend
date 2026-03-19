@@ -35,6 +35,15 @@ export default function SmartSearch({ isOpen, onClose }) {
     return () => { document.body.style.overflow = "unset"; };
   }, [isOpen]);
 
+  // Autocomplete suggestions (product titles matching query prefix)
+  const suggestions = query.trim().length >= 2
+    ? [...new Set(
+        products
+          .filter(p => p.title?.toLowerCase().includes(query.toLowerCase()))
+          .map(p => p.title)
+      )].slice(0, 6)
+    : [];
+
   // The Smart "Fuzzy" Search Algorithm
   useEffect(() => {
     if (!query.trim()) {
@@ -105,7 +114,7 @@ export default function SmartSearch({ isOpen, onClose }) {
               </button>
 
               {/* SEARCH INPUT AREA */}
-              <div className="w-full flex flex-col items-center justify-center pt-20 md:pt-28 pb-12 px-4">
+              <div className="w-full flex flex-col items-center justify-center pt-20 md:pt-28 pb-6 px-4">
                 <input
                   ref={inputRef}
                   type="text"
@@ -115,6 +124,39 @@ export default function SmartSearch({ isOpen, onClose }) {
                   className="w-full max-w-lg text-center text-[12px] md:text-[13px] font-light text-black placeholder:text-black/40 outline-none bg-transparent uppercase tracking-[0.15em] transition-colors"
                 />
               </div>
+
+              {/* AUTOCOMPLETE SUGGESTIONS */}
+              {suggestions.length > 0 && (
+                <div className="w-full flex flex-wrap justify-center gap-2 px-4 pb-8">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setQuery(s)}
+                      className="px-4 py-1.5 border border-black/15 rounded-full text-[11px] tracking-wide text-black/60 hover:border-black hover:text-black transition-colors capitalize"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* TRENDING CHIPS (shown when no query) */}
+              {!query.trim() && (
+                <div className="w-full flex flex-col items-center pb-10 px-4">
+                  <p className="text-[10px] tracking-widest uppercase text-black/30 mb-3">Trending</p>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {['Onesies', 'Dresses', 'T-Shirts', 'Co-ord Sets', 'Jeans', 'Rompers', 'Sweatshirts', 'Shorts'].map(term => (
+                      <button
+                        key={term}
+                        onClick={() => setQuery(term)}
+                        className="px-4 py-1.5 border border-black/15 rounded-full text-[11px] tracking-wide text-black/60 hover:border-black hover:text-black transition-colors"
+                      >
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* STATE 1: LOADING INDICATOR */}
               {isSearching && (
