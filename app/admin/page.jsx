@@ -10,8 +10,9 @@ import {
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import VariantDrawer from "@/components/VariantDrawer";
+import { csrfHeaders } from "@/lib/csrf";
 
-const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 const COLOR_HEX_MAP = {
   Black:'#000000', White:'#FFFFFF', Beige:'#F5F5DC', Blue:'#4A90E2', Pink:'#E2889D',
@@ -34,6 +35,7 @@ const DEFAULT_FORM_STATE = {
   title: "", price: "", mrp: "", sku: "", hsn_code: "",
   main_category: "Baby", sub_category: "Baby Boy", item_type: "Onesies & Rompers",
   fabric: "", pattern: "", neck_type: "", belt_included: false,
+  closure_type: "", length_type: "",
   image_urls: [], sizes: [], colors: [],
   description: "", manufacturer_details: "", care_instructions: "Machine Wash", origin_country: "India",
   variants: [],
@@ -186,7 +188,8 @@ export default function AdminDashboard() {
       const token = localStorage.getItem("adminToken");
       const res = await fetch(`${API}/api/admin/orders/${orderId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: await csrfHeaders({ "Content-Type": "application/json", Authorization: `Bearer ${token}` }),
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus, courier_name: courier, awb_number: awb })
       });
       if (res.ok) {
@@ -205,7 +208,8 @@ export default function AdminDashboard() {
       const token = localStorage.getItem("adminToken");
       const res = await fetch(`${API}/api/admin/orders/${orderId}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: await csrfHeaders({ "Content-Type": "application/json", Authorization: `Bearer ${token}` }),
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus, courier_name: courierName, awb_number: awbNumber })
       });
       if (res.ok) {
@@ -241,7 +245,8 @@ export default function AdminDashboard() {
       fd.append("image", file);
       const res = await fetch(`${API}/api/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: await csrfHeaders({ Authorization: `Bearer ${token}` }),
+        credentials: 'include',
         body: fd
       });
       const data = await res.json();
@@ -266,7 +271,8 @@ export default function AdminDashboard() {
       const token = localStorage.getItem("adminToken");
       await fetch(`${API}/api/upload`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: await csrfHeaders({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" }),
+        credentials: 'include',
         body: JSON.stringify({ imageUrl: urlToDelete })
       });
     } catch (err) { console.error("Failed to delete image from S3:", err); }
@@ -304,7 +310,8 @@ export default function AdminDashboard() {
       const token = localStorage.getItem("adminToken");
       const res = await fetch(url, {
         method: editingId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: await csrfHeaders({ "Content-Type": "application/json", Authorization: `Bearer ${token}` }),
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
       if (res.ok) {
@@ -330,7 +337,9 @@ export default function AdminDashboard() {
       main_category: product.main_category || "Baby", sub_category: product.sub_category || "Baby Boy",
       item_type: product.item_type || "Onesies & Rompers",
       fabric: product.fabric || "", pattern: product.pattern || "", neck_type: product.neck_type || "",
-      belt_included: product.belt_included || false, image_urls: parsedImages, sizes: [], colors: [],
+      belt_included: product.belt_included || false,
+      closure_type: product.closure_type || "", length_type: product.length_type || "",
+      image_urls: parsedImages, sizes: [], colors: [],
       description: product.description || "", manufacturer_details: product.manufacturer_details || "",
       care_instructions: product.care_instructions || "", origin_country: product.origin_country || "India",
       variants: parsedVariants,
@@ -349,7 +358,7 @@ export default function AdminDashboard() {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${API}/api/products/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API}/api/products/${id}`, { method: "DELETE", credentials: 'include', headers: await csrfHeaders({ Authorization: `Bearer ${token}` }) });
       if (res.ok) setAllProducts(prev => prev.filter(p => p.id !== id));
       else alert("Failed to delete product.");
     } catch (err) { console.error(err); }
@@ -1070,7 +1079,9 @@ export default function AdminDashboard() {
                 if (!couponForm.code || !couponForm.discount_value) return alert('Code and value required.');
                 const token = localStorage.getItem('adminToken');
                 const res = await fetch(`${API}/api/admin/coupons`, {
-                  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  method: 'POST',
+                  headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }),
+                  credentials: 'include',
                   body: JSON.stringify(couponForm)
                 });
                 if (res.ok) {
@@ -1107,7 +1118,7 @@ export default function AdminDashboard() {
                       <td className="p-4">
                         <button onClick={async () => {
                           const token = localStorage.getItem('adminToken');
-                          const res = await fetch(`${API}/api/admin/coupons/${c.id}`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
+                          const res = await fetch(`${API}/api/admin/coupons/${c.id}`, { method: 'PUT', credentials: 'include', headers: await csrfHeaders({ Authorization: `Bearer ${token}` }) });
                           if (res.ok) { const data = await res.json(); setCoupons(prev => prev.map(x => x.id === c.id ? data : x)); }
                         }} className={`px-3 py-1 rounded-lg text-[10px] font-bold tracking-widest uppercase border transition-colors ${
                           c.is_active
@@ -1256,9 +1267,7 @@ export default function AdminDashboard() {
               {/* 3. Attributes */}
               <div className={`${card} p-6 md:p-8 space-y-6`}>
                 <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>3. Product Attributes</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {[
-                    { name: 'fabric', placeholder: 'e.g. 100% Cotton' },
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     { name: 'pattern', placeholder: 'e.g. Floral Print' },
                     { name: 'neck_type', placeholder: 'e.g. Round Neck' },
                   ].map(f => (
@@ -1267,6 +1276,28 @@ export default function AdminDashboard() {
                       <input type="text" name={f.name} value={formData[f.name]} onChange={handleChange} placeholder={f.placeholder} className={inp} />
                     </div>
                   ))}
+                  <div className="flex flex-col gap-2">
+                    <label className={label}>Closure Type</label>
+                    <select name="closure_type" value={formData.closure_type} onChange={handleChange} className={`${inp} cursor-pointer`}>
+                      <option value="">-- Select --</option>
+                      <option value="Pull On">Pull On</option>
+                      <option value="Elastic">Elastic</option>
+                      <option value="Button">Button</option>
+                      <option value="Snap Button">Snap Button</option>
+                      <option value="Zip">Zip</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className={label}>Length Type</label>
+                    <select name="length_type" value={formData.length_type} onChange={handleChange} className={`${inp} cursor-pointer`}>
+                      <option value="">-- Select --</option>
+                      <option value="Mini">Mini</option>
+                      <option value="Mid Thigh">Mid Thigh</option>
+                      <option value="Knee Length">Knee Length</option>
+                      <option value="Midi">Midi</option>
+                      <option value="Ankle Length">Ankle Length</option>
+                    </select>
+                  </div>
                   <div className="flex items-center gap-3 pt-2 md:pt-8">
                     <input type="checkbox" name="belt_included" checked={formData.belt_included} onChange={handleChange} className="w-5 h-5 accent-blue-600 cursor-pointer rounded" id="beltCheck" />
                     <label htmlFor="beltCheck" className={`text-[12px] font-bold tracking-widest uppercase cursor-pointer ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>Belt Included?</label>

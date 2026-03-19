@@ -1,4 +1,4 @@
-const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export async function generateMetadata({ params }) {
   try {

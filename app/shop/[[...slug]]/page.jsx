@@ -33,7 +33,7 @@ const PRICE_RANGES = [
   { label: 'Over ₹999', min: 999, max: 999999 }
 ];
 
-const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Shop() {
   const { addToCart } = useCart();
@@ -226,12 +226,12 @@ export default function Shop() {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-[64px] md:pt-[72px] pb-24 font-sans text-black">
+    <div className="min-h-screen bg-white pb-24 font-sans text-black">
       
       {/* ========================================== */}
       {/* TOP HEADER SECTION (BREADCRUMBS & SORT)    */}
       {/* ========================================== */}
-      <div className="w-full px-4 md:px-12 py-8 md:py-12 border-b border-black/10">
+      <div className="w-full px-4 md:px-12 py-4 md:py-6 border-b border-black/10">
         <div className="max-w-[1600px] mx-auto flex flex-col gap-6">
           
           <div className="flex items-center flex-wrap gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-black/40">

@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
+const API = process.env.NEXT_PUBLIC_API_URL;
+
 export default function ProductGrid() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +13,7 @@ export default function ProductGrid() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products");
+        const response = await fetch(`${API}/api/products`);
         const rawData = await response.json();
         const data = rawData.map(p => ({
           ...p,

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Mail, Lock, User as UserIcon, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { csrfHeaders } from "@/lib/csrf";
 
-const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 function LoginContent() {
   const [mode, setMode] = useState("login"); // login | register | forgot | reset | reset_done
@@ -35,7 +36,8 @@ function LoginContent() {
         const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
         const res = await fetch(`${API}${endpoint}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await csrfHeaders({ "Content-Type": "application/json" }),
+          credentials: 'include',
           body: JSON.stringify(formData),
         });
         const data = await res.json();
@@ -51,18 +53,13 @@ function LoginContent() {
       if (mode === "forgot") {
         const res = await fetch(`${API}/api/auth/forgot-password`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await csrfHeaders({ "Content-Type": "application/json" }),
+          credentials: 'include',
           body: JSON.stringify({ email: formData.email }),
         });
         const data = await res.json();
         if (res.ok) {
-          // In production this would be emailed. For now show the token as a reset link.
-          if (data.reset_token) {
-            setResetToken(data.reset_token);
-            setMode("reset");
-          } else {
-            setMode("forgot_sent");
-          }
+          setMode("forgot_sent");
         } else {
           setError(data.error || "Something went wrong.");
         }
@@ -76,7 +73,8 @@ function LoginContent() {
         }
         const res = await fetch(`${API}/api/auth/reset-password`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: await csrfHeaders({ "Content-Type": "application/json" }),
+          credentials: 'include',
           body: JSON.stringify({ token: resetToken, password: formData.password }),
         });
         const data = await res.json();

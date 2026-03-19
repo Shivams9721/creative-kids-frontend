@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 
-const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Home() {
   const [girlsProducts, setGirlsProducts] = useState([null, null, null, null]);

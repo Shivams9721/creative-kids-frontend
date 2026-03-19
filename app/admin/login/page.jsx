@@ -16,7 +16,8 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/admin/login", {
+      const API = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(`${API}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })

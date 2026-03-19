@@ -4,7 +4,7 @@ import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Wand2, Trash2, Image as ImageIcon, UploadCloud, CheckCircle2, Plus } from "lucide-react";
 
-const API = "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 const ALL_SIZES = [
   '0-3M','3-6M','6-9M','9-12M','12-18M','18-24M',

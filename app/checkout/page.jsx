@@ -3,9 +3,12 @@
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
+import { csrfHeaders } from "@/lib/csrf";
 import { CheckCircle2, ChevronLeft, MapPin, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 const SmartInput = ({ label, name, value, placeholder, error, type = "text", disabled = false, badge, onChange }) => (
     <div className="w-full relative">
@@ -26,7 +29,7 @@ const SmartInput = ({ label, name, value, placeholder, error, type = "text", dis
 );
 
 export default function CheckoutPage() {
-    const { cart, cartTotal, setCart } = useCart();
+    const { cart, cartTotal, setCart, clearCart } = useCart();
     const router = useRouter();
 
     // SECURITY STATE
@@ -136,9 +139,10 @@ export default function CheckoutPage() {
         setCouponStatus('checking');
         setCouponError("");
         try {
-            const res = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/coupons/validate", {
+            const res = await fetch(`${API}/api/coupons/validate`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: await csrfHeaders({ "Content-Type": "application/json" }),
+                credentials: 'include',
                 body: JSON.stringify({ code: coupon, orderAmount: cartTotal })
             });
             const data = await res.json();
@@ -153,21 +157,20 @@ export default function CheckoutPage() {
     const handlePlaceOrder = async () => {
         setLoading(true);
         try {
-            const userStr = localStorage.getItem("user");
-            const currentUser = userStr ? JSON.parse(userStr) : null;
-            const userEmail = currentUser ? currentUser.email : "guest";
+            const token = localStorage.getItem("token");
+            if (!token) { router.push("/login"); return; }
 
-            const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/orders", {
+            const response = await fetch(`${API}/api/orders`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: await csrfHeaders({ "Content-Type": "application/json", "Authorization": `Bearer ${token}` }),
+                credentials: 'include',
                 body: JSON.stringify({
                     cartItems: cart,
                     totalAmount: cartTotal,
                     address,
                     paymentMethod,
-                    userEmail,
                     couponCode: couponStatus?.code || null,
-                    discountAmount 
+                    discountAmount
                 })
             });
 

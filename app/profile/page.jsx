@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User, Package, RefreshCcw, Settings, MapPin, LogOut, CheckCircle2, Circle, X, Heart
 } from "lucide-react";
+import { csrfHeaders } from "@/lib/csrf";
+
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 const DEMO_RETURNS = [
   { id: "#RET-0012", orderId: "#ORD-0041", item: "Classic Blue Romper", date: "Aug 15, 2023", status: "Refunded" }
@@ -44,10 +47,12 @@ export default function UserProfile() {
     const parsedUser = JSON.parse(savedUser);
     setUser(prev => ({ ...prev, name: parsedUser.name, email: parsedUser.email }));
 
-    // Fetch My Orders using the new Advanced Order route
+    // Fetch My Orders — use JWT, never trust client-supplied email
     const fetchMyOrders = async () => {
       try {
-        const response = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/orders/user/${parsedUser.email}`);
+        const response = await fetch(`${API}/api/orders/user/${parsedUser.email}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         if (response.ok) {
           const data = await response.json();
           setOrders(data);
@@ -58,12 +63,12 @@ export default function UserProfile() {
         setLoadingOrders(false);
       }
     };
-    fetchMyOrders();
+    if (token) fetchMyOrders();
 
     // Fetch My Wishlist
     const fetchMyWishlist = async () => {
       try {
-        const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/wishlist", {
+        const response = await fetch(`${API}/api/wishlist`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {
@@ -237,9 +242,10 @@ export default function UserProfile() {
                                   onClick={async () => {
                                     if (!window.confirm('Cancel this order?')) return;
                                     const token = localStorage.getItem('token');
-                                    const res = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/orders/${order.id}/cancel`, {
+                                    const res = await fetch(`${API}/api/orders/${order.id}/cancel`, {
                                       method: 'POST',
-                                      headers: { Authorization: `Bearer ${token}` }
+                                      headers: await csrfHeaders({ Authorization: `Bearer ${token}` }),
+                                      credentials: 'include'
                                     });
                                     if (res.ok) setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Cancelled' } : o));
                                     else alert('Could not cancel order.');
@@ -282,8 +288,11 @@ export default function UserProfile() {
                       <button
                         onClick={async () => {
                           const token = localStorage.getItem("token");
-                          await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/wishlist/toggle", {
-                            method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }, body: JSON.stringify({ productId: product.id })
+                          await fetch(`${API}/api/wishlist/toggle`, {
+                            method: "POST",
+                            headers: await csrfHeaders({ "Content-Type": "application/json", "Authorization": `Bearer ${token}` }),
+                            credentials: 'include',
+                            body: JSON.stringify({ productId: product.id })
                           });
                           setWishlist(wishlist.filter(p => p.id !== product.id));
                         }}
@@ -361,9 +370,10 @@ export default function UserProfile() {
               const name = e.target.name.value;
               const phone = e.target.phone.value;
               try {
-                const res = await fetch('https://vbaumdstnz.ap-south-1.awsapprunner.com/api/user/profile', {
+                const res = await fetch(`${API}/api/user/profile`, {
                   method: 'PUT',
-                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                  headers: await csrfHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }),
+                  credentials: 'include',
                   body: JSON.stringify({ name, phone })
                 });
                 if (res.ok) {

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Heart } from "lucide-react";
 import Link from "next/link";
 
+const API = process.env.NEXT_PUBLIC_API_URL;
+
 export default function SmartSearch({ isOpen, onClose }) {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState([]);
@@ -15,7 +17,7 @@ export default function SmartSearch({ isOpen, onClose }) {
   // Fetch products so the search engine can analyze them instantly
   useEffect(() => {
     if (isOpen) {
-      fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products")
+      fetch(`${API}/api/products`)
         .then(res => res.json())
         .then(data => setProducts(data))
         .catch(err => console.error("Search fetch error:", err));

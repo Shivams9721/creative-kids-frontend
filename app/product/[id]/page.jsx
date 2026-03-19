@@ -7,6 +7,9 @@ import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { ShoppingBag, ChevronDown, ChevronUp, Heart, Share2, Truck, ShieldCheck, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { csrfHeaders } from "@/lib/csrf";
+
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -37,7 +40,7 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/products/${id}`);
+        const response = await fetch(`${API}/api/products/${id}`);
         // Prevent JSON crash if server sends a plain text error
         if (!response.ok) throw new Error("Product fetch failed or server error");
         
@@ -94,13 +97,13 @@ export default function ProductPage() {
   useEffect(() => {
     if (!product) return;
     // Fetch reviews
-    fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/reviews/${product.id}`)
+    fetch(`${API}/api/reviews/${product.id}`)
       .then(r => r.json()).then(setReviews).catch(() => {});
 
     // Check if logged-in user can review
     const token = localStorage.getItem('token');
     if (token) {
-      fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/reviews/check/${product.id}`, {
+      fetch(`${API}/api/reviews/check/${product.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(r => r.json()).then(d => {
         setCanReview(d.canReview);
@@ -114,9 +117,10 @@ export default function ProductPage() {
     if (!token) return;
     setSubmittingReview(true);
     try {
-      const res = await fetch('https://vbaumdstnz.ap-south-1.awsapprunner.com/api/reviews', {
+      const res = await fetch(`${API}/api/reviews`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }),
+        credentials: 'include',
         body: JSON.stringify({ productId: product.id, ...reviewForm })
       });
       const data = await res.json();
@@ -135,7 +139,7 @@ export default function ProductPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token && product) {
-      fetch(`https://vbaumdstnz.ap-south-1.awsapprunner.com/api/wishlist/check/${product.id}`, {
+      fetch(`${API}/api/wishlist/check/${product.id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
       .then(async res => {
@@ -158,19 +162,16 @@ export default function ProductPage() {
     }
 
     try {
-      const response = await fetch("https://vbaumdstnz.ap-south-1.awsapprunner.com/api/wishlist/toggle", {
+      const response = await fetch(`${API}/api/wishlist/toggle`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
+        headers: await csrfHeaders({ "Content-Type": "application/json", "Authorization": `Bearer ${token}` }),
+        credentials: 'include',
         body: JSON.stringify({ productId: product.id })
       });
-      
-      // If the database is missing the table, alert the user nicely instead of crashing!
+
       if (!response.ok) {
-         alert("Database Error: Make sure you ran the 'CREATE TABLE wishlist' command in pgAdmin!");
-         return;
+        console.error("Wishlist update failed");
+        return;
       }
 
       const data = await response.json();
@@ -352,7 +353,7 @@ export default function ProductPage() {
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
           
           {/* LEFT: IMAGE GALLERY */}
-          <div className="w-full lg:w-1/2 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-[100px] lg:h-[calc(100vh-120px)]">
+          <div className="w-full lg:w-1/2 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-[100px] lg:self-start">
             {displayThumbnails.length > 1 && (
               <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:w-20 flex-shrink-0 [&::-webkit-scrollbar]:hidden">
                 {displayThumbnails.map((url, idx) => (
@@ -367,13 +368,13 @@ export default function ProductPage() {
               </div>
             )}
             
-            <div className="w-full aspect-[3/4] bg-[#f6f5f3] relative overflow-hidden flex-1">
-              <Image src={mainImage} alt={product.title} fill priority className="object-cover object-center" sizes="(max-width: 1024px) 100vw, 50vw" />
+            <div className="w-full flex-1 relative">
+              <Image src={mainImage} alt={product.title} width={800} height={1000} priority className="w-full h-auto block" sizes="(max-width: 1024px) 100vw, 50vw" />
               
               {/* WISHLIST BUTTON */}
               <button 
                 onClick={handleWishlistToggle}
-                className="absolute top-6 right-6 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:scale-110 transition-transform z-10 shadow-sm"
+                className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:scale-110 transition-transform z-10 shadow-sm"
               >
                 <Heart 
                   size={20} 
@@ -414,25 +415,60 @@ export default function ProductPage() {
             {availableColors.length > 0 && (
               <div className="mb-6">
                 <div className="flex justify-between items-end mb-3">
-                  <span className="text-[11px] font-bold tracking-widest uppercase text-black">Color: <span className="text-black/60 font-medium">{selectedColor}</span></span>
+                  <span className="text-[11px] font-bold tracking-widest uppercase text-black">
+                    Color: <span className="text-black/60 font-medium normal-case tracking-normal">{selectedColor}</span>
+                  </span>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {availableColors.map(color => {
                     const available = isColorAvailable(color);
+                    const colorImg =
+                      product.color_images?.[color]?.[0] ||
+                      colorImageMap[color] ||
+                      product.image_urls?.[0] ||
+                      null;
                     return (
                       <button
                         key={color}
                         onClick={() => available && handleColorSelect(color)}
                         disabled={!available}
-                        className={`px-6 py-3 border rounded-full text-[11px] font-bold tracking-widest uppercase transition-all ${
-                          selectedColor === color
-                            ? 'border-black bg-black text-white'
-                            : available
-                            ? 'border-black/20 text-black/70 hover:border-black/50'
-                            : 'border-black/10 text-black/25 line-through cursor-not-allowed'
+                        className={`flex flex-col items-center gap-1.5 transition-all group ${
+                          !available ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer'
                         }`}
                       >
-                        {color}
+                        <div className={`w-16 h-20 rounded-lg overflow-hidden border-2 transition-all relative ${
+                          selectedColor === color
+                            ? 'border-black shadow-md'
+                            : available
+                            ? 'border-transparent hover:border-black/40'
+                            : 'border-transparent'
+                        }`}>
+                          {colorImg ? (
+                            <Image
+                              src={colorImg}
+                              alt={color}
+                              fill
+                              className={`object-contain transition-transform duration-500 ${
+                                available ? 'group-hover:scale-105' : ''
+                              } ${!available ? 'grayscale' : ''}`}
+                              sizes="64px"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                              <span className="text-[8px] text-black/30 uppercase tracking-wider">No img</span>
+                            </div>
+                          )}
+                          {!available && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-full h-[1px] bg-black/30 rotate-45" />
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-[10px] font-medium tracking-wide transition-colors ${
+                          selectedColor === color ? 'text-black font-bold' : 'text-black/50'
+                        }`}>
+                          {color}
+                        </span>
                       </button>
                     );
                   })}
@@ -585,6 +621,18 @@ export default function ProductPage() {
                               <tr className="border-b border-black/5">
                                 <th className="py-3 font-medium text-black/50 w-1/3">Neck Type</th>
                                 <td className="py-3 text-black font-medium">{product.neck_type}</td>
+                              </tr>
+                            )}
+                            {product.closure_type && (
+                              <tr className="border-b border-black/5">
+                                <th className="py-3 font-medium text-black/50 w-1/3">Closure Type</th>
+                                <td className="py-3 text-black font-medium">{product.closure_type}</td>
+                              </tr>
+                            )}
+                            {product.length_type && (
+                              <tr className="border-b border-black/5">
+                                <th className="py-3 font-medium text-black/50 w-1/3">Length</th>
+                                <td className="py-3 text-black font-medium">{product.length_type}</td>
                               </tr>
                             )}
                             <tr className="border-b border-black/5">
