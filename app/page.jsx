@@ -157,10 +157,10 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute bottom-8 inset-x-0 text-center"><h3 className="text-white text-[15px] tracking-[0.15em] uppercase font-medium">Dress</h3></div>
             </Link>
-            <Link href="/shop/kids-girl/bottomwear" className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <Image src="/images/shorts.jpg" alt="Bottom Wears" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
+            <Link href="/shop/kids-girl/shorts-skirts-skorts" className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
+              <Image src="/images/shorts.jpg" alt="Shorts" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="absolute bottom-8 inset-x-0 text-center"><h3 className="text-white text-[15px] tracking-[0.15em] uppercase font-medium">Bottom Wears</h3></div>
+              <div className="absolute bottom-8 inset-x-0 text-center"><h3 className="text-white text-[15px] tracking-[0.15em] uppercase font-medium">Shorts</h3></div>
             </Link>
             <Link href="/shop/baby-boy/onesies-rompers" className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
               <Image src="/images/infant.png" alt="Infants" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
