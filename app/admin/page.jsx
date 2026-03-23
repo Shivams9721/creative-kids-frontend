@@ -358,7 +358,12 @@ export default function AdminDashboard() {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${API}/api/products/${id}`, { method: "DELETE", credentials: 'include', headers: await csrfHeaders({ Authorization: `Bearer ${token}` }) });
+      const res = await fetch(`${API}/api/products/${id}`, {
+        method: "DELETE",
+        credentials: 'include',
+        headers: await csrfHeaders({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" }),
+        body: JSON.stringify({ confirm: "DELETE" })
+      });
       if (res.ok) setAllProducts(prev => prev.filter(p => p.id !== id));
       else alert("Failed to delete product.");
     } catch (err) { console.error(err); }
