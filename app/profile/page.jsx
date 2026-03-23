@@ -29,6 +29,12 @@ export default function UserProfile() {
   // Tracking Modal State
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  // Returns state
+  const [returns, setReturns] = useState([]);
+  const [loadingReturns, setLoadingReturns] = useState(true);
+  const [returnForm, setReturnForm] = useState({ order_id: '', order_number: '', reason: '', comments: '' });
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+
   // ==========================================
   // 1. DATA FETCHING (ALL HOOKS INSIDE THE COMPONENT)
   // ==========================================
@@ -83,7 +89,17 @@ export default function UserProfile() {
     };
     if (token) fetchMyWishlist();
 
-  }, []); 
+    // Fetch My Returns
+    const fetchMyReturns = async () => {
+      try {
+        const res = await fetch(`${API}/api/returns`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) setReturns(await res.json());
+      } catch {}
+      finally { setLoadingReturns(false); }
+    };
+    if (token) fetchMyReturns();
+
+  }, []);
 
   // ==========================================
   // 2. HELPER FUNCTIONS
@@ -326,15 +342,110 @@ export default function UserProfile() {
 
         {/* TAB 4: RETURNS */}
         {activeTab === "returns" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl">
             <h1 className="text-2xl font-light tracking-widest uppercase text-black mb-8">Returns & Refunds</h1>
-            <div className="bg-white border border-black/10 rounded-xl p-12 text-center">
-              <p className="text-[13px] text-black/50 mb-4">No return requests yet.</p>
-              <p className="text-[12px] text-black/40">To initiate a return, please contact us via WhatsApp or email within 7 days of delivery.</p>
-              <a href="https://wa.me/918527910223" target="_blank" rel="noreferrer" className="inline-block mt-6 bg-[#25D366] text-white px-8 py-3 rounded-full text-[11px] font-bold tracking-widest uppercase hover:opacity-90 transition-opacity">
-                Contact on WhatsApp
-              </a>
-            </div>
+
+            {/* Submit Return Form */}
+            <form className="bg-white p-8 border border-black/10 rounded-xl shadow-sm space-y-5 mb-8"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!returnForm.order_id) return alert('Please select an order.');
+                setSubmittingReturn(true);
+                const token = localStorage.getItem('token');
+                try {
+                  const res = await fetch(`${API}/api/returns`, {
+                    method: 'POST',
+                    headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }),
+                    credentials: 'include',
+                    body: JSON.stringify(returnForm)
+                  });
+                  const data = await res.json();
+                  if (!res.ok) return alert(data.error || 'Failed to submit.');
+                  setReturns(prev => [data, ...prev]);
+                  setReturnForm({ order_id: '', order_number: '', reason: '', comments: '' });
+                  alert('Return request submitted successfully.');
+                } catch { alert('Network error.'); }
+                finally { setSubmittingReturn(false); }
+              }}
+            >
+              <h3 className="text-[12px] font-bold tracking-widest uppercase text-black border-b border-black/10 pb-2">Request a Return</h3>
+              <p className="text-[11px] text-black/50">Only delivered orders are eligible. Returns must be requested within 7 days of delivery.</p>
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Select Order</label>
+                <select
+                  value={returnForm.order_id}
+                  onChange={(e) => {
+                    const order = orders.find(o => String(o.id) === e.target.value);
+                    setReturnForm(f => ({ ...f, order_id: e.target.value, order_number: order?.order_number || '' }));
+                  }}
+                  className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black"
+                  required
+                >
+                  <option value="">-- Select a delivered order --</option>
+                  {orders.filter(o => o.status === 'Delivered').map(o => (
+                    <option key={o.id} value={o.id}>{o.order_number} — ₹{parseFloat(o.total_amount).toFixed(2)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Reason for Return</label>
+                <select
+                  value={returnForm.reason}
+                  onChange={(e) => setReturnForm(f => ({ ...f, reason: e.target.value }))}
+                  className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black"
+                  required
+                >
+                  <option value="">-- Select a reason --</option>
+                  <option>Wrong size received</option>
+                  <option>Damaged / defective product</option>
+                  <option>Wrong item received</option>
+                  <option>Product not as described</option>
+                  <option>Changed my mind</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Additional Comments (Optional)</label>
+                <textarea
+                  value={returnForm.comments}
+                  onChange={(e) => setReturnForm(f => ({ ...f, comments: e.target.value }))}
+                  rows={3}
+                  placeholder="Describe the issue in detail..."
+                  className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black resize-none"
+                />
+              </div>
+              <div className="flex justify-end">
+                <button type="submit" disabled={submittingReturn} className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors disabled:opacity-50">
+                  {submittingReturn ? 'Submitting...' : 'Submit Return Request'}
+                </button>
+              </div>
+            </form>
+
+            {/* Existing Return Requests */}
+            <h3 className="text-[12px] font-bold tracking-widest uppercase text-black/60 mb-4">Your Return Requests</h3>
+            {loadingReturns ? (
+              <p className="text-[12px] text-black/50">Loading...</p>
+            ) : returns.length === 0 ? (
+              <p className="text-[13px] text-black/40 italic">No return requests yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {returns.map(r => (
+                  <div key={r.id} className="bg-white border border-black/10 rounded-xl p-5 flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[13px] font-bold text-black">{r.order_number}</p>
+                      <p className="text-[12px] text-black/60 mt-1">{r.reason}</p>
+                      {r.comments && <p className="text-[11px] text-black/40 mt-1">{r.comments}</p>}
+                      <p className="text-[10px] text-black/30 mt-2">{new Date(r.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full flex-shrink-0 ${
+                      r.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                      r.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                      r.status === 'Completed' ? 'bg-gray-100 text-gray-600' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>{r.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -446,7 +557,7 @@ export default function UserProfile() {
                 initial={{ opacity: 0, y: 50, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 z-50 border border-black/10"
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 z-50 border border-black/10 max-h-[85vh] overflow-y-auto"
               >
                 <div className="flex justify-between items-start mb-8">
                   <div>
@@ -510,8 +621,38 @@ export default function UserProfile() {
                 </div>
 
                 {selectedOrder.status !== "Cancelled" && (
-                  <div className="mt-10 pt-6 border-t border-black/10 flex justify-center">
-                    <p className="text-[10px] text-black/50 tracking-widest uppercase font-medium">Estimated Delivery: 3-5 Business Days</p>
+                  <div className="mt-10 pt-6 border-t border-black/10">
+                    <p className="text-[10px] text-black/50 tracking-widest uppercase font-medium text-center mb-6">Estimated Delivery: 3-5 Business Days</p>
+
+                    {/* Order Items Breakdown */}
+                    {(() => {
+                      let items = [];
+                      try { items = typeof selectedOrder.items === 'string' ? JSON.parse(selectedOrder.items) : (selectedOrder.items || []); } catch {}
+                      return items.length > 0 ? (
+                        <div>
+                          <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-3">Items in this order</p>
+                          <div className="space-y-3">
+                            {items.map((item, i) => (
+                              <div key={i} className="flex items-center gap-3">
+                                {item.image && <img src={item.image} alt={item.title} className="w-12 h-14 object-cover rounded-lg flex-shrink-0" />}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[12px] font-medium text-black truncate">{item.title}</p>
+                                  <p className="text-[10px] text-black/50">
+                                    {[item.selectedSize || item.size, item.selectedColor || item.color].filter(Boolean).join(' · ')}
+                                    {item.quantity > 1 ? ` · Qty ${item.quantity}` : ''}
+                                  </p>
+                                </div>
+                                <p className="text-[12px] font-bold text-black flex-shrink-0">₹{parseFloat(item.price).toFixed(2)}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-4 pt-3 border-t border-black/10 flex justify-between">
+                            <span className="text-[11px] font-bold tracking-widest uppercase text-black/60">Total</span>
+                            <span className="text-[13px] font-bold text-black">₹{parseFloat(selectedOrder.total_amount).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 )}
               </motion.div>
