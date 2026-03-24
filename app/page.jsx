@@ -62,10 +62,12 @@ export default function Home() {
       try {
         const response = await fetch(`${API}/api/products`);
         const rawData = await response.json();
-        const data = rawData.map(p => ({
-          ...p,
-          image_urls: typeof p.image_urls === "string" ? JSON.parse(p.image_urls) : (p.image_urls || [])
-        }));
+        const data = rawData.map(p => {
+          let image_urls = [];
+          try { image_urls = typeof p.image_urls === "string" ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch {}
+          if (!Array.isArray(image_urls)) image_urls = [];
+          return { ...p, image_urls };
+        });
 
         const getCardsForSection = (sectionName) => {
           const slots = [null, null, null, null];
