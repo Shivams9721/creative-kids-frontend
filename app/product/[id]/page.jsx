@@ -42,6 +42,7 @@ export default function ProductPage() {
 
   // 2. FETCH PRODUCT DATA (Now Crash-Proof)
   useEffect(() => {
+    if (!id) return;
     const fetchProduct = async () => {
       try {
         const response = await fetch(`${API}/api/products/${id}`);
@@ -104,7 +105,7 @@ export default function ProductPage() {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 3. WISHLIST LOGIC (Now Crash-Proof)
   useEffect(() => {
