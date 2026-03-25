@@ -1316,15 +1316,72 @@ export default function AdminDashboard() {
                       </optgroup>
                     </select>
                   </div>
-                  {[
-                    { name: 'pattern', placeholder: 'e.g. Floral Print' },
-                    { name: 'neck_type', placeholder: 'e.g. Round Neck' },
-                  ].map(f => (
-                    <div key={f.name} className="flex flex-col gap-2">
-                      <label className={label}>{f.name.replace('_', ' ')}</label>
-                      <input type="text" name={f.name} value={formData[f.name]} onChange={handleChange} placeholder={f.placeholder} className={inp} />
-                    </div>
-                  ))}
+                  <div className="flex flex-col gap-2">
+                    <label className={label}>Pattern</label>
+                    <select name="pattern" value={formData.pattern} onChange={handleChange} className={`${inp} cursor-pointer`}>
+                      <option value="">-- Select Pattern --</option>
+                      <option>Animal Prints</option>
+                      <option>Brocade</option>
+                      <option>Checkered</option>
+                      <option>Floral</option>
+                      <option>Basket Weave</option>
+                      <option>Damask</option>
+                      <option>Chevron</option>
+                      <option>Flame Stitch</option>
+                      <option>Geometric</option>
+                      <option>Harlequin</option>
+                      <option>Houndstooth</option>
+                      <option>Ikat</option>
+                      <option>Jacquard</option>
+                      <option>Polka Dots</option>
+                      <option>Stripes</option>
+                      <option>Trellis</option>
+                      <option>Chintz</option>
+                      <option>Ditsy</option>
+                      <option>Greek Key</option>
+                      <option>Herringbone</option>
+                      <option>Fruit Pattern</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className={label}>Neck Type</label>
+                    <select name="neck_type" value={formData.neck_type} onChange={handleChange} className={`${inp} cursor-pointer`}>
+                      <option value="">-- Select Neck Type --</option>
+                      <option>Round Neck</option>
+                      <option>Crew Neck</option>
+                      <option>V-Neck</option>
+                      <option>Scoop Neck</option>
+                      <option>Square Neck</option>
+                      <option>Boat Neck</option>
+                      <option>Bateau</option>
+                      <option>Polo Neck</option>
+                      <option>Henley Neck</option>
+                      <option>Mandarin Collar</option>
+                      <option>Band Collar</option>
+                      <option>Button-Down Collar</option>
+                      <option>Peter Pan Collar</option>
+                      <option>Turtleneck</option>
+                      <option>Mock Neck</option>
+                      <option>Cowl Neck</option>
+                      <option>Funnel Neck</option>
+                      <option>Sweetheart Neck</option>
+                      <option>Halter Neck</option>
+                      <option>Jewel Neck</option>
+                      <option>Keyhole Neck</option>
+                      <option>Off-the-Shoulder</option>
+                      <option>Bardot</option>
+                      <option>Asymmetrical Neck</option>
+                      <option>One-Shoulder Neck</option>
+                      <option>Queen Anne Neck</option>
+                      <option>Sabrina Neck</option>
+                      <option>Illusion Neck</option>
+                      <option>Greta Neck</option>
+                      <option>Notched Neck</option>
+                      <option>U-Neck</option>
+                      <option>Portrait Neck</option>
+                      <option>Plunge Neck</option>
+                    </select>
+                  </div>
                   <div className="flex flex-col gap-2">
                     <label className={label}>Closure Type</label>
                     <select name="closure_type" value={formData.closure_type} onChange={handleChange} className={`${inp} cursor-pointer`}>

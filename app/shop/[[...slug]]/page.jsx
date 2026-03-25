@@ -41,6 +41,23 @@ const FABRICS = [
   'Cotton Poplin','Viscose Rayon','Poly Chiffon','Denim Cotton'
 ];
 
+const PATTERNS = [
+  'Animal Prints','Brocade','Checkered','Floral','Basket Weave','Damask',
+  'Chevron','Flame Stitch','Geometric','Harlequin','Houndstooth','Ikat',
+  'Jacquard','Polka Dots','Stripes','Trellis','Chintz','Ditsy',
+  'Greek Key','Herringbone','Fruit Pattern'
+];
+
+const NECK_TYPES = [
+  'Round Neck','Crew Neck','V-Neck','Scoop Neck','Square Neck','Boat Neck',
+  'Bateau','Polo Neck','Henley Neck','Mandarin Collar','Band Collar',
+  'Button-Down Collar','Peter Pan Collar','Turtleneck','Mock Neck','Cowl Neck',
+  'Funnel Neck','Sweetheart Neck','Halter Neck','Jewel Neck','Keyhole Neck',
+  'Off-the-Shoulder','Bardot','Asymmetrical Neck','One-Shoulder Neck',
+  'Queen Anne Neck','Sabrina Neck','Illusion Neck','Greta Neck','Notched Neck',
+  'U-Neck','Portrait Neck','Plunge Neck'
+];
+
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Shop() {
@@ -62,6 +79,8 @@ export default function Shop() {
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
   const [selectedFabrics, setSelectedFabrics] = useState([]);
+  const [selectedPatterns, setSelectedPatterns] = useState([]);
+  const [selectedNeckTypes, setSelectedNeckTypes] = useState([]);
   const [activeSizeTab, setActiveSizeTab] = useState("BABY");
 
   // Routing Data
@@ -137,7 +156,9 @@ export default function Shop() {
   const toggleSize = (size) => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   const toggleColor = (color) => setSelectedColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
   const toggleFabric = (fabric) => setSelectedFabrics(prev => prev.includes(fabric) ? prev.filter(f => f !== fabric) : [...prev, fabric]);
-  const clearFilters = () => { setSelectedPrice(null); setSelectedSizes([]); setSelectedColors([]); setSelectedFabrics([]); };
+  const togglePattern = (pattern) => setSelectedPatterns(prev => prev.includes(pattern) ? prev.filter(p => p !== pattern) : [...prev, pattern]);
+  const toggleNeckType = (neck) => setSelectedNeckTypes(prev => prev.includes(neck) ? prev.filter(n => n !== neck) : [...prev, neck]);
+  const clearFilters = () => { setSelectedPrice(null); setSelectedSizes([]); setSelectedColors([]); setSelectedFabrics([]); setSelectedPatterns([]); setSelectedNeckTypes([]); };
 
   // --- FILTERING LOGIC ---
   let displayedProducts = products;
@@ -204,11 +225,23 @@ export default function Shop() {
     );
   }
 
+  if (selectedPatterns.length > 0) {
+    displayedProducts = displayedProducts.filter(p =>
+      selectedPatterns.some(pt => (p.pattern || '').toLowerCase() === pt.toLowerCase())
+    );
+  }
+
+  if (selectedNeckTypes.length > 0) {
+    displayedProducts = displayedProducts.filter(p =>
+      selectedNeckTypes.some(n => (p.neck_type || '').toLowerCase() === n.toLowerCase())
+    );
+  }
+
   if (sortBy === "newest") displayedProducts.sort((a, b) => b.id - a.id);
   else if (sortBy === "price-low") displayedProducts.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
   else if (sortBy === "price-high") displayedProducts.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
 
-  const hasActiveFilters = selectedPrice !== null || selectedSizes.length > 0 || selectedColors.length > 0 || selectedFabrics.length > 0;
+  const hasActiveFilters = selectedPrice !== null || selectedSizes.length > 0 || selectedColors.length > 0 || selectedFabrics.length > 0 || selectedPatterns.length > 0 || selectedNeckTypes.length > 0;
 
   // Header Data
   const getPageTitle = () => {
@@ -384,6 +417,30 @@ export default function Shop() {
             </div>
           </div>
 
+          <div className="pb-10 border-b border-black/10 mb-10">
+            <h3 className="text-[11px] font-bold tracking-[0.15em] uppercase text-black mb-6">Pattern</h3>
+            <div className="flex flex-col gap-3 max-h-48 overflow-y-auto pr-1">
+              {PATTERNS.map(pattern => (
+                <label key={pattern} className={`flex items-center gap-3 cursor-pointer text-[11px] font-medium tracking-widest uppercase transition-colors ${selectedPatterns.includes(pattern) ? 'text-black font-bold' : 'text-black/50 hover:text-black'}`}>
+                  <input type="checkbox" checked={selectedPatterns.includes(pattern)} onChange={() => togglePattern(pattern)} className="accent-black w-3 h-3" />
+                  {pattern}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="pb-10 border-b border-black/10 mb-10">
+            <h3 className="text-[11px] font-bold tracking-[0.15em] uppercase text-black mb-6">Neck Type</h3>
+            <div className="flex flex-col gap-3 max-h-48 overflow-y-auto pr-1">
+              {NECK_TYPES.map(neck => (
+                <label key={neck} className={`flex items-center gap-3 cursor-pointer text-[11px] font-medium tracking-widest uppercase transition-colors ${selectedNeckTypes.includes(neck) ? 'text-black font-bold' : 'text-black/50 hover:text-black'}`}>
+                  <input type="checkbox" checked={selectedNeckTypes.includes(neck)} onChange={() => toggleNeckType(neck)} className="accent-black w-3 h-3" />
+                  {neck}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <AnimatePresence>
             {hasActiveFilters && (
               <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={clearFilters} className="text-[10px] font-bold tracking-widest uppercase text-black/50 hover:text-black flex items-center gap-2 transition-all">
@@ -452,6 +509,28 @@ export default function Shop() {
                         <label key={fabric} className="flex items-center gap-2 text-[11px] cursor-pointer">
                           <input type="checkbox" checked={selectedFabrics.includes(fabric)} onChange={() => toggleFabric(fabric)} className="accent-black w-3.5 h-3.5" />
                           {fabric}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-4">Pattern</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {PATTERNS.map(pattern => (
+                        <label key={pattern} className="flex items-center gap-2 text-[11px] cursor-pointer">
+                          <input type="checkbox" checked={selectedPatterns.includes(pattern)} onChange={() => togglePattern(pattern)} className="accent-black w-3.5 h-3.5" />
+                          {pattern}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-4">Neck Type</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {NECK_TYPES.map(neck => (
+                        <label key={neck} className="flex items-center gap-2 text-[11px] cursor-pointer">
+                          <input type="checkbox" checked={selectedNeckTypes.includes(neck)} onChange={() => toggleNeckType(neck)} className="accent-black w-3.5 h-3.5" />
+                          {neck}
                         </label>
                       ))}
                     </div>
