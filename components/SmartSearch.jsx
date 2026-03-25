@@ -61,7 +61,7 @@ export default function SmartSearch({ isOpen, onClose }) {
       const filtered = products.filter(p => {
         const searchableText = `
           ${p.title} ${p.main_category} ${p.sub_category} 
-          ${p.item_type} ${p.fabric} ${p.pattern} ${p.description}
+          ${p.item_type} ${p.fabric} ${p.pattern} ${p.neck_type} ${p.description}
         `.toLowerCase();
         return searchTerms.every(term => searchableText.includes(term));
       });

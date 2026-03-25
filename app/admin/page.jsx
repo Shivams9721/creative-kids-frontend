@@ -93,6 +93,7 @@ export default function AdminDashboard() {
   const [analyticsData, setAnalyticsData] = useState({ revenue: [], topProducts: [], funnel: [] });
   const [coupons, setCoupons] = useState([]);
   const [couponForm, setCouponForm] = useState({ code: '', discount_type: 'percent', discount_value: '', min_order_amount: '', max_uses: '', expires_at: '' });
+  const [adminReturns, setAdminReturns] = useState([]);
 
   // Persist
   useEffect(() => { localStorage.setItem('adminFormDraft', JSON.stringify(formData)); }, [formData]);
@@ -162,6 +163,9 @@ export default function AdminDashboard() {
     } else if (activeTab === "coupons") {
       fetch(`${API}/api/admin/coupons`, { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json()).then(data => setCoupons(Array.isArray(data) ? data : [])).catch(console.error);
+    } else if (activeTab === "returns") {
+      fetch(`${API}/api/admin/returns`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json()).then(data => setAdminReturns(Array.isArray(data) ? data : [])).catch(console.error);
     }
   }, [activeTab, isAuthenticated, fetchAdminOrders]);
 
@@ -523,6 +527,7 @@ export default function AdminDashboard() {
               { id: 'add_product', icon: <PackagePlus size={18} />, label: 'List Product' },
               { id: 'analytics', icon: <BarChart2 size={18} />, label: 'Analytics' },
               { id: 'coupons', icon: <Ticket size={18} />, label: 'Coupons' },
+              { id: 'returns', icon: <RefreshCcw size={18} />, label: 'Returns' },
             ].map(item => (
               <motion.button key={item.id} onClick={() => handleNavClick(item.id)}
                 whileHover={{ x: 4 }} whileTap={{ scale: 0.97 }}
@@ -1152,6 +1157,70 @@ export default function AdminDashboard() {
                         }`}>
                           {c.is_active ? 'Active' : 'Disabled'}
                         </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+
+        {/* RETURNS TAB */}
+        {activeTab === "returns" && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
+            <h1 className={`text-2xl font-bold mb-6 tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Return Requests</h1>
+            <div className={`${card} overflow-hidden`}>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className={`border-b ${darkMode ? 'bg-white/5 border-white/10' : 'bg-slate-50 border-slate-200'}`}>
+                    {['Order', 'Customer', 'Reason', 'Date', 'Status', 'Action'].map(h => (
+                      <th key={h} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {adminReturns.length === 0 ? (
+                    <tr><td colSpan="6" className={`p-10 text-center text-[13px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>No return requests yet.</td></tr>
+                  ) : adminReturns.map(r => (
+                    <tr key={r.id} className={`border-b ${darkMode ? 'border-white/5 hover:bg-white/5' : 'border-slate-100 hover:bg-slate-50'}`}>
+                      <td className={`p-4 text-[13px] font-bold ${darkMode ? 'text-white' : 'text-slate-800'}`}>{r.order_number}</td>
+                      <td className="p-4">
+                        <p className={`text-[13px] font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>{r.user_name}</p>
+                        <p className={`text-[11px] ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{r.user_email}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className={`text-[12px] ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{r.reason}</p>
+                        {r.comments && <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>{r.comments}</p>}
+                      </td>
+                      <td className={`p-4 text-[12px] ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td className="p-4">
+                        <span className={`px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase rounded border ${
+                          r.status === 'Approved' ? darkMode ? 'bg-emerald-900/40 text-emerald-400 border-emerald-700/50' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : r.status === 'Rejected' ? darkMode ? 'bg-red-900/40 text-red-400 border-red-700/50' : 'bg-red-50 text-red-700 border-red-200'
+                          : r.status === 'Completed' ? darkMode ? 'bg-slate-800 text-slate-400 border-slate-600' : 'bg-slate-100 text-slate-600 border-slate-200'
+                          : darkMode ? 'bg-amber-900/40 text-amber-400 border-amber-700/50' : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>{r.status || 'Pending'}</span>
+                      </td>
+                      <td className="p-4">
+                        <select
+                          value={r.status || 'Pending'}
+                          onChange={async (e) => {
+                            const token = localStorage.getItem('adminToken');
+                            const res = await fetch(`${API}/api/admin/returns/${r.id}`, {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ status: e.target.value })
+                            });
+                            if (res.ok) setAdminReturns(prev => prev.map(x => x.id === r.id ? { ...x, status: e.target.value } : x));
+                          }}
+                          className={`text-[11px] font-bold tracking-wider uppercase border rounded-lg px-2 py-1.5 outline-none cursor-pointer ${darkMode ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-slate-200 text-slate-700'}`}
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Approved">Approved</option>
+                          <option value="Rejected">Rejected</option>
+                          <option value="Completed">Completed</option>
+                        </select>
                       </td>
                     </tr>
                   ))}
