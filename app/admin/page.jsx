@@ -364,8 +364,21 @@ export default function AdminDashboard() {
         headers: await csrfHeaders({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" }),
         body: JSON.stringify({ confirm: "DELETE" })
       });
-      if (res.ok) setAllProducts(prev => prev.filter(p => p.id !== id));
+      if (res.ok) setAllProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: false } : p));
       else alert("Failed to delete product.");
+    } catch (err) { console.error(err); }
+  }, []);
+
+  const handleRestore = useCallback(async (id) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API}/api/products/${id}/restore`, {
+        method: "PUT",
+        credentials: 'include',
+        headers: await csrfHeaders({ Authorization: `Bearer ${token}` }),
+      });
+      if (res.ok) setAllProducts(prev => prev.map(p => p.id === id ? { ...p, is_active: true } : p));
+      else alert("Failed to restore product.");
     } catch (err) { console.error(err); }
   }, []);
 
@@ -945,6 +958,7 @@ export default function AdminDashboard() {
                             <p className={`text-[11px] mt-1 font-medium tracking-wider uppercase ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Base SKU: {product.sku || 'N/A'}</p>
                             <div className="flex gap-2 mt-2 flex-wrap">
                               {product.is_draft && <span className={`px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded border ${darkMode ? 'bg-white/10 text-slate-400 border-white/10' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>Draft</span>}
+                              {product.is_active === false && <span className={`px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded border ${darkMode ? 'bg-red-900/40 text-red-400 border-red-700/50' : 'bg-red-50 text-red-600 border-red-200'}`}>Delisted</span>}
                               {product.is_featured && <span className={`px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded border ${darkMode ? 'bg-blue-900/40 text-blue-400 border-blue-700/50' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>Homepage</span>}
                               {product.is_new_arrival && <span className={`px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded border ${darkMode ? 'bg-purple-900/40 text-purple-400 border-purple-700/50' : 'bg-purple-50 text-purple-600 border-purple-200'}`}>New</span>}
                               {(isLowStock || isOutOfStock) && (
@@ -970,8 +984,14 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-5 text-right">
                             <div className="flex justify-end gap-3">
-                              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }} onClick={() => handleEdit(product)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-100'}`} title="Edit"><Edit size={18} /></motion.button>
-                              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }} onClick={() => handleDelete(product.id)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100'}`} title="Delete"><Trash2 size={18} /></motion.button>
+                              {product.is_active === false ? (
+                                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }} onClick={() => handleRestore(product.id)} className={`p-2.5 rounded-lg transition-colors border border-transparent text-[10px] font-bold tracking-widest uppercase px-3 ${darkMode ? 'text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/20 border-emerald-700/40 bg-emerald-900/20' : 'text-emerald-700 hover:bg-emerald-50 border-emerald-200 bg-emerald-50'}`} title="Restore">Restore</motion.button>
+                              ) : (
+                                <>
+                                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }} onClick={() => handleEdit(product)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:border-blue-500/20' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-100'}`} title="Edit"><Edit size={18} /></motion.button>
+                                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.93 }} onClick={() => handleDelete(product.id)} className={`p-2.5 rounded-lg transition-colors border border-transparent ${darkMode ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-100'}`} title="Delete"><Trash2 size={18} /></motion.button>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -1273,8 +1293,30 @@ export default function AdminDashboard() {
               <div className={`${card} p-6 md:p-8 space-y-6`}>
                 <h3 className={`text-[13px] font-bold tracking-wider uppercase border-b pb-3 ${darkMode ? 'text-slate-200 border-white/10' : 'text-slate-800 border-slate-100'}`}>3. Product Attributes</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label className={label}>Fabric</label>
+                    <select name="fabric" value={formData.fabric} onChange={handleChange} className={`${inp} cursor-pointer`}>
+                      <option value="">-- Select Fabric --</option>
+                      <optgroup label="Basic Woven">
+                        <option>Cotton</option><option>Linen</option><option>Rayon</option>
+                        <option>Viscose</option><option>Polyester</option><option>Denim</option><option>Chambray</option>
+                      </optgroup>
+                      <optgroup label="Lightweight / Fashion Woven">
+                        <option>Chiffon</option><option>Georgette</option><option>Crepe</option>
+                        <option>Satin</option><option>Organza</option>
+                      </optgroup>
+                      <optgroup label="Textured / Premium Woven">
+                        <option>Dobby</option><option>Jacquard</option><option>Seersucker</option>
+                        <option>Twill</option><option>Poplin</option>
+                      </optgroup>
+                      <optgroup label="Blended Woven">
+                        <option>Cotton Blend</option><option>Poly Cotton</option><option>Rayon Blend</option>
+                        <option>Viscose Blend</option><option>Cotton Poplin</option>
+                        <option>Viscose Rayon</option><option>Poly Chiffon</option><option>Denim Cotton</option>
+                      </optgroup>
+                    </select>
+                  </div>
                   {[
-                    { name: 'fabric', placeholder: 'e.g. Cotton' },
                     { name: 'pattern', placeholder: 'e.g. Floral Print' },
                     { name: 'neck_type', placeholder: 'e.g. Round Neck' },
                   ].map(f => (

@@ -33,6 +33,14 @@ const PRICE_RANGES = [
   { label: 'Over ₹999', min: 999, max: 999999 }
 ];
 
+const FABRICS = [
+  'Cotton','Linen','Rayon','Viscose','Polyester','Denim','Chambray',
+  'Chiffon','Georgette','Crepe','Satin','Organza',
+  'Dobby','Jacquard','Seersucker','Twill','Poplin',
+  'Cotton Blend','Poly Cotton','Rayon Blend','Viscose Blend',
+  'Cotton Poplin','Viscose Rayon','Poly Chiffon','Denim Cotton'
+];
+
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function Shop() {
@@ -53,6 +61,7 @@ export default function Shop() {
   const [selectedPrice, setSelectedPrice] = useState(null);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
+  const [selectedFabrics, setSelectedFabrics] = useState([]);
   const [activeSizeTab, setActiveSizeTab] = useState("BABY");
 
   // Routing Data
@@ -127,7 +136,8 @@ export default function Shop() {
   // Filter Toggles
   const toggleSize = (size) => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
   const toggleColor = (color) => setSelectedColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
-  const clearFilters = () => { setSelectedPrice(null); setSelectedSizes([]); setSelectedColors([]); };
+  const toggleFabric = (fabric) => setSelectedFabrics(prev => prev.includes(fabric) ? prev.filter(f => f !== fabric) : [...prev, fabric]);
+  const clearFilters = () => { setSelectedPrice(null); setSelectedSizes([]); setSelectedColors([]); setSelectedFabrics([]); };
 
   // --- FILTERING LOGIC ---
   let displayedProducts = products;
@@ -188,11 +198,17 @@ export default function Shop() {
     });
   }
 
+  if (selectedFabrics.length > 0) {
+    displayedProducts = displayedProducts.filter(p =>
+      selectedFabrics.some(f => (p.fabric || '').toLowerCase() === f.toLowerCase())
+    );
+  }
+
   if (sortBy === "newest") displayedProducts.sort((a, b) => b.id - a.id);
   else if (sortBy === "price-low") displayedProducts.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
   else if (sortBy === "price-high") displayedProducts.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
 
-  const hasActiveFilters = selectedPrice !== null || selectedSizes.length > 0 || selectedColors.length > 0;
+  const hasActiveFilters = selectedPrice !== null || selectedSizes.length > 0 || selectedColors.length > 0 || selectedFabrics.length > 0;
 
   // Header Data
   const getPageTitle = () => {
@@ -356,6 +372,18 @@ export default function Shop() {
             </div>
           </div>
 
+          <div className="pb-10 border-b border-black/10 mb-10">
+            <h3 className="text-[11px] font-bold tracking-[0.15em] uppercase text-black mb-6">Fabric</h3>
+            <div className="flex flex-col gap-3 max-h-48 overflow-y-auto pr-1">
+              {FABRICS.map(fabric => (
+                <label key={fabric} className={`flex items-center gap-3 cursor-pointer text-[11px] font-medium tracking-widest uppercase transition-colors ${selectedFabrics.includes(fabric) ? 'text-black font-bold' : 'text-black/50 hover:text-black'}`}>
+                  <input type="checkbox" checked={selectedFabrics.includes(fabric)} onChange={() => toggleFabric(fabric)} className="accent-black w-3 h-3" />
+                  {fabric}
+                </label>
+              ))}
+            </div>
+          </div>
+
           <AnimatePresence>
             {hasActiveFilters && (
               <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={clearFilters} className="text-[10px] font-bold tracking-widest uppercase text-black/50 hover:text-black flex items-center gap-2 transition-all">
@@ -414,6 +442,17 @@ export default function Shop() {
                           className={`w-7 h-7 rounded-full ring-2 transition-all ${selectedColors.includes(color.name) ? 'ring-black ring-offset-2 scale-110' : 'ring-transparent border border-black/10'}`}
                           style={{ backgroundColor: color.hex }}
                         />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-[11px] font-bold tracking-widest uppercase text-black mb-4">Fabric</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {FABRICS.map(fabric => (
+                        <label key={fabric} className="flex items-center gap-2 text-[11px] cursor-pointer">
+                          <input type="checkbox" checked={selectedFabrics.includes(fabric)} onChange={() => toggleFabric(fabric)} className="accent-black w-3.5 h-3.5" />
+                          {fabric}
+                        </label>
                       ))}
                     </div>
                   </div>
