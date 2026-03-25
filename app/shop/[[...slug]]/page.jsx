@@ -42,7 +42,7 @@ const FABRICS = [
 ];
 
 const PATTERNS = [
-  'Animal Prints','Brocade','Checkered','Floral','Basket Weave','Damask',
+  'No Pattern','Animal Prints','Brocade','Checkered','Floral','Basket Weave','Damask',
   'Chevron','Flame Stitch','Geometric','Harlequin','Houndstooth','Ikat',
   'Jacquard','Polka Dots','Stripes','Trellis','Chintz','Ditsy',
   'Greek Key','Herringbone','Fruit Pattern'

@@ -1389,6 +1389,7 @@ export default function AdminDashboard() {
                     <label className={label}>Pattern</label>
                     <select name="pattern" value={formData.pattern} onChange={handleChange} className={`${inp} cursor-pointer`}>
                       <option value="">-- Select Pattern --</option>
+                      <option>No Pattern</option>
                       <option>Animal Prints</option>
                       <option>Brocade</option>
                       <option>Checkered</option>
