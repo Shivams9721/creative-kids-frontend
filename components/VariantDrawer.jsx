@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Wand2, Trash2, Image as ImageIcon, UploadCloud, CheckCircle2, Plus } from "lucide-react";
+import { X, Wand2, Trash2, UploadCloud, CheckCircle2, Plus } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -66,7 +66,7 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
     setFormData(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i !== index) }));
   }, [setFormData]);
 
-  // Upload helper — used for both variant thumbnail and color gallery images
+  // Upload helper — used for color gallery images
   const uploadToS3 = useCallback(async (file) => {
     const fd = new FormData();
     fd.append("image", file);
@@ -81,19 +81,7 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
     throw new Error(data.error || "Upload failed");
   }, []);
 
-  // Variant thumbnail (single image per row)
-  const handleVariantImageUpload = useCallback(async (e, index) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploadingVariantImage(`variant-${index}`);
-    try {
-      const url = await uploadToS3(file);
-      handleVariantChange(index, "image", url);
-    } catch { alert("Upload error."); }
-    finally { setUploadingVariantImage(null); e.target.value = ""; }
-  }, [uploadToS3, handleVariantChange]);
-
-  // Color gallery — add multiple images per color
+  // Color gallery — add multiple images per color, auto-sync first image of each color to image_urls
   const handleColorGalleryUpload = useCallback(async (e, color) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -103,7 +91,17 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
       const valid = urls.filter(Boolean);
       setFormData(prev => {
         const existing = (prev.color_images || {})[color] || [];
-        return { ...prev, color_images: { ...(prev.color_images || {}), [color]: [...existing, ...valid] } };
+        const newColorImages = { ...(prev.color_images || {}), [color]: [...existing, ...valid] };
+        // Sync: rebuild image_urls as first image from each color gallery
+        const allColorKeys = Object.keys(newColorImages);
+        const syncedImageUrls = allColorKeys
+          .map(c => newColorImages[c][0])
+          .filter(Boolean);
+        return {
+          ...prev,
+          color_images: newColorImages,
+          image_urls: syncedImageUrls.length > 0 ? syncedImageUrls : prev.image_urls
+        };
       });
     } catch { alert("Upload error."); }
     finally { setUploadingVariantImage(null); e.target.value = ""; }
@@ -113,7 +111,16 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
     setFormData(prev => {
       const existing = [...((prev.color_images || {})[color] || [])];
       existing.splice(imgIndex, 1);
-      return { ...prev, color_images: { ...(prev.color_images || {}), [color]: existing } };
+      const newColorImages = { ...(prev.color_images || {}), [color]: existing };
+      // Re-sync image_urls
+      const syncedImageUrls = Object.keys(newColorImages)
+        .map(c => newColorImages[c][0])
+        .filter(Boolean);
+      return {
+        ...prev,
+        color_images: newColorImages,
+        image_urls: syncedImageUrls.length > 0 ? syncedImageUrls : prev.image_urls
+      };
     });
   }, [setFormData]);
 
@@ -209,8 +216,8 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
                   <table className={`w-full min-w-[700px] text-left ${darkMode ? 'bg-transparent' : 'bg-white'}`}>
                     <thead>
                       <tr className={`border-b ${darkMode ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50'}`}>
-                        {['Color', 'Size', 'Stock', 'Cost Price (₹)', 'Margin', 'Variant SKU', 'Thumb', ''].map((h, i) => (
-                          <th key={i} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 7 ? 'text-center' : ''}`}>{h}</th>
+                        {['Color', 'Size', 'Stock', 'Cost Price (₹)', 'Margin', 'Variant SKU', ''].map((h, i) => (
+                          <th key={i} className={`p-4 text-[11px] font-bold tracking-widest uppercase ${darkMode ? 'text-slate-400' : 'text-slate-500'} ${i === 6 ? 'text-center' : ''}`}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -254,26 +261,6 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
                                   onChange={e => handleVariantChange(index, "sku", e.target.value)}
                                   className={`border p-2.5 w-full rounded-lg text-[12px] outline-none font-mono ${darkMode ? 'bg-white/5 border-white/10 text-slate-300 focus:border-blue-400' : 'bg-white border-slate-300 text-slate-600 focus:border-blue-500'}`} />
                               </td>
-                              <td className="p-4">
-                                <label className="cursor-pointer flex flex-col items-center gap-1">
-                                  {variant.image ? (
-                                    <div className="relative w-12 h-14 rounded-lg overflow-hidden border group">
-                                      <img src={variant.image} alt="variant" className="w-full h-full object-cover" />
-                                      <button type="button" onClick={() => handleVariantChange(index, 'image', '')}
-                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                        <X size={14} className="text-white" />
-                                      </button>
-                                    </div>
-                                  ) : (
-                                    <div className={`w-12 h-14 rounded-lg border-2 border-dashed flex items-center justify-center transition-colors ${uploadingVariantImage === `variant-${index}` ? darkMode ? 'border-blue-400 bg-blue-500/10' : 'border-blue-400 bg-blue-50' : darkMode ? 'border-white/20 hover:border-blue-400' : 'border-slate-300 hover:border-blue-400'}`}>
-                                      {uploadingVariantImage === `variant-${index}`
-                                        ? <UploadCloud size={14} className="text-blue-400 animate-pulse" />
-                                        : <ImageIcon size={14} className={darkMode ? 'text-slate-500' : 'text-slate-400'} />}
-                                    </div>
-                                  )}
-                                  <input type="file" accept="image/*" className="hidden" disabled={uploadingVariantImage !== null} onChange={e => handleVariantImageUpload(e, index)} />
-                                </label>
-                              </td>
                               <td className="p-4 text-center">
                                 <button type="button" onClick={() => removeVariant(index)}
                                   className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}>
@@ -298,7 +285,10 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
                 <div className="space-y-4">
                   <div>
                     <p className={`text-[13px] font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>Color Image Galleries</p>
-                    <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>Upload multiple images per color — storefront will show these when customer selects that color.</p>
+                    <p className={`text-[11px] mt-0.5 ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                      Upload images per color — these automatically become the product images on the storefront.
+                      The first image of each color is used as the cover. No need to upload again on the main form.
+                    </p>
                   </div>
                   {uniqueColors.map(color => {
                     const images = (formData.color_images || {})[color] || [];

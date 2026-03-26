@@ -1536,6 +1536,17 @@ export default function AdminDashboard() {
                   <ImageIcon size={18} /> 5. Product Media Gallery (AWS S3) *
                 </h3>
 
+                {/* If color images exist, show sync notice instead of upload */}
+                {Object.keys(formData.color_images || {}).some(c => (formData.color_images[c] || []).length > 0) ? (
+                  <div className={`p-4 rounded-xl border flex items-start gap-3 ${darkMode ? 'bg-emerald-900/20 border-emerald-700/40 text-emerald-300' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}`}>
+                    <CheckCircle2 size={18} className="flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[12px] font-bold">Images synced from Color Galleries</p>
+                      <p className="text-[11px] mt-0.5 opacity-80">The first image from each color gallery is automatically used as the product cover. You can still add extra images below for the general gallery.</p>
+                    </div>
+                  </div>
+                ) : null}
+
                 {/* Upload zone — accepts multiple */}
                 <label className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-3 transition-colors cursor-pointer ${
                   uploadingImage
