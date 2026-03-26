@@ -26,8 +26,8 @@ const CATEGORY_TREE = {
     "Baby Girl": ["Onesies & Rompers", "Tops & Tees", "Dresses", "Bottomwear", "Clothing Sets"]
   },
   "Kids": {
-    "Boys Clothing": ["T-Shirts", "Shirts", "Jeans", "Trousers & Joggers", "Shorts", "Co-ord Sets", "Sweatshirts"],
-    "Girls Clothing": ["Tops & Tees", "Dresses", "Co-ords & Jumpsuits", "Jeans Joggers & Trousers", "Shorts, Skirts & Skorts"]
+    "Boys Clothing": ["T-Shirts", "Shirts", "Jeans", "Trousers & Joggers", "Shorts", "Co-ord Sets", "Sweatshirts", "Rompers"],
+    "Girls Clothing": ["Tops & Tees", "Dresses", "Co-ords & Jumpsuits", "Jeans Joggers & Trousers", "Shorts, Skirts & Skorts", "Rompers"]
   }
 };
 
