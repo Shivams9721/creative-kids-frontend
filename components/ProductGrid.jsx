@@ -3,30 +3,32 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useCart } from "@/context/CartContext";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ProductGrid() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(`${API}/api/products`);
+        // Fetch only new arrivals with a limit — no need to load the full catalogue
+        const response = await fetch(`${API}/api/products?new_arrival=true`);
         const rawData = await response.json();
         const data = rawData.map(p => ({
           ...p,
-          image_urls: typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || [])
+          image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })()
         }));
         setProducts(data);
-        setLoading(false);
       } catch (error) {
         console.error("Database connection failed:", error);
+      } finally {
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
 
@@ -71,7 +73,27 @@ export default function ProductGrid() {
                   className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
                 <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                  <button className="w-full bg-black text-white text-xs tracking-widest uppercase py-3 hover:bg-black/80 transition-colors shadow-lg">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const variants = (() => { try { return typeof product.variants === 'string' ? JSON.parse(product.variants) : (product.variants || []); } catch { return []; } })();
+                      const first = variants.find(v => (parseInt(v.stock) || 0) > 0) || variants[0];
+                      addToCart({
+                        id: product.id,
+                        title: product.title,
+                        price: product.price,
+                        mrp: product.mrp,
+                        image: product.image_urls[0] || '',
+                        selectedColor: first?.color || 'Default',
+                        selectedSize: first?.size || 'Default',
+                        sku: first?.sku || null,
+                        baseSku: product.sku || null,
+                        quantity: 1
+                      });
+                    }}
+                    className="w-full bg-black text-white text-xs tracking-widest uppercase py-3 hover:bg-black/80 transition-colors shadow-lg"
+                  >
                     Quick Add
                   </button>
                 </div>

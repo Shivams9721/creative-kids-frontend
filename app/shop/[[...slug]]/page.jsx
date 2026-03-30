@@ -3,8 +3,8 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { ChevronDown, SlidersHorizontal, Heart, X } from "lucide-react";
 
@@ -60,52 +60,70 @@ const NECK_TYPES = [
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-export default function Shop() {
-  const { addToCart } = useCart();
+// Normalise string for robust slug matching
+const normalise = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+function ShopInner() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // States
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [wishlist, setWishlist] = useState(new Set());
-  
-  // Filtering States
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [activeItem, setActiveItem] = useState(null); 
-  const [sortBy, setSortBy] = useState("newest");
-  const [selectedPrice, setSelectedPrice] = useState(null);
-  const [selectedSizes, setSelectedSizes] = useState([]);
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [selectedFabrics, setSelectedFabrics] = useState([]);
-  const [selectedPatterns, setSelectedPatterns] = useState([]);
-  const [selectedNeckTypes, setSelectedNeckTypes] = useState([]);
-  const [activeSizeTab, setActiveSizeTab] = useState("BABY");
+  const [activeSizeTab, setActiveSizeTab] = useState('BABY');
 
-  // Routing Data
+  // Routing
   const slugArray = Array.isArray(params?.slug) ? params.slug : (params?.slug ? [params.slug] : []);
-  const slug0 = slugArray[0] || ""; 
-  const slug1 = slugArray[1] || ""; 
+  const slug0 = slugArray[0] || '';
+  const slug1 = slugArray[1] || '';
 
-  // Determine Category from URL
+  const SLUG_CATEGORY_MAP = {
+    'baby-boy': 'Baby Boy', 'baby-girl': 'Baby Girl',
+    'kids-boy': 'Boys', 'kids-girl': 'Girls', 'baby': 'Baby',
+  };
+  const activeCategory = SLUG_CATEGORY_MAP[slug0] || 'All';
+  const activeItem = slug1 ? slug1.toLowerCase() : null;
+
+  // --- URL-driven filter state ---
+  const sp = searchParams;
+  const sortBy = sp.get('sort') || 'newest';
+  const selectedSizes = sp.get('sizes') ? sp.get('sizes').split(',') : [];
+  const selectedColors = sp.get('colors') ? sp.get('colors').split(',') : [];
+  const selectedFabrics = sp.get('fabrics') ? sp.get('fabrics').split(',') : [];
+  const selectedPatterns = sp.get('patterns') ? sp.get('patterns').split(',') : [];
+  const selectedNeckTypes = sp.get('necks') ? sp.get('necks').split(',') : [];
+  const priceLabel = sp.get('price') || null;
+  const selectedPrice = priceLabel ? PRICE_RANGES.find(r => r.label === priceLabel) || null : null;
+
+  const setParam = (key, value) => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (!value || (Array.isArray(value) && value.length === 0)) next.delete(key);
+    else next.set(key, Array.isArray(value) ? value.join(',') : value);
+    router.replace(`${window.location.pathname}?${next.toString()}`, { scroll: false });
+  };
+
+  const toggleSize = (size) => setParam('sizes', selectedSizes.includes(size) ? selectedSizes.filter(s => s !== size) : [...selectedSizes, size]);
+  const toggleColor = (color) => setParam('colors', selectedColors.includes(color) ? selectedColors.filter(c => c !== color) : [...selectedColors, color]);
+  const toggleFabric = (f) => setParam('fabrics', selectedFabrics.includes(f) ? selectedFabrics.filter(x => x !== f) : [...selectedFabrics, f]);
+  const togglePattern = (p) => setParam('patterns', selectedPatterns.includes(p) ? selectedPatterns.filter(x => x !== p) : [...selectedPatterns, p]);
+  const toggleNeckType = (n) => setParam('necks', selectedNeckTypes.includes(n) ? selectedNeckTypes.filter(x => x !== n) : [...selectedNeckTypes, n]);
+  const setSortBy = (v) => setParam('sort', v);
+  const setSelectedPrice = (range) => setParam('price', range ? range.label : null);
+  const clearFilters = () => router.replace(window.location.pathname, { scroll: false });
+
+  const hasActiveFilters = !!(priceLabel || selectedSizes.length || selectedColors.length || selectedFabrics.length || selectedPatterns.length || selectedNeckTypes.length);
+
+  // Set size tab based on category
   useEffect(() => {
-    if (slug0.includes('baby') && slug0.includes('boy')) setActiveCategory('Baby Boy');
-    else if (slug0.includes('baby') && slug0.includes('girl')) setActiveCategory('Baby Girl');
-    else if (slug0.includes('boy')) setActiveCategory('Boys');
-    else if (slug0.includes('girl')) setActiveCategory('Girls');
-    else setActiveCategory("All");
+    if (slug0 === 'baby' || slug0 === 'baby-boy' || slug0 === 'baby-girl') setActiveSizeTab('BABY');
+    else if (slug0 === 'kids-boy' || slug0 === 'kids-girl') setActiveSizeTab('KIDS');
+  }, [slug0]);
 
-    // Auto-set size tab based on category
-    if (slug0.includes('baby')) setActiveSizeTab('BABY');
-    else if (slug0.includes('boy') || slug0.includes('girl')) setActiveSizeTab('KIDS');
-
-    if (slug1) setActiveItem(slug1.replace(/-/g, " "));
-    else setActiveItem(null);
-  }, [params, slug0, slug1]);
-
+  // Wishlist
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (!token) return;
     fetch(`${API}/api/wishlist`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
@@ -114,154 +132,100 @@ export default function Shop() {
   }, []);
 
   const toggleWishlist = async (e, productId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/login"); return; }
+    e.preventDefault(); e.stopPropagation();
+    const token = localStorage.getItem('token');
+    if (!token) { router.push('/login'); return; }
     try {
       await fetch(`${API}/api/wishlist/toggle`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ productId })
       });
-      setWishlist(prev => {
-        const next = new Set(prev);
-        next.has(productId) ? next.delete(productId) : next.add(productId);
-        return next;
-      });
+      setWishlist(prev => { const next = new Set(prev); next.has(productId) ? next.delete(productId) : next.add(productId); return next; });
     } catch {}
   };
 
-  // Fetch Database
+  // Fetch — scoped by main_category
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch(`${API}/api/products`);
-        const rawData = await response.json();
-        const data = rawData.map(p => ({
-          ...p,
-          image_urls: typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || [])
-        }));
-        setProducts(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Database connection failed:", error);
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+    setLoading(true);
+    const mainCat = (slug0 === 'baby' || slug0 === 'baby-boy' || slug0 === 'baby-girl') ? 'Baby'
+      : (slug0 === 'kids-boy' || slug0 === 'kids-girl') ? 'Kids' : null;
+    const url = mainCat ? `${API}/api/products?main_category=${encodeURIComponent(mainCat)}` : `${API}/api/products`;
+    fetch(url)
+      .then(r => r.json())
+      .then(raw => setProducts(raw.map(p => ({
+        ...p,
+        image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })()
+      }))))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [slug0]);
 
-  // Filter Toggles
-  const toggleSize = (size) => setSelectedSizes(prev => prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]);
-  const toggleColor = (color) => setSelectedColors(prev => prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]);
-  const toggleFabric = (fabric) => setSelectedFabrics(prev => prev.includes(fabric) ? prev.filter(f => f !== fabric) : [...prev, fabric]);
-  const togglePattern = (pattern) => setSelectedPatterns(prev => prev.includes(pattern) ? prev.filter(p => p !== pattern) : [...prev, pattern]);
-  const toggleNeckType = (neck) => setSelectedNeckTypes(prev => prev.includes(neck) ? prev.filter(n => n !== neck) : [...prev, neck]);
-  const clearFilters = () => { setSelectedPrice(null); setSelectedSizes([]); setSelectedColors([]); setSelectedFabrics([]); setSelectedPatterns([]); setSelectedNeckTypes([]); };
+  // --- Memoised filter + sort pipeline ---
+  const displayedProducts = useMemo(() => {
+    let list = products;
 
-  // --- FILTERING LOGIC ---
-  let displayedProducts = products;
+    if (slug0 === 'offers') list = list.filter(p => p.mrp && (((parseFloat(p.mrp) - parseFloat(p.price)) / parseFloat(p.mrp)) * 100) >= 30);
+    if (slug0 === 'new') list = list.filter(p => p.is_new_arrival === true);
 
-  if (slug0 === "offers") {
-    displayedProducts = displayedProducts.filter(p => {
-      if (!p.mrp || parseFloat(p.mrp) <= parseFloat(p.price)) return false;
-      return (((parseFloat(p.mrp) - parseFloat(p.price)) / parseFloat(p.mrp)) * 100) >= 30; 
+    if (activeCategory !== 'All') {
+      list = list.filter(p => {
+        const extra = (() => { try { return typeof p.extra_categories === 'string' ? JSON.parse(p.extra_categories) : (p.extra_categories || []); } catch { return []; } })();
+        const allSubs = [p.sub_category, ...extra.map(e => e.sub_category)].map(s => (s || '').toLowerCase());
+        const allMains = [p.main_category, ...extra.map(e => e.main_category)].map(m => (m || '').toLowerCase());
+        if (activeCategory === 'Baby') return allMains.some(m => m === 'baby');
+        if (activeCategory === 'Baby Boy') return allSubs.some(s => s.includes('baby') && s.includes('boy')) || (allMains.some(m => m === 'baby') && allSubs.some(s => s.includes('boy')));
+        if (activeCategory === 'Baby Girl') return allSubs.some(s => s.includes('baby') && s.includes('girl')) || (allMains.some(m => m === 'baby') && allSubs.some(s => s.includes('girl')));
+        if (activeCategory === 'Boys') return allSubs.some(s => s.includes('boy') && !s.includes('baby'));
+        if (activeCategory === 'Girls') return allSubs.some(s => s.includes('girl') && !s.includes('baby'));
+        return true;
+      });
+    }
+
+    if (activeItem) {
+      const normItem = normalise(activeItem);
+      list = list.filter(p => normalise(p.item_type || '') === normItem);
+    }
+
+    if (selectedPrice) list = list.filter(p => parseFloat(p.price) >= selectedPrice.min && parseFloat(p.price) <= selectedPrice.max);
+
+    if (selectedSizes.length) list = list.filter(p => {
+      try { const v = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []); return selectedSizes.some(s => v.some(vv => vv.size === s)); } catch { return false; }
     });
-  }
 
-  if (slug0 === "new") displayedProducts = displayedProducts.filter(p => p.is_new_arrival === true);
-
-  if (activeCategory !== "All") {
-    displayedProducts = displayedProducts.filter((p) => {
-      const extra = (() => { try { return typeof p.extra_categories === 'string' ? JSON.parse(p.extra_categories) : (p.extra_categories || []); } catch { return []; } })();
-      const allSubs = [p.sub_category, ...extra.map(e => e.sub_category)].map(s => (s || '').toLowerCase());
-      const allMains = [p.main_category, ...extra.map(e => e.main_category)].map(m => (m || '').toLowerCase());
-      if (activeCategory === 'Baby Boy') return allSubs.some(s => s.includes('baby') && s.includes('boy')) || (allMains.some(m => m === 'baby') && allSubs.some(s => s.includes('boy')));
-      if (activeCategory === 'Baby Girl') return allSubs.some(s => s.includes('baby') && s.includes('girl')) || (allMains.some(m => m === 'baby') && allSubs.some(s => s.includes('girl')));
-      if (activeCategory === 'Boys') return allSubs.some(s => s.includes('boy') && !s.includes('baby'));
-      if (activeCategory === 'Girls') return allSubs.some(s => s.includes('girl') && !s.includes('baby'));
-      return true;
+    if (selectedColors.length) list = list.filter(p => {
+      try { const v = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []); return selectedColors.some(c => v.some(vv => vv.color?.toLowerCase() === c.toLowerCase())); } catch { return false; }
     });
-  }
 
-  if (activeItem) {
-    displayedProducts = displayedProducts.filter((p) => {
-      const itemType = (p.item_type || '').toLowerCase();
-      const searchItem = activeItem.toLowerCase();
-      return (
-        itemType === searchItem ||
-        itemType.replace(/[^a-z0-9]/g, '-') === searchItem.replace(/[^a-z0-9]/g, '-') ||
-        itemType.replace(/[^a-z0-9]/g, '') === searchItem.replace(/[^a-z0-9]/g, '')
-      );
-    });
-  }
+    if (selectedFabrics.length) list = list.filter(p => selectedFabrics.some(f => normalise(p.fabric || '') === normalise(f)));
+    if (selectedPatterns.length) list = list.filter(p => selectedPatterns.some(pt => normalise(p.pattern || '') === normalise(pt)));
+    if (selectedNeckTypes.length) list = list.filter(p => selectedNeckTypes.some(n => normalise(p.neck_type || '') === normalise(n)));
 
-  if (selectedPrice) {
-    displayedProducts = displayedProducts.filter(p => parseFloat(p.price) >= selectedPrice.min && parseFloat(p.price) <= selectedPrice.max);
-  }
+    const sorted = [...list];
+    if (sortBy === 'newest') sorted.sort((a, b) => b.id - a.id);
+    else if (sortBy === 'price-low') sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+    else if (sortBy === 'price-high') sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+    return sorted;
+  }, [products, slug0, activeCategory, activeItem, selectedPrice, selectedSizes, selectedColors, selectedFabrics, selectedPatterns, selectedNeckTypes, sortBy]);
 
-  if (selectedSizes.length > 0) {
-    displayedProducts = displayedProducts.filter(p => {
-      try {
-        const variants = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []);
-        return selectedSizes.some(size => variants.some(v => v.size === size));
-      } catch { return false; }
-    });
-  }
-
-  if (selectedColors.length > 0) {
-    displayedProducts = displayedProducts.filter(p => {
-      try {
-        const variants = typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []);
-        return selectedColors.some(color => variants.some(v => v.color.toLowerCase() === color.toLowerCase()));
-      } catch { return false; }
-    });
-  }
-
-  if (selectedFabrics.length > 0) {
-    displayedProducts = displayedProducts.filter(p =>
-      selectedFabrics.some(f => (p.fabric || '').toLowerCase() === f.toLowerCase())
-    );
-  }
-
-  if (selectedPatterns.length > 0) {
-    displayedProducts = displayedProducts.filter(p =>
-      selectedPatterns.some(pt => (p.pattern || '').toLowerCase() === pt.toLowerCase())
-    );
-  }
-
-  if (selectedNeckTypes.length > 0) {
-    displayedProducts = displayedProducts.filter(p =>
-      selectedNeckTypes.some(n => (p.neck_type || '').toLowerCase() === n.toLowerCase())
-    );
-  }
-
-  if (sortBy === "newest") displayedProducts.sort((a, b) => b.id - a.id);
-  else if (sortBy === "price-low") displayedProducts.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-  else if (sortBy === "price-high") displayedProducts.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-
-  const hasActiveFilters = selectedPrice !== null || selectedSizes.length > 0 || selectedColors.length > 0 || selectedFabrics.length > 0 || selectedPatterns.length > 0 || selectedNeckTypes.length > 0;
-
-  // Header Data
   const getPageTitle = () => {
-    if (activeItem) return activeItem;
-    if (slug0 === "offers") return "Special Offers";
-    if (slug0 === "new") return "New Arrivals";
-    if (activeCategory !== "All") return activeCategory;
-    return "The Collection";
+    if (activeItem) return activeItem.replace(/-/g, ' ');
+    if (slug0 === 'offers') return 'Special Offers';
+    if (slug0 === 'new') return 'New Arrivals';
+    if (activeCategory !== 'All') return activeCategory;
+    return 'The Collection';
   };
 
   const generateBreadcrumbs = () => {
     const paths = [{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop' }];
     if (slugArray.length > 0) {
-      let catName = activeCategory !== "All" ? activeCategory : slugArray[0].replace(/-/g, ' ');
-      if (slug0 === "offers") catName = "Offers";
-      if (slug0 === "new") catName = "New Arrivals";
+      let catName = activeCategory !== 'All' ? activeCategory : slugArray[0].replace(/-/g, ' ');
+      if (slug0 === 'offers') catName = 'Offers';
+      if (slug0 === 'new') catName = 'New Arrivals';
       paths.push({ name: catName, href: `/shop/${slugArray[0]}` });
     }
     if (slugArray.length > 1) {
-      paths.push({ name: activeItem || slugArray[1].replace(/-/g, ' '), href: `/shop/${slugArray[0]}/${slugArray[1]}` });
+      paths.push({ name: activeItem ? activeItem.replace(/-/g, ' ') : slugArray[1].replace(/-/g, ' '), href: `/shop/${slugArray[0]}/${slugArray[1]}` });
     }
     return paths;
   };
@@ -605,5 +569,17 @@ export default function Shop() {
 
       </div>
     </div>
+  );
+}
+
+export default function Shop() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-white flex justify-center items-center">
+        <span className="text-xs tracking-widest uppercase text-black animate-pulse">Curating Collection...</span>
+      </main>
+    }>
+      <ShopInner />
+    </Suspense>
   );
 }

@@ -14,6 +14,44 @@ const HERO_SLIDES = [
   { image: "/images/infant.png", tag: "Baby", title: "Infants & Toddlers", href: "/shop/baby" },
 ];
 
+// Defined outside Home so React never remounts cards on wishlist state changes
+function GridCard({ product, wishlist, toggleWishlist }) {
+  if (!product) {
+    return (
+      <div className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start flex flex-col group">
+        <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] border border-dashed border-black/10 flex flex-col items-center justify-center text-center p-4 mb-4">
+          <span className="text-[10px] font-bold tracking-widest uppercase text-black/30">Empty Slot</span>
+          <span className="text-[9px] tracking-widest uppercase text-black/20 mt-1">Assign in Admin</span>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start flex flex-col group">
+      <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-4">
+        <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 p-1 hover:scale-110 transition-transform">
+          <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
+        </button>
+        <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
+          <Image src={product.image_urls?.[0] || "https://via.placeholder.com/400x500"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
+        </Link>
+      </div>
+      <Link href={`/product/${product.id}`} className="flex flex-col px-1">
+        <h3 className="text-[13px] text-black mb-1">{product.title}</h3>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-[12px] text-black font-medium">₹{product.price ? parseFloat(product.price).toFixed(2) : "0.00"}</p>
+          {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
+            <>
+              <p className="text-[10px] text-black/40 line-through">₹{parseFloat(product.mrp).toFixed(2)}</p>
+              <span className="text-[9px] font-bold text-[#D32F2F]">({Math.round(((parseFloat(product.mrp) - parseFloat(product.price)) / parseFloat(product.mrp)) * 100)}% OFF)</span>
+            </>
+          )}
+        </div>
+      </Link>
+    </div>
+  );
+}
+
 export default function Home() {
   const [girlsProducts, setGirlsProducts] = useState([null, null, null, null]);
   const [bestsellerProducts, setBestsellerProducts] = useState([null, null, null, null]);

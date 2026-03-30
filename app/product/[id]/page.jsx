@@ -51,12 +51,12 @@ export default function ProductPage() {
         
         const data = await response.json();
 
-        // Fetch related products
-        fetch(`${API}/api/products`)
+        // Fetch related products — pass sub_category as query param to avoid loading all products
+        fetch(`${API}/api/products?sub_category=${encodeURIComponent(data.sub_category)}`)
           .then(r => r.json())
           .then(all => {
             const parsed = all.map(p => ({ ...p, image_urls: typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []) }));
-            const related = parsed.filter(p => p.id !== parseInt(id) && p.sub_category === data.sub_category).slice(0, 6);
+            const related = parsed.filter(p => p.id !== parseInt(id)).slice(0, 6);
             setRelatedProducts(related);
           }).catch(() => {});
 
@@ -594,7 +594,7 @@ export default function ProductPage() {
                   <div className="flex gap-2">
                     <input type="email" value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} placeholder="Enter your email" className="flex-1 border border-black/20 rounded-full px-4 py-2.5 text-[13px] outline-none focus:border-black" />
                     <button onClick={async () => {
-                      if (!notifyEmail) return;
+                      if (!notifyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail)) return;
                       try {
                         await fetch(`${API}/api/notify-me`, {
                           method: 'POST',

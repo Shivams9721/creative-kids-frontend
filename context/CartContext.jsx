@@ -27,19 +27,32 @@ export function CartProvider({ children }) {
 
   const addToCart = (product) => {
     setCart(prev => {
-      // If same product + color + size already in cart, increment quantity
       const existing = prev.findIndex(
         i => i.id === product.id &&
              i.selectedColor === product.selectedColor &&
              i.selectedSize === product.selectedSize
       );
+      // Store only minimal fields to avoid localStorage quota issues
+      const slim = {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        mrp: product.mrp,
+        image: product.image,
+        selectedColor: product.selectedColor,
+        selectedSize: product.selectedSize,
+        sku: product.sku,
+        baseSku: product.baseSku,
+        quantity: product.quantity || 1,
+        cartId: product.cartId || Math.random().toString(),
+      };
       let next;
       if (existing >= 0) {
         next = prev.map((item, idx) =>
           idx === existing ? { ...item, quantity: (item.quantity || 1) + 1 } : item
         );
       } else {
-        next = [...prev, { ...product, cartId: Math.random().toString(), quantity: product.quantity || 1 }];
+        next = [...prev, slim];
       }
       try { localStorage.setItem("ck_cart", JSON.stringify(next)); } catch {}
       return next;

@@ -3,17 +3,20 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Download, CheckCircle2 } from "lucide-react";
 
 export default function OrderSuccess() {
   const [order, setOrder] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem("lastOrder");
-      if (saved) setOrder(JSON.parse(saved));
-    } catch {}
-  }, []);
+      if (!saved) { router.replace("/"); return; }
+      setOrder(JSON.parse(saved));
+    } catch { router.replace("/"); }
+  }, [router]);
 
   const downloadInvoice = async () => {
     const { jsPDF } = await import("jspdf");

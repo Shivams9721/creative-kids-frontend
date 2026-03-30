@@ -82,12 +82,10 @@ export default function Navbar() {
   }, [isPaused, isAnnouncementVisible]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
+    const checkAuth = () => setIsLoggedIn(!!localStorage.getItem("token"));
+    checkAuth();
+    window.addEventListener('storage', checkAuth);
+    return () => window.removeEventListener('storage', checkAuth);
   }, [pathname]);
 
   useEffect(() => {

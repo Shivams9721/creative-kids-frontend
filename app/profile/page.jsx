@@ -42,7 +42,7 @@ export default function UserProfile() {
     const savedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
 
-    if (!savedUser) {
+    if (!savedUser || !token) {
       window.location.href = "/login";
       return;
     }
@@ -53,23 +53,21 @@ export default function UserProfile() {
     const parsedUser = JSON.parse(savedUser);
     setUser(prev => ({ ...prev, name: parsedUser.name, email: parsedUser.email }));
 
-    // Fetch My Orders — use JWT, never trust client-supplied email
+    // Fetch My Orders — JWT-authenticated, server resolves user from token
     const fetchMyOrders = async () => {
       try {
-        const response = await fetch(`${API}/api/orders/user/${parsedUser.email}`, {
+        const response = await fetch(`${API}/api/user/orders`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data);
-        }
+        if (response.status === 401) { window.location.href = "/login"; return; }
+        if (response.ok) setOrders(await response.json());
       } catch (error) {
         console.error("Failed to fetch orders", error);
       } finally {
         setLoadingOrders(false);
       }
     };
-    if (token) fetchMyOrders();
+    fetchMyOrders();
 
     // Fetch My Wishlist
     const fetchMyWishlist = async () => {
@@ -77,27 +75,26 @@ export default function UserProfile() {
         const response = await fetch(`${API}/api/wishlist`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
-        if (response.ok) {
-          const data = await response.json();
-          setWishlist(data);
-        }
+        if (response.status === 401) { window.location.href = "/login"; return; }
+        if (response.ok) setWishlist(await response.json());
       } catch (error) {
         console.error("Failed to fetch wishlist", error);
       } finally {
         setLoadingWishlist(false);
       }
     };
-    if (token) fetchMyWishlist();
+    fetchMyWishlist();
 
     // Fetch My Returns
     const fetchMyReturns = async () => {
       try {
         const res = await fetch(`${API}/api/returns`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.status === 401) { window.location.href = "/login"; return; }
         if (res.ok) setReturns(await res.json());
       } catch {}
       finally { setLoadingReturns(false); }
     };
-    if (token) fetchMyReturns();
+    fetchMyReturns();
 
   }, []);
 

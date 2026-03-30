@@ -60,13 +60,9 @@ export default function CheckoutPage() {
     // ==========================================
     useEffect(() => {
         const token = localStorage.getItem("token");
-        
         if (!token) {
-            // If they are not logged in, alert them and send them to the login page!
-            alert("Please log in or create an account to securely place your order.");
-            router.push("/login"); 
+            router.replace("/login");
         } else {
-            // If they are logged in, allow the checkout page to load
             setIsCheckingAuth(false);
         }
     }, [router]);
@@ -158,15 +154,27 @@ export default function CheckoutPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem("token");
-            if (!token) { router.push("/login"); return; }
+            if (!token) { router.replace("/login"); return; }
+
+            // Send only item IDs + variant selection — backend re-fetches prices from DB
+            // price and mrp are intentionally excluded to prevent client-side manipulation
+            const safeCartItems = cart.map(({ id, title, image, selectedColor, selectedSize, sku, baseSku, quantity }) => ({
+                id,
+                title,
+                image,
+                selectedColor,
+                selectedSize,
+                sku,
+                baseSku,
+                quantity: quantity || 1
+            }));
 
             const response = await fetch(`${API}/api/orders`, {
                 method: "POST",
                 headers: await csrfHeaders({ "Content-Type": "application/json", "Authorization": `Bearer ${token}` }),
                 credentials: 'include',
                 body: JSON.stringify({
-                    cartItems: cart,
-                    totalAmount: cartTotal,
+                    cartItems: safeCartItems,
                     address,
                     paymentMethod,
                     couponCode: couponStatus?.code || null,
