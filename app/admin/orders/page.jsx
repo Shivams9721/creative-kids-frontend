@@ -1,9 +1,8 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { RefreshCcw, Search, ChevronDown, ChevronUp, MessageCircle, Printer } from "lucide-react";
 import { csrfHeaders } from "@/lib/csrf";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch, safeId, safePage as toSafePage } from "@/lib/safeFetch";
 
 const STATUS_COLORS = {
   Processing: "bg-blue-50 text-blue-700 border-blue-200",
@@ -27,8 +26,9 @@ export default function OrdersPage() {
   const fetchOrders = useCallback(async (p = 1) => {
     setRefreshing(true);
     const token = localStorage.getItem("adminToken");
+    const sp = toSafePage(p);
     try {
-      const res = await fetch(`${API}/api/admin/orders?page=${p}&limit=${LIMIT}`, {
+      const res = await safeFetch(`/api/admin/orders?page=${sp}&limit=${LIMIT}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -42,12 +42,13 @@ export default function OrdersPage() {
   useEffect(() => { fetchOrders(1); }, [fetchOrders]);
 
   const updateStatus = async (orderId, status, courier = "", awb = "") => {
+    const sid = safeId(orderId);
     if (status === "Shipped" && !courier) {
-      setShippingModal({ orderId, status, courier, awb });
+      setShippingModal({ orderId: sid, status, courier, awb });
       return;
     }
     const token = localStorage.getItem("adminToken");
-    const res = await fetch(`${API}/api/admin/orders/${orderId}/status`, {
+    const res = await safeFetch(`/api/admin/orders/${sid}/status`, {
       method: "PUT",
       headers: await csrfHeaders({ "Content-Type": "application/json", Authorization: `Bearer ${token}` }),
       credentials: "include",
@@ -116,7 +117,7 @@ export default function OrdersPage() {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan="6" className="p-12 text-center text-[13px] text-slate-400">No orders found.</td></tr>
               ) : filtered.map(order => (
-                <>
+                <React.Fragment key={order.id}>
                   <tr key={order.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="p-5 text-[13px] font-bold text-slate-800">{order.order_number}</td>
                     <td className="p-5 text-[13px] text-slate-500">{new Date(order.created_at).toLocaleDateString("en-IN")}</td>
@@ -175,7 +176,7 @@ export default function OrdersPage() {
                                   <button onClick={() => window.print()} className="flex items-center gap-1 bg-slate-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">
                                     <Printer size={12} /> Print
                                   </button>
-                                  <a href={`https://wa.me/91${(order.phone || "").replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${order.customer_name}, your Creative Kids order ${order.order_number} is confirmed! 🎉`)}`}
+                                  <a href={`https://wa.me/91${(order.phone || "").replace(/\D/g, "").slice(0, 10)}?text=${encodeURIComponent(`Hi ${order.customer_name}, your Creative Kids order ${order.order_number} is confirmed! 🎉`)}`}
                                     target="_blank" rel="noreferrer"
                                     className="flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">
                                     <MessageCircle size={12} /> WhatsApp
@@ -203,7 +204,7 @@ export default function OrdersPage() {
                       </tr>
                     );
                   })()}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LockKeyhole } from "lucide-react";
 import { motion } from "framer-motion";
+import { safeFetch } from "@/lib/safeFetch";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -16,8 +17,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL;
-      const response = await fetch(`${API}/api/admin/login`, {
+      const response = await safeFetch(`/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })

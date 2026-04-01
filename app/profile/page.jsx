@@ -6,8 +6,7 @@ import {
   User, Package, RefreshCcw, Settings, MapPin, LogOut, CheckCircle2, Circle, X, Heart
 } from "lucide-react";
 import { csrfHeaders } from "@/lib/csrf";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch, safeId } from "@/lib/safeFetch";
 
 // The timeline steps your admin panel uses
 const TRACKING_STEPS = ["Processing", "Shipped", "Delivered"];
@@ -56,7 +55,7 @@ export default function UserProfile() {
     // Fetch My Orders — JWT-authenticated, server resolves user from token
     const fetchMyOrders = async () => {
       try {
-        const response = await fetch(`${API}/api/user/orders`, {
+        const response = await safeFetch(`/api/user/orders`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.status === 401) { window.location.href = "/login"; return; }
@@ -72,7 +71,7 @@ export default function UserProfile() {
     // Fetch My Wishlist
     const fetchMyWishlist = async () => {
       try {
-        const response = await fetch(`${API}/api/wishlist`, {
+        const response = await safeFetch(`/api/wishlist`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.status === 401) { window.location.href = "/login"; return; }
@@ -88,7 +87,7 @@ export default function UserProfile() {
     // Fetch My Returns
     const fetchMyReturns = async () => {
       try {
-        const res = await fetch(`${API}/api/returns`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await safeFetch(`/api/returns`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.status === 401) { window.location.href = "/login"; return; }
         if (res.ok) setReturns(await res.json());
       } catch {}
@@ -261,7 +260,7 @@ export default function UserProfile() {
                                   onClick={async () => {
                                     if (!window.confirm('Cancel this order?')) return;
                                     const token = localStorage.getItem('token');
-                                    const res = await fetch(`${API}/api/orders/${order.id}/cancel`, {
+                                    const res = await safeFetch(`/api/orders/${safeId(order.id)}/cancel`, {
                                       method: 'POST',
                                       headers: await csrfHeaders({ Authorization: `Bearer ${token}` }),
                                       credentials: 'include'
@@ -307,7 +306,7 @@ export default function UserProfile() {
                       <button
                         onClick={async () => {
                           const token = localStorage.getItem("token");
-                          await fetch(`${API}/api/wishlist/toggle`, {
+                          await safeFetch(`/api/wishlist/toggle`, {
                             method: "POST",
                             headers: await csrfHeaders({ "Content-Type": "application/json", "Authorization": `Bearer ${token}` }),
                             credentials: 'include',
@@ -350,7 +349,7 @@ export default function UserProfile() {
                 setSubmittingReturn(true);
                 const token = localStorage.getItem('token');
                 try {
-                  const res = await fetch(`${API}/api/returns`, {
+                  const res = await safeFetch(`/api/returns`, {
                     method: 'POST',
                     headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }),
                     credentials: 'include',
@@ -456,7 +455,7 @@ export default function UserProfile() {
               const name = e.target.name.value;
               const phone = e.target.phone.value;
               try {
-                const res = await fetch(`${API}/api/user/profile`, {
+                const res = await safeFetch(`/api/user/profile`, {
                   method: 'PUT',
                   headers: await csrfHeaders({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }),
                   credentials: 'include',

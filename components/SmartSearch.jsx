@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, Heart } from "lucide-react";
 import Link from "next/link";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch } from "@/lib/safeFetch";
 
 // Module-level cache — fetched once per session, not on every search open
 let cachedProducts = null;
@@ -28,7 +27,7 @@ export default function SmartSearch({ isOpen, onClose }) {
     document.body.style.overflow = "hidden";
     setTimeout(() => inputRef.current?.focus(), 100);
     if (cachedProducts) { setProducts(cachedProducts); return; }
-    fetch(`${API}/api/products`)
+    safeFetch(`/api/products`)
       .then(res => res.json())
       .then(data => { cachedProducts = data; setProducts(data); })
       .catch(err => console.error("Search fetch error:", err));

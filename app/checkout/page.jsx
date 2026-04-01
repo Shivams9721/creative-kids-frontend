@@ -5,12 +5,11 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
 import { initializeRazorpay, processRazorpayPayment } from "@/lib/razorpay";
+import { safeFetch } from "@/lib/safeFetch";
 import { CheckCircle2, ChevronLeft, MapPin, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import Script from "next/script";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
 
 const SmartInput = ({ label, name, value, placeholder, error, type = "text", disabled = false, badge, onChange }) => (
     <div className="w-full relative">
@@ -137,7 +136,7 @@ export default function CheckoutPage() {
         setCouponStatus('checking');
         setCouponError("");
         try {
-            const res = await fetch(`${API}/api/coupons/validate`, {
+            const res = await safeFetch(`/api/coupons/validate`, {
                 method: "POST",
                 headers: await csrfHeaders({ "Content-Type": "application/json" }),
                 credentials: 'include',
@@ -175,7 +174,6 @@ export default function CheckoutPage() {
                     name: address.fullName,
                     email: JSON.parse(localStorage.getItem('user') || '{}').email,
                     phone: address.phone,
-                    API_BASE: API,
                     token,
                     csrfHeaders,
                     onSuccess: async (paymentData) => {
@@ -213,7 +211,7 @@ export default function CheckoutPage() {
                 quantity: quantity || 1
             }));
 
-            const response = await fetch(`${API}/api/orders`, {
+            const response = await safeFetch(`/api/orders`, {
                 method: "POST",
                 headers: await csrfHeaders({ "Content-Type": "application/json", "Authorization": `Bearer ${token}` }),
                 credentials: 'include',

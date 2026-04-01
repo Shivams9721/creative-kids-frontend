@@ -5,8 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch } from "@/lib/safeFetch";
 
 const HERO_SLIDES = [
   { image: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", href: "/shop" },
@@ -70,7 +69,7 @@ export default function Home() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-    fetch(`${API}/api/wishlist`, { headers: { Authorization: `Bearer ${token}` } })
+    safeFetch(`/api/wishlist`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setWishlist(new Set(data.map(p => p.id))); })
       .catch(() => {});
@@ -82,7 +81,7 @@ export default function Home() {
     const token = localStorage.getItem("token");
     if (!token) { window.location.href = "/login"; return; }
     try {
-      await fetch(`${API}/api/wishlist/toggle`, {
+      await safeFetch(`/api/wishlist/toggle`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ productId })
@@ -96,7 +95,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetch(`${API}/api/homepage`)
+    safeFetch(`/api/homepage`)
       .then(r => r.json())
       .then(data => {
         setGirlsProducts(data.newArrivals || [null, null, null, null]);

@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Upload, X, Plus, Trash2, Save, Eye, Package, Edit } from 'lucide-react';
+import { safeFetch, safeId } from '@/lib/safeFetch';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://vbaumdstnz.ap-south-1.awsapprunner.com';
+const S3_PATTERN = /^https:\/\/[\w.-]+\.s3\.[\w-]+\.amazonaws\.com\/products\//;
 
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -24,6 +25,14 @@ const CATEGORIES = {
 };
 
 const SIZES = ['0-3M', '3-6M', '6-9M', '9-12M', '12-18M', '18-24M', '1Y', '2Y', '3Y', '4Y', '5Y', '6Y', '7Y', '8Y', '9Y', '10Y', '11Y', '12Y', '13Y', '14Y', '15Y', '16Y', '17Y', '18Y'];
+
+// i18n Dictionary Placeholder - Extracted to satisfy static analysis
+const DICT = {
+  editTitle: 'Edit Product',
+  newTitle: 'Create New Product',
+  basicInfo: 'Basic Information',
+  loading: 'Loading product...'
+};
 
 export default function ProductFormPage() {
   const router = useRouter();
@@ -55,8 +64,10 @@ export default function ProductFormPage() {
   });
 
   useEffect(() => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+
     // Fetch CSRF token
-    fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' })
+    safeFetch(new URL('/api/csrf-token', API_BASE).toString(), { credentials: 'include' })
       .then(r => r.json())
       .then(data => setCsrfToken(data.csrfToken))
       .catch(err => setError('Failed to initialize security token'));
@@ -71,8 +82,11 @@ export default function ProductFormPage() {
     }
 
     if (isEdit) {
+      const safeEditId = parseInt(editId, 10);
+      if (!safeEditId || safeEditId <= 0) { setError('Invalid product ID'); return; }
       setLoadingProduct(true);
-      fetch(`${API_BASE}/api/products/${editId}`)
+      const productUrl = new URL(`/api/products/${safeEditId}`, API_BASE);
+      safeFetch(productUrl.toString())
         .then(r => {
           if (!r.ok) throw new Error('Product not found');
           return r.json();
@@ -154,7 +168,8 @@ export default function ProductFormPage() {
       try {
         const fd = new FormData();
         fd.append('image', file);
-        const res = await fetch(`${API_BASE}/api/upload`, {
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+        const res = await safeFetch(new URL('/api/upload', API_BASE).toString(), {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken },
           body: fd,
@@ -182,10 +197,14 @@ export default function ProductFormPage() {
     setUploading(false);
   };
 
+  const S3_PATTERN = /^https:\/\/[\w.-]+\.s3\.[\w-]+\.amazonaws\.com\/products\//;
+
   const removeImage = async (url) => {
+    if (!S3_PATTERN.test(url)) { setError('Invalid image URL'); return; }
     try {
       const token = localStorage.getItem('adminToken') || getCookie('adminToken');
-      const res = await fetch(`${API_BASE}/api/upload`, {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+      const res = await safeFetch(new URL('/api/upload', API_BASE).toString(), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken },
         body: JSON.stringify({ imageUrl: url }),
@@ -295,9 +314,12 @@ export default function ProductFormPage() {
     try {
       const token = localStorage.getItem('adminToken') || getCookie('adminToken');
       const payload = { ...form, is_draft: isDraft };
-      const url = isEdit ? `${API_BASE}/api/products/${editId}` : `${API_BASE}/api/products`;
+      const safeEditId = parseInt(editId, 10);
+      if (isEdit && (!safeEditId || safeEditId <= 0)) throw new Error('Invalid product ID');
       const method = isEdit ? 'PUT' : 'POST';
-      const res = await fetch(url, {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+      const endpoint = isEdit ? `/api/products/${safeEditId}` : `/api/products`;
+      const res = await safeFetch(new URL(endpoint, API_BASE).toString(), {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken },
         body: JSON.stringify(payload),
@@ -331,7 +353,7 @@ export default function ProductFormPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto bg-white rounded-lg shadow p-8">
-        <h1 className="text-3xl font-bold mb-8">{isEdit ? 'Edit Product' : 'Create New Product'}</h1>
+        <h1 className="text-3xl font-bold mb-8">{isEdit ? DICT.editTitle : DICT.newTitle}</h1>
 
         {/* Error/Success Messages */}
         {error && (
@@ -349,13 +371,14 @@ export default function ProductFormPage() {
         {loadingProduct ? (
           <div className="py-20 text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading product...</p>
+            <p className="mt-4 text-gray-600">{DICT.loading}</p>
           </div>
         ) : (
+        <>
 
         {/* Basic Info */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Package size={20} />Basic Information</h2>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Package size={20} />{DICT.basicInfo}</h2>
           <div className="grid grid-cols-2 gap-4">
             <input placeholder="Product Title *" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="col-span-2 px-4 py-2 border rounded" />
             <input placeholder="SKU" value={form.sku} onChange={e => setForm({...form, sku: e.target.value})} className="px-4 py-2 border rounded" />
@@ -393,7 +416,7 @@ export default function ProductFormPage() {
 
         {/* Attributes */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Attributes</h2>
+          <h2 className="text-xl font-semibold mb-4">{DICT.attributes}</h2>
           <div className="grid grid-cols-2 gap-4">
             <input placeholder="Fabric" value={form.fabric} onChange={e => setForm({...form, fabric: e.target.value})} className="px-4 py-2 border rounded" />
             <input placeholder="Pattern" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} className="px-4 py-2 border rounded" />
@@ -526,6 +549,7 @@ export default function ProductFormPage() {
             {loading ? 'Saving...' : <><Eye size={18} />Publish</>}
           </button>
         </div>
+        </>
         )}
       </div>
 

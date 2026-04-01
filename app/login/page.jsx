@@ -6,8 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Mail, Lock, User as UserIcon, ArrowLeft, CheckCircle2, Eye, EyeOff, Sparkles, ShieldCheck, Truck, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch } from "@/lib/safeFetch";
 
 // Modes: otp_email | otp_verify | otp_reset_password | login | register | forgot | reset | reset_done | forgot_sent
 
@@ -71,7 +70,7 @@ function LoginContent() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API}/api/auth/send-otp`, {
+      const res = await safeFetch(`/api/auth/send-otp`, {
         method: "POST",
         headers: await csrfHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
@@ -101,7 +100,7 @@ function LoginContent() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API}/api/auth/verify-otp`, {
+      const res = await safeFetch(`/api/auth/verify-otp`, {
         method: "POST",
         headers: await csrfHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
@@ -135,7 +134,7 @@ function LoginContent() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API}/api/auth/reset-password`, {
+      const res = await safeFetch(`/api/auth/reset-password`, {
         method: "POST",
         headers: await csrfHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
@@ -159,7 +158,7 @@ function LoginContent() {
     setTouched({ email: true, password: true, name: true, confirmPassword: true });
     try {
       const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-      const res = await fetch(`${API}${endpoint}`, {
+      const res = await safeFetch(`${endpoint}`, {
         method: "POST",
         headers: await csrfHeaders({ "Content-Type": "application/json" }),
         credentials: "include",

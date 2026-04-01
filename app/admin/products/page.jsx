@@ -2,8 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, Edit, Trash2, RefreshCcw, Package } from "lucide-react";
 import Link from "next/link";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch, safeId } from "@/lib/safeFetch";
 
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -23,7 +22,7 @@ export default function ProductsPage() {
     setLoading(true);
     const token = localStorage.getItem("adminToken") || getCookie('adminToken');
     try {
-      const res = await fetch(`${API}/api/admin/products`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await safeFetch(`/api/admin/products`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(data.map(p => ({
@@ -38,7 +37,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     // Fetch CSRF token once on mount
-    fetch(`${API}/api/csrf-token`, { credentials: 'include' })
+    safeFetch(`/api/csrf-token`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => setCsrfToken(data.csrfToken))
       .catch(err => setError('Failed to initialize security'));
@@ -51,7 +50,7 @@ export default function ProductsPage() {
     setError('');
     const token = localStorage.getItem("adminToken") || getCookie('adminToken');
     try {
-      const res = await fetch(`${API}/api/products/${id}`, {
+      const res = await safeFetch(`/api/products/${safeId(id)}`, {
         method: "DELETE",
         headers: { 
           Authorization: `Bearer ${token}`, 
@@ -72,7 +71,7 @@ export default function ProductsPage() {
     setError('');
     const token = localStorage.getItem("adminToken") || getCookie('adminToken');
     try {
-      const res = await fetch(`${API}/api/products/${id}/restore`, {
+      const res = await safeFetch(`/api/products/${safeId(id)}/restore`, {
         method: "PUT",
         credentials: "include",
         headers: { 

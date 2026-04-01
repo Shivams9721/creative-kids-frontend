@@ -1,11 +1,12 @@
 import ProductClient from "@/components/ProductClient";
 import { Suspense } from "react";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch } from "@/lib/safeFetch";
 
 async function getProductData(id) {
+  const safeId = parseInt(id, 10);
+  if (!safeId || safeId <= 0) return { product: null, relatedProducts: [] };
   try {
-    const res = await fetch(`${API}/api/products/${id}`, { next: { revalidate: 60 } });
+    const res = await safeFetch(`/api/products/${safeId}`, { next: { revalidate: 60 } });
     if (!res.ok) return { product: null, relatedProducts: [] };
 
     const product = await res.json();
@@ -19,7 +20,7 @@ async function getProductData(id) {
     };
     
     // Fetch related products
-    const relatedRes = await fetch(`${API}/api/products?sub_category=${encodeURIComponent(product.sub_category)}&limit=7`, { next: { revalidate: 3600 } });
+    const relatedRes = await safeFetch(`/api/products?sub_category=${encodeURIComponent(product.sub_category)}&limit=7`, { next: { revalidate: 3600 } });
     let relatedProducts = [];
     if (relatedRes.ok) {
         const allRelated = await relatedRes.json();

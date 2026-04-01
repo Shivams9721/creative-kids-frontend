@@ -57,6 +57,8 @@ const NECK_TYPES = [
   'U-Neck','Portrait Neck','Plunge Neck'
 ];
 
+import { safeFetch } from "@/lib/safeFetch";
+
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 // Normalise string for robust slug matching
@@ -124,7 +126,7 @@ export default function ShopClient({ initialProducts }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch(`${API}/api/wishlist`, { headers: { Authorization: `Bearer ${token}` } })
+    safeFetch(`/api/wishlist`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setWishlist(new Set(data.map(p => p.id))); })
       .catch(() => {});
@@ -135,7 +137,7 @@ export default function ShopClient({ initialProducts }) {
     const token = localStorage.getItem('token');
     if (!token) { router.push('/login'); return; }
     try {
-      await fetch(`${API}/api/wishlist/toggle`, {
+      await safeFetch(`/api/wishlist/toggle`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ productId })

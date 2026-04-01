@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch } from "@/lib/safeFetch";
 
 export default function ProductGrid() {
   const [products, setProducts] = useState([]);
@@ -16,7 +15,7 @@ export default function ProductGrid() {
     const fetchProducts = async () => {
       try {
         // Fetch only new arrivals with a limit — no need to load the full catalogue
-        const response = await fetch(`${API}/api/products?new_arrival=true`);
+        const response = await safeFetch(`/api/products?new_arrival=true`);
         const rawData = await response.json();
         const data = rawData.map(p => ({
           ...p,

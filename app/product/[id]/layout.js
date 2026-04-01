@@ -1,8 +1,10 @@
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch, safeId } from "@/lib/safeFetch";
 
 export async function generateMetadata({ params }) {
   try {
-    const res = await fetch(`${API}/api/products/${params.id}`, { next: { revalidate: 3600 } });
+    const id = safeId(params.id);
+    if (!id) return { title: "Creative Kids" };
+    const res = await safeFetch(`/api/products/${id}`, { next: { revalidate: 3600 } });
     if (!res.ok) return {};
     const product = await res.json();
     const images = (() => { try { return typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : (product.image_urls || []); } catch { return []; } })();

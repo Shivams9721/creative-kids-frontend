@@ -1,17 +1,15 @@
 import { Suspense } from "react";
 import ShopClient from "@/components/ShopClient";
+import { safeFetch } from "@/lib/safeFetch";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
-
-// Helper to construct API URL from search params
-const buildApiUrl = (base, params) => {
-  const url = new URL(base);
+// Helper to construct safe API path with query params
+const buildApiPath = (params) => {
+  const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value) {
-      url.searchParams.append(key, value);
-    }
+    if (value) query.append(key, value);
   }
-  return url.toString();
+  const qs = query.toString();
+  return `/api/products${qs ? `?${qs}` : ''}`;
 };
 
 async function getProducts(params, searchParams) {
@@ -39,10 +37,10 @@ async function getProducts(params, searchParams) {
   if (slug0 === 'offers') queryParams.offers = 'true';
   if (slug0 === 'new') queryParams.new_arrival = 'true';
   
-  const apiUrl = buildApiUrl(`${API}/api/products`, queryParams);
+  const apiPath = buildApiPath(queryParams);
 
   try {
-    const res = await fetch(apiUrl, { next: { revalidate: 60 } }); // Revalidate every 60s
+    const res = await safeFetch(apiPath, { next: { revalidate: 60 } }); // Revalidate every 60s
     if (!res.ok) throw new Error("Failed to fetch products");
     
     const products = await res.json();

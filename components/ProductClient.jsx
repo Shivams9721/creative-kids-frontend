@@ -8,6 +8,8 @@ import { ShoppingBag, ChevronDown, ChevronUp, Heart, Share2, Truck, ShieldCheck,
 import { motion, AnimatePresence } from "framer-motion";
 import { csrfHeaders } from "@/lib/csrf";
 
+import { safeFetch } from "@/lib/safeFetch";
+
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function ProductClient({ product, relatedProducts }) {
@@ -53,20 +55,20 @@ export default function ProductClient({ product, relatedProducts }) {
     setColorImageMap(imgMap);
     
     // Fetch reviews
-    fetch(`${API}/api/reviews/${product.id}`)
+    safeFetch(`/api/reviews/${product.id}`)
       .then(r => r.json()).then(setReviews).catch(() => {});
 
     // Check if logged-in user can review
     const token = localStorage.getItem('token');
     if (token) {
-      fetch(`${API}/api/reviews/check/${product.id}`, {
+      safeFetch(`/api/reviews/check/${product.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(r => r.json()).then(d => {
         setCanReview(d.canReview);
         setAlreadyReviewed(d.alreadyReviewed);
       }).catch(() => {});
       
-      fetch(`${API}/api/wishlist/check/${product.id}`, {
+      safeFetch(`/api/wishlist/check/${product.id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
       .then(async res => res.ok ? res.json() : null)
@@ -82,7 +84,7 @@ export default function ProductClient({ product, relatedProducts }) {
     if (!token) return;
     setSubmittingReview(true);
     try {
-      const res = await fetch(`${API}/api/reviews`, {
+      const res = await safeFetch(`/api/reviews`, {
         method: 'POST',
         headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }),
         credentials: 'include',
@@ -107,7 +109,7 @@ export default function ProductClient({ product, relatedProducts }) {
       return;
     }
     try {
-      const response = await fetch(`${API}/api/wishlist/toggle`, {
+      const response = await safeFetch(`/api/wishlist/toggle`, {
         method: "POST",
         headers: await csrfHeaders({ "Content-Type": "application/json", "Authorization": `Bearer ${token}` }),
         credentials: 'include',
@@ -498,7 +500,7 @@ export default function ProductClient({ product, relatedProducts }) {
                     <button onClick={async () => {
                       if (!notifyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notifyEmail)) return;
                       try {
-                        await fetch(`${API}/api/notify-me`, {
+                        await safeFetch(`/api/notify-me`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ email: notifyEmail, product_id: product.id })

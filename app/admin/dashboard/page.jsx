@@ -2,8 +2,7 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, Package, ShoppingBag, AlertTriangle, RefreshCcw } from "lucide-react";
 import Link from "next/link";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch } from "@/lib/safeFetch";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState(null);
@@ -11,7 +10,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
-    fetch(`${API}/api/admin/stats/full`, { headers: { Authorization: `Bearer ${token}` } })
+    safeFetch(`/api/admin/stats/full`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(data => { setStats(data); setLoading(false); })
       .catch(() => setLoading(false));
