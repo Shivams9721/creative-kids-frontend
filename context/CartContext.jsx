@@ -26,36 +26,35 @@ export function CartProvider({ children }) {
   };
 
   const addToCart = (product) => {
+    const compositeId = `${product.id}-${product.selectedColor || 'Default'}-${product.selectedSize || 'Default'}`;
+    
     setCart(prev => {
-      const existing = prev.findIndex(
-        i => i.id === product.id &&
-             i.selectedColor === product.selectedColor &&
-             i.selectedSize === product.selectedSize
-      );
+      const existingItemIndex = prev.findIndex(i => i.cartId === compositeId);
+
       // Store only minimal fields to avoid localStorage quota issues
-      const slim = {
+      const slimProduct = {
         id: product.id,
         title: product.title,
         price: product.price,
         mrp: product.mrp,
         image: product.image,
-        selectedColor: product.selectedColor,
-        selectedSize: product.selectedSize,
+        selectedColor: product.selectedColor || 'Default',
+        selectedSize: product.selectedSize || 'Default',
         sku: product.sku,
         baseSku: product.baseSku,
         quantity: product.quantity || 1,
-        cartId: product.cartId || Math.random().toString(),
+        cartId: compositeId,
       };
-      let next;
-      if (existing >= 0) {
-        next = prev.map((item, idx) =>
-          idx === existing ? { ...item, quantity: (item.quantity || 1) + 1 } : item
-        );
+
+      if (existingItemIndex >= 0) {
+        // Item exists, just increment quantity
+        const nextCart = [...prev];
+        nextCart[existingItemIndex].quantity += 1;
+        return nextCart;
       } else {
-        next = [...prev, slim];
+        // Item does not exist, add it
+        return [...prev, slimProduct];
       }
-      try { localStorage.setItem("ck_cart", JSON.stringify(next)); } catch {}
-      return next;
     });
     setIsCartOpen(true);
   };
@@ -65,13 +64,15 @@ export function CartProvider({ children }) {
   };
 
   const updateQuantity = (cartId, quantity) => {
-    if (quantity < 1) { removeFromCart(cartId); return; }
+    if (quantity < 1) {
+      removeFromCart(cartId);
+      return;
+    }
     setCart(prev => prev.map(item => item.cartId === cartId ? { ...item, quantity } : item));
   };
 
   const clearCart = () => {
     setCart([]);
-    try { localStorage.removeItem("ck_cart"); } catch {}
   };
 
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);

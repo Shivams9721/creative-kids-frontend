@@ -26,9 +26,10 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Save admin token and redirect to dashboard
         localStorage.setItem("adminToken", data.token);
-        window.location.href = "/admin"; 
+        // Also set a cookie so the edge middleware can protect /admin routes
+        document.cookie = `adminToken=${data.token}; path=/; max-age=43200; SameSite=Strict`;
+        window.location.href = "/admin/dashboard";
       } else {
         setError(data.message || "Invalid credentials");
       }

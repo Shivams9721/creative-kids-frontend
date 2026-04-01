@@ -320,7 +320,7 @@ export default function UserProfile() {
                         <Heart strokeWidth={1.5} size={18} className="fill-red-500 text-red-500" />
                       </button>
                       <img
-                        src={product.image_urls?.[0] || 'https://via.placeholder.com/400x500'}
+                        src={product.image_urls?.[0] || ''}
                         alt={product.title}
                         className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out cursor-pointer"
                         onClick={() => window.location.href = `/product/${product.id}`}

@@ -33,7 +33,7 @@ function GridCard({ product, wishlist, toggleWishlist }) {
           <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
         </button>
         <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-          <Image src={product.image_urls?.[0] || "https://via.placeholder.com/400x500"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
+          <Image src={product.image_urls?.[0] || ""} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
         </Link>
       </div>
       <Link href={`/product/${product.id}`} className="flex flex-col px-1">
@@ -96,38 +96,15 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await fetch(`${API}/api/products`);
-        const rawData = await response.json();
-        const data = rawData.map(p => {
-          let image_urls = [];
-          try { image_urls = typeof p.image_urls === "string" ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch {}
-          if (!Array.isArray(image_urls)) image_urls = [];
-          return { ...p, image_urls };
-        });
-
-        const getCardsForSection = (sectionName) => {
-          const slots = [null, null, null, null];
-          const sectionProducts = data.filter(p => p.homepage_section === sectionName);
-          sectionProducts.sort((a, b) => b.id - a.id);
-          sectionProducts.forEach(p => {
-            const slotIndex = parseInt(p.homepage_card_slot) - 1;
-            if (slotIndex >= 0 && slotIndex < 4 && slots[slotIndex] === null) slots[slotIndex] = p;
-          });
-          return slots;
-        };
-
-        setGirlsProducts(getCardsForSection("New Arrivals"));
-        setBestsellerProducts(getCardsForSection("Season Bestsellers"));
-        setFeaturedProducts(data.filter(p => p.homepage_section === "Featured Collection"));
+    fetch(`${API}/api/homepage`)
+      .then(r => r.json())
+      .then(data => {
+        setGirlsProducts(data.newArrivals || [null, null, null, null]);
+        setBestsellerProducts(data.bestsellers || [null, null, null, null]);
+        setFeaturedProducts(data.featured || []);
         setLoading(false);
-      } catch (error) {
-        console.error("Database connection failed:", error);
-        setLoading(false);
-      }
-    };
-    fetchProducts();
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const scrollLeft = () => {
@@ -140,43 +117,6 @@ export default function Home() {
     if (carouselRef.current) {
       carouselRef.current.scrollBy({ left: (window.innerWidth > 1024 ? window.innerWidth * 0.22 : window.innerWidth * 0.5), behavior: "smooth" });
     }
-  };
-
-  const GridCard = ({ product }) => {
-    if (!product) {
-      return (
-        <div className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start flex flex-col group">
-          <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] border border-dashed border-black/10 flex flex-col items-center justify-center text-center p-4 mb-4">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-black/30">Empty Slot</span>
-            <span className="text-[9px] tracking-widest uppercase text-black/20 mt-1">Assign in Admin</span>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className="flex-none w-[75vw] sm:w-[45vw] md:w-auto snap-start flex flex-col group">
-        <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-4">
-          <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 p-1 hover:scale-110 transition-transform">
-            <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
-          </button>
-          <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-            <Image src={product.image_urls?.[0] || "https://via.placeholder.com/400x500"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
-          </Link>
-        </div>
-        <Link href={`/product/${product.id}`} className="flex flex-col px-1">
-          <h3 className="text-[13px] text-black mb-1">{product.title}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-[12px] text-black font-medium">₹{product.price ? parseFloat(product.price).toFixed(2) : "0.00"}</p>
-            {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
-              <>
-                <p className="text-[10px] text-black/40 line-through">₹{parseFloat(product.mrp).toFixed(2)}</p>
-                <span className="text-[9px] font-bold text-[#D32F2F]">({Math.round(((parseFloat(product.mrp) - parseFloat(product.price)) / parseFloat(product.mrp)) * 100)}% OFF)</span>
-              </>
-            )}
-          </div>
-        </Link>
-      </div>
-    );
   };
 
   return (
@@ -250,7 +190,7 @@ export default function Home() {
                 <h2 className="text-xl md:text-2xl font-medium text-black tracking-[0.15em] uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>Girl's New Arrivals</h2>
               </div>
               <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-8 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                {girlsProducts.map((product, index) => (<GridCard key={`girl-${index}`} product={product} />))}
+                {girlsProducts.map((product, index) => (<GridCard key={`girl-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
               </div>
               <div className="flex justify-center mt-4 md:mt-12 px-4">
                 <Link href="/shop/girls" className="border border-black px-10 py-4 text-[11px] font-bold tracking-widest uppercase text-black hover:bg-black hover:text-white transition-colors">Discover the Collection</Link>
@@ -266,7 +206,7 @@ export default function Home() {
                 <h2 className="text-xl md:text-2xl font-medium text-black tracking-[0.15em] uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>Season Bestsellers</h2>
               </div>
               <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-8 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-                {bestsellerProducts.map((product, index) => (<GridCard key={`best-${index}`} product={product} />))}
+                {bestsellerProducts.map((product, index) => (<GridCard key={`best-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
               </div>
               <div className="flex justify-center mt-4 md:mt-12 px-4">
                 <Link href="/shop" className="border border-black px-10 py-4 text-[11px] font-bold tracking-widest uppercase text-black hover:bg-black hover:text-white transition-colors">Discover the Collection</Link>
@@ -301,7 +241,7 @@ export default function Home() {
                             <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
                           </button>
                           <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-                            <Image src={product.image_urls?.[0] || "https://via.placeholder.com/400x500"} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 30vw" />
+                            <Image src={product.image_urls?.[0] || ""} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 30vw" />
                           </Link>
                         </div>
                         <Link href={`/product/${product.id}`} className="flex flex-col px-1">

@@ -7,6 +7,9 @@ import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
+// Module-level cache — fetched once per session, not on every search open
+let cachedProducts = null;
+
 export default function SmartSearch({ isOpen, onClose }) {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState([]);
@@ -14,24 +17,21 @@ export default function SmartSearch({ isOpen, onClose }) {
   const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef(null);
 
-  // Fetch products so the search engine can analyze them instantly
+  // Fetch products once and cache at module level
   useEffect(() => {
-    if (isOpen) {
-      fetch(`${API}/api/products`)
-        .then(res => res.json())
-        .then(data => setProducts(data))
-        .catch(err => console.error("Search fetch error:", err));
-        
-      // Auto-focus the input bar
-      setTimeout(() => inputRef.current?.focus(), 100);
-      
-      // Prevent background scrolling while search is open
-      document.body.style.overflow = "hidden";
-    } else {
+    if (!isOpen) {
       document.body.style.overflow = "unset";
       setQuery("");
       setResults([]);
+      return;
     }
+    document.body.style.overflow = "hidden";
+    setTimeout(() => inputRef.current?.focus(), 100);
+    if (cachedProducts) { setProducts(cachedProducts); return; }
+    fetch(`${API}/api/products`)
+      .then(res => res.json())
+      .then(data => { cachedProducts = data; setProducts(data); })
+      .catch(err => console.error("Search fetch error:", err));
     return () => { document.body.style.overflow = "unset"; };
   }, [isOpen]);
 
@@ -196,7 +196,7 @@ export default function SmartSearch({ isOpen, onClose }) {
                           </button>
                           
                           <img 
-                            src={product.image_urls?.[0] || 'https://via.placeholder.com/400x500'} 
+                            src={product.image_urls?.[0] || ''} 
                             alt={product.title} 
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                           />

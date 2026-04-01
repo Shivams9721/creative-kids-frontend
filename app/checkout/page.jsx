@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
+import { initializeRazorpay, processRazorpayPayment } from "@/lib/razorpay";
 import { CheckCircle2, ChevronLeft, MapPin, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import Script from "next/script";
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -156,8 +158,50 @@ export default function CheckoutPage() {
             const token = localStorage.getItem("token");
             if (!token) { router.replace("/login"); return; }
 
+            // If online payment (UPI/Card), process through Razorpay first
+            if (paymentMethod === 'UPI' || paymentMethod === 'Card') {
+                // Initialize Razorpay
+                const razorpayLoaded = await initializeRazorpay();
+                if (!razorpayLoaded) {
+                    alert('Failed to load payment gateway. Please try again.');
+                    setLoading(false);
+                    return;
+                }
+
+                // Process payment
+                await processRazorpayPayment({
+                    amount: finalTotal,
+                    currency: 'INR',
+                    name: address.fullName,
+                    email: JSON.parse(localStorage.getItem('user') || '{}').email,
+                    phone: address.phone,
+                    API_BASE: API,
+                    token,
+                    csrfHeaders,
+                    onSuccess: async (paymentData) => {
+                        // Payment successful, create order
+                        await createOrder(token, paymentData);
+                    },
+                    onFailure: (error) => {
+                        console.error('Payment failed:', error);
+                        alert(error.message || 'Payment failed. Please try again.');
+                        setLoading(false);
+                    }
+                });
+            } else {
+                // COD - create order directly
+                await createOrder(token, null);
+            }
+        } catch (error) {
+            console.error("Order error:", error);
+            alert("Something went wrong.");
+            setLoading(false);
+        }
+    };
+
+    const createOrder = async (token, paymentData) => {
+        try {
             // Send only item IDs + variant selection — backend re-fetches prices from DB
-            // price and mrp are intentionally excluded to prevent client-side manipulation
             const safeCartItems = cart.map(({ id, title, image, selectedColor, selectedSize, sku, baseSku, quantity }) => ({
                 id,
                 title,
@@ -176,7 +220,9 @@ export default function CheckoutPage() {
                 body: JSON.stringify({
                     cartItems: safeCartItems,
                     address,
-                    paymentMethod,
+                    paymentMethod: paymentData ? 'Online' : paymentMethod,
+                    paymentId: paymentData?.payment_id || null,
+                    razorpayOrderId: paymentData?.order_id || null,
                     couponCode: couponStatus?.code || null,
                     discountAmount
                 })
@@ -191,7 +237,7 @@ export default function CheckoutPage() {
                   items: cart,
                   total: finalTotal,
                   address,
-                  paymentMethod,
+                  paymentMethod: paymentData ? 'Online' : paymentMethod,
                   date: new Date().toISOString()
                 }));
                 clearCart();
@@ -200,11 +246,11 @@ export default function CheckoutPage() {
                 }, 4000);
             } else {
                 alert("Failed to place order. Please try again.");
+                setLoading(false);
             }
         } catch (error) {
-            console.error("Order error:", error);
-            alert("Something went wrong.");
-        } finally {
+            console.error("Order creation error:", error);
+            alert("Failed to create order.");
             setLoading(false);
         }
     };
