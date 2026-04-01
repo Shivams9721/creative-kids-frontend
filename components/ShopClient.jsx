@@ -59,7 +59,7 @@ const NECK_TYPES = [
 
 import { safeFetch } from "@/lib/safeFetch";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
+
 
 // Normalise string for robust slug matching
 const normalise = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');

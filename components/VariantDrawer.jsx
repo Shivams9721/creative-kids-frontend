@@ -3,8 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Wand2, Trash2, UploadCloud, CheckCircle2, Plus } from "lucide-react";
-
-const API = process.env.NEXT_PUBLIC_API_URL;
+import { safeFetch } from "@/lib/safeFetch";
 
 const ALL_SIZES = [
   '0-3M','3-6M','6-9M','9-12M','12-18M','18-24M',
@@ -71,7 +70,7 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
     const fd = new FormData();
     fd.append("image", file);
     const token = localStorage.getItem("adminToken");
-    const res = await fetch(`${API}/api/upload`, {
+    const res = await safeFetch(`/api/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: fd

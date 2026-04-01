@@ -64,10 +64,10 @@ export default function ProductFormPage() {
   });
 
   useEffect(() => {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+    
 
     // Fetch CSRF token
-    safeFetch(new URL('/api/csrf-token', API_BASE).toString(), { credentials: 'include' })
+    safeFetch('/api/csrf-token', { credentials: 'include' })
       .then(r => r.json())
       .then(data => setCsrfToken(data.csrfToken))
       .catch(err => setError('Failed to initialize security token'));
@@ -91,8 +91,8 @@ export default function ProductFormPage() {
       const safeEditId = parseInt(editId, 10);
       if (isNaN(safeEditId) || safeEditId <= 0) { setError('Invalid product ID'); return; }
       setLoadingProduct(true);
-      const productUrl = new URL(`/api/products/${safeEditId}`, API_BASE);
-      safeFetch(productUrl.toString())
+      
+      safeFetch(`/api/products/${safeEditId}`)
         .then(async r => {
           if (!r.ok) {
              const errData = await r.json().catch(() => ({}));
@@ -217,8 +217,8 @@ export default function ProductFormPage() {
       try {
         const fd = new FormData();
         fd.append('image', file);
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
-        const res = await safeFetch(new URL('/api/upload', API_BASE).toString(), {
+        
+        const res = await safeFetch('/api/upload', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken },
           body: fd,
@@ -253,8 +253,8 @@ export default function ProductFormPage() {
     const token = localStorage.getItem('adminToken') || getCookie('adminToken');
     if (!token) { setError('Authentication token missing.'); return; }
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
-      const res = await safeFetch(new URL('/api/upload', API_BASE).toString(), {
+      
+      const res = await safeFetch('/api/upload', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken },
         body: JSON.stringify({ imageUrl: url }),
@@ -386,9 +386,9 @@ export default function ProductFormPage() {
       const safeEditId = parseInt(editId, 10);
       if (isEdit && (isNaN(safeEditId) || safeEditId <= 0)) throw new Error('Invalid product ID');
       const method = isEdit ? 'PUT' : 'POST';
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
+      
       const endpoint = isEdit ? `/api/products/${safeEditId}` : `/api/products`;
-      const res = await safeFetch(new URL(endpoint, API_BASE).toString(), {
+      const res = await safeFetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken },
         body: JSON.stringify(payload),

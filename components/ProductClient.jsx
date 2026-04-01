@@ -10,7 +10,7 @@ import { csrfHeaders } from "@/lib/csrf";
 
 import { safeFetch } from "@/lib/safeFetch";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
+
 
 export default function ProductClient({ product, relatedProducts }) {
   const { addToCart } = useCart();
