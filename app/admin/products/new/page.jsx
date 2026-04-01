@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Upload, X, Plus, Trash2, Save, Eye, Package, Edit } from 'lucide-react';
-import { safeFetch, safeId } from '@/lib/safeFetch';
+import { safeFetch } from '@/lib/safeFetch';
 
-const S3_PATTERN = /^https:\/\/[\w.-]+\.s3\.[\w-]+\.amazonaws\.com\/products\//;
+const S3_PATTERN = /^https:\/\/[\w.-]+\.s3\.[\w.-]+\.amazonaws\.com\/.*$/;
 
 const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -73,34 +73,68 @@ export default function ProductFormPage() {
       .catch(err => setError('Failed to initialize security token'));
 
     // Load draft from localStorage
-    const draft = localStorage.getItem('productFormDraft');
-    if (draft && !isEdit) {
-      try {
-        const parsed = JSON.parse(draft);
-        setForm(parsed);
-      } catch (e) {}
+    try {
+      const draft = localStorage.getItem('productFormDraft');
+      if (draft && !isEdit) {
+        try {
+          const parsed = JSON.parse(draft);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            setForm(prev => ({ ...prev, ...parsed }));
+          }
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn("LocalStorage access denied", err);
     }
 
     if (isEdit) {
       const safeEditId = parseInt(editId, 10);
-      if (!safeEditId || safeEditId <= 0) { setError('Invalid product ID'); return; }
+      if (isNaN(safeEditId) || safeEditId <= 0) { setError('Invalid product ID'); return; }
       setLoadingProduct(true);
       const productUrl = new URL(`/api/products/${safeEditId}`, API_BASE);
       safeFetch(productUrl.toString())
-        .then(r => {
-          if (!r.ok) throw new Error('Product not found');
+        .then(async r => {
+          if (!r.ok) {
+             const errData = await r.json().catch(() => ({}));
+             throw new Error(errData.error || 'Product not found');
+          }
           return r.json();
         })
         .then(p => {
-          setForm({
-            ...p,
-            image_urls: JSON.parse(p.image_urls || '[]'),
-            sizes: JSON.parse(p.sizes || '[]'),
-            colors: JSON.parse(p.colors || '[]'),
-            variants: JSON.parse(p.variants || '[]'),
-            extra_categories: JSON.parse(p.extra_categories || '[]'),
-            color_images: JSON.parse(p.color_images || '{}')
-          });
+          try {
+            const parseArray = (val) => {
+              if (Array.isArray(val)) return val;
+              if (typeof val === 'string') {
+                try {
+                  const parsed = JSON.parse(val);
+                  return Array.isArray(parsed) ? parsed : [];
+                } catch { return []; }
+              }
+              return [];
+            };
+            const parseObject = (val) => {
+              if (val && typeof val === 'object' && !Array.isArray(val)) return val;
+              if (typeof val === 'string') {
+                try {
+                  const parsed = JSON.parse(val);
+                  return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+                } catch { return {}; }
+              }
+              return {};
+            };
+
+            setForm({
+              ...p,
+              image_urls: parseArray(p.image_urls),
+              sizes: parseArray(p.sizes),
+              colors: parseArray(p.colors),
+              variants: parseArray(p.variants),
+              extra_categories: parseArray(p.extra_categories),
+              color_images: parseObject(p.color_images)
+            });
+          } catch (e) {
+            setError('Error parsing product data from server.');
+          }
         })
         .catch(err => setError('Failed to load product: ' + err.message))
         .finally(() => setLoadingProduct(false));
@@ -112,7 +146,11 @@ export default function ProductFormPage() {
     if (!isEdit && form.title) {
       setHasUnsavedChanges(true);
       const timer = setTimeout(() => {
-        localStorage.setItem('productFormDraft', JSON.stringify(form));
+        try {
+          localStorage.setItem('productFormDraft', JSON.stringify(form));
+        } catch (err) {
+          console.warn("Could not save draft to localStorage");
+        }
       }, 1000); // Debounce 1 second
       return () => clearTimeout(timer);
     }
@@ -146,21 +184,32 @@ export default function ProductFormPage() {
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     
+    if (!csrfToken) {
+      setError('Security token missing. Please refresh the page.');
+      return;
+    }
+
     // Validate file size (8MB limit)
     for (const file of files) {
       if (file.size > 8 * 1024 * 1024) {
         setError(`Image "${file.name}" exceeds 8MB limit`);
         return;
       }
-      if (!file.type.startsWith('image/')) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
         setError(`File "${file.name}" is not an image`);
         return;
       }
     }
 
+    const token = localStorage.getItem('adminToken') || getCookie('adminToken');
+    if (!token) {
+      setError('Authentication token missing. Please log in again.');
+      return;
+    }
+
     setUploading(true);
     setError('');
-    const token = localStorage.getItem('adminToken') || getCookie('adminToken');
     const uploaded = [];
     const failed = [];
 
@@ -175,8 +224,9 @@ export default function ProductFormPage() {
           body: fd,
           credentials: 'include'
         });
+        if (!res.ok) throw new Error('Upload failed');
         const data = await res.json();
-        if (data.imageUrl) {
+        if (data.imageUrl && S3_PATTERN.test(data.imageUrl)) {
           uploaded.push(data.imageUrl);
         } else {
           failed.push(file.name);
@@ -197,12 +247,12 @@ export default function ProductFormPage() {
     setUploading(false);
   };
 
-  const S3_PATTERN = /^https:\/\/[\w.-]+\.s3\.[\w-]+\.amazonaws\.com\/products\//;
-
   const removeImage = async (url) => {
+    if (!csrfToken) { setError('Security token missing. Please refresh the page.'); return; }
     if (!S3_PATTERN.test(url)) { setError('Invalid image URL'); return; }
+    const token = localStorage.getItem('adminToken') || getCookie('adminToken');
+    if (!token) { setError('Authentication token missing.'); return; }
     try {
-      const token = localStorage.getItem('adminToken') || getCookie('adminToken');
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
       const res = await safeFetch(new URL('/api/upload', API_BASE).toString(), {
         method: 'DELETE',
@@ -278,15 +328,17 @@ export default function ProductFormPage() {
     setEditingVariantIndex(null);
   };
 
-  const deleteVariant = (color, size) => {
-    setForm(f => ({ ...f, variants: f.variants.filter(v => !(v.color === color && v.size === size)) }));
+  const deleteVariant = (index) => {
+    setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== index) }));
   };
 
   const validateForm = () => {
     if (!form.title.trim()) return 'Product title is required';
-    if (!form.price || parseFloat(form.price) <= 0) return 'Valid selling price is required';
-    if (!form.mrp || parseFloat(form.mrp) <= 0) return 'Valid MRP is required';
-    if (parseFloat(form.price) > parseFloat(form.mrp)) return 'Selling price cannot be greater than MRP';
+    const priceVal = parseFloat(form.price);
+    const mrpVal = parseFloat(form.mrp);
+    if (isNaN(priceVal) || priceVal <= 0) return 'Valid selling price is required';
+    if (isNaN(mrpVal) || mrpVal <= 0) return 'Valid MRP is required';
+    if (priceVal > mrpVal) return 'Selling price cannot be greater than MRP';
     if (!form.main_category) return 'Main category is required';
     if (!form.sub_category) return 'Sub category is required';
     if (!form.item_type) return 'Item type is required';
@@ -300,6 +352,12 @@ export default function ProductFormPage() {
     setError('');
     setSuccess('');
 
+    if (!csrfToken) {
+      setError('Security token missing. Please refresh the page.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     // Skip validation for drafts
     if (!isDraft) {
       const validationError = validateForm();
@@ -310,12 +368,23 @@ export default function ProductFormPage() {
       }
     }
 
+    const token = localStorage.getItem('adminToken') || getCookie('adminToken');
+    if (!token) {
+      setError('Authentication token missing. Please log in again.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setLoading(true);
     try {
-      const token = localStorage.getItem('adminToken') || getCookie('adminToken');
-      const payload = { ...form, is_draft: isDraft };
+      const payload = { 
+        ...form, 
+        price: parseFloat(form.price),
+        mrp: parseFloat(form.mrp),
+        is_draft: isDraft 
+      };
       const safeEditId = parseInt(editId, 10);
-      if (isEdit && (!safeEditId || safeEditId <= 0)) throw new Error('Invalid product ID');
+      if (isEdit && (isNaN(safeEditId) || safeEditId <= 0)) throw new Error('Invalid product ID');
       const method = isEdit ? 'PUT' : 'POST';
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || window.location.origin;
       const endpoint = isEdit ? `/api/products/${safeEditId}` : `/api/products`;
@@ -333,7 +402,11 @@ export default function ProductFormPage() {
 
       // Clear draft on successful publish
       if (!isDraft && !isEdit) {
-        localStorage.removeItem('productFormDraft');
+        try {
+          localStorage.removeItem('productFormDraft');
+        } catch (e) {
+          // ignore
+        }
       }
 
       setHasUnsavedChanges(false);
@@ -416,7 +489,7 @@ export default function ProductFormPage() {
 
         {/* Attributes */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">{DICT.attributes}</h2>
+          <h2 className="text-xl font-semibold mb-4">Attributes</h2>
           <div className="grid grid-cols-2 gap-4">
             <input placeholder="Fabric" value={form.fabric} onChange={e => setForm({...form, fabric: e.target.value})} className="px-4 py-2 border rounded" />
             <input placeholder="Pattern" value={form.pattern} onChange={e => setForm({...form, pattern: e.target.value})} className="px-4 py-2 border rounded" />
@@ -480,7 +553,7 @@ export default function ProductFormPage() {
                           <button type="button" onClick={() => editVariant(i)} className="text-blue-600 hover:text-blue-700">
                             <Edit size={16} />
                           </button>
-                          <button type="button" onClick={() => deleteVariant(v.color, v.size)} className="text-red-600 hover:text-red-700">
+                          <button type="button" onClick={() => deleteVariant(i)} className="text-red-600 hover:text-red-700">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -537,7 +610,7 @@ export default function ProductFormPage() {
                 <option value="section2">Section 2</option>
                 <option value="section3">Section 3</option>
               </select>
-              <input type="number" placeholder="Card Slot (1-8)" value={form.homepage_card_slot || ''} onChange={e => setForm({...form, homepage_card_slot: e.target.value ? parseInt(e.target.value) : null})} className="px-4 py-2 border rounded" min="1" max="8" />
+              <input type="number" placeholder="Card Slot (1-8)" value={form.homepage_card_slot || ''} onChange={e => setForm({...form, homepage_card_slot: e.target.value ? parseInt(e.target.value, 10) : null})} className="px-4 py-2 border rounded" min="1" max="8" />
             </div>
           </div>
         </section>
@@ -567,7 +640,7 @@ export default function ProductFormPage() {
                 <option value="">Select Size *</option>
                 {form.sizes.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
-              <input type="number" placeholder="Stock Quantity *" value={currentVariant?.stock || 0} onChange={e => setCurrentVariant({...currentVariant, stock: parseInt(e.target.value) || 0})} className="w-full px-4 py-2 border rounded" min="0" />
+              <input type="number" placeholder="Stock Quantity *" value={currentVariant?.stock || 0} onChange={e => setCurrentVariant({...currentVariant, stock: Math.max(0, parseInt(e.target.value, 10) || 0)})} className="w-full px-4 py-2 border rounded" min="0" />
               <input placeholder="Variant SKU (optional)" value={currentVariant?.sku || ''} onChange={e => setCurrentVariant({...currentVariant, sku: e.target.value})} className="w-full px-4 py-2 border rounded" />
             </div>
             <div className="flex gap-3 mt-6">
