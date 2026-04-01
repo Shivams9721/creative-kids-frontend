@@ -2,9 +2,10 @@ import { safeFetch, safeId } from "@/lib/safeFetch";
 
 export async function generateMetadata({ params }) {
   try {
-    const id = safeId(params.id);
-    if (!id) return { title: "Creative Kids" };
-    const res = await safeFetch(`/api/products/${id}`, { next: { revalidate: 3600 } });
+    const { id } = await params;
+    const safeIdVal = safeId(id);
+    if (!safeIdVal) return { title: "Creative Kids" };
+    const res = await safeFetch(`/api/products/${safeIdVal}`, { next: { revalidate: 3600 } });
     if (!res.ok) return {};
     const product = await res.json();
     const images = (() => { try { return typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : (product.image_urls || []); } catch { return []; } })();
