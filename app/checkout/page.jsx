@@ -156,18 +156,14 @@ export default function CheckoutPage() {
             const token = localStorage.getItem("token");
             if (!token) { router.replace("/login"); return; }
 
-            // If online payment (UPI/Card), process through Razorpay first
             if (paymentMethod === 'UPI' || paymentMethod === 'Card') {
-                // Initialize Razorpay
                 const razorpayLoaded = await initializeRazorpay();
                 if (!razorpayLoaded) {
                     alert('Failed to load payment gateway. Please try again.');
-                    setLoading(false);
                     return;
                 }
-
-                // Process payment
-                await processRazorpayPayment({
+                // processRazorpayPayment now returns a real Promise
+                const paymentData = await processRazorpayPayment({
                     amount: finalTotal,
                     currency: 'INR',
                     name: address.fullName,
@@ -175,23 +171,17 @@ export default function CheckoutPage() {
                     phone: address.phone,
                     token,
                     csrfHeaders,
-                    onSuccess: async (paymentData) => {
-                        // Payment successful, create order
-                        await createOrder(token, paymentData);
-                    },
-                    onFailure: (error) => {
-                        console.error('Payment failed:', error);
-                        alert(error.message || 'Payment failed. Please try again.');
-                        setLoading(false);
-                    }
                 });
+                await createOrder(token, paymentData);
             } else {
-                // COD - create order directly
                 await createOrder(token, null);
             }
         } catch (error) {
-            console.error("Order error:", error);
-            alert("Something went wrong.");
+            const msg = error?.message || '';
+            if (msg !== 'Payment cancelled by user') {
+                alert(msg || 'Something went wrong. Please try again.');
+            }
+        } finally {
             setLoading(false);
         }
     };
