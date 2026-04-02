@@ -215,6 +215,10 @@ export default function CheckoutPage() {
                 })
             });
 
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('Your session has expired. Please log in again.');
+            }
+
             const data = await response.json();
 
             if (data.success) {
