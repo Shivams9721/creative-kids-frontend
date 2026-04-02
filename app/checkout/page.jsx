@@ -47,6 +47,7 @@ export default function CheckoutPage() {
 
     const [errors, setErrors] = useState({});
     const [paymentMethod, setPaymentMethod] = useState("COD");
+    const [savedAddress, setSavedAddress] = useState(null);
     const [coupon, setCoupon] = useState("");
     const [couponStatus, setCouponStatus] = useState(null); // null | 'checking' | { discount, code } | 'error'
     const [couponError, setCouponError] = useState("");
@@ -55,16 +56,30 @@ export default function CheckoutPage() {
     const [showAltPhone, setShowAltPhone] = useState(false);
     const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
-    // ==========================================
-    // 1. SECURITY CHECK (NEW)
-    // ==========================================
+    // SECURITY CHECK
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) {
             router.replace("/login");
-        } else {
-            setIsCheckingAuth(false);
+            return;
         }
+        setIsCheckingAuth(false);
+        // Load saved address from DB
+        safeFetch('/api/user/address', { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => {
+                if (data.address) {
+                    setAddress(prev => ({ ...prev, ...data.address }));
+                    setSavedAddress(data.address);
+                }
+            })
+            .catch(() => {
+                // Fallback to localStorage
+                try {
+                    const a = localStorage.getItem('ck_address');
+                    if (a) { const parsed = JSON.parse(a); setAddress(prev => ({ ...prev, ...parsed })); setSavedAddress(parsed); }
+                } catch {}
+            });
     }, [router]);
 
     // ==========================================
@@ -222,6 +237,14 @@ export default function CheckoutPage() {
             const data = await response.json();
 
             if (data.success) {
+                // Save address to DB for next time
+                const token2 = localStorage.getItem('token');
+                safeFetch('/api/user/address', {
+                    method: 'PUT',
+                    headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token2}` }),
+                    credentials: 'include',
+                    body: JSON.stringify({ address })
+                }).catch(() => {});
                 setOrderSuccess(true);
                 localStorage.setItem('lastOrder', JSON.stringify({
                   orderNumber: data.order_number,
@@ -320,6 +343,17 @@ export default function CheckoutPage() {
                                     </div>
 
                                     <div className="space-y-8">
+
+                                        {/* Saved address banner */}
+                                        {savedAddress?.houseNo && (
+                                            <div className="flex items-center justify-between bg-black/5 rounded-xl px-5 py-4 border border-black/10">
+                                                <div>
+                                                    <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-1">Saved Address</p>
+                                                    <p className="text-[13px] text-black">{savedAddress.houseNo}, {savedAddress.roadName}, {savedAddress.city} — {savedAddress.pincode}</p>
+                                                </div>
+                                                <button type="button" onClick={() => setAddress(prev => ({ ...prev, ...savedAddress }))} className="text-[11px] font-bold tracking-widest uppercase text-black border-b border-black pb-0.5 ml-4 whitespace-nowrap">Use This</button>
+                                            </div>
+                                        )}
 
                                         {/* Contact Block */}
                                         <div>

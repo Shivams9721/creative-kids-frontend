@@ -46,8 +46,20 @@ export default function UserProfile() {
       return;
     }
 
-    // Load saved address
-    try { const a = localStorage.getItem('ck_address'); if (a) setSavedAddress(JSON.parse(a)); } catch {}
+    // Load saved address from DB
+    const fetchAddress = async () => {
+      try {
+        const res = await safeFetch('/api/user/address', { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.address) setSavedAddress(data.address);
+        else {
+          try { const a = localStorage.getItem('ck_address'); if (a) setSavedAddress(JSON.parse(a)); } catch {}
+        }
+      } catch {
+        try { const a = localStorage.getItem('ck_address'); if (a) setSavedAddress(JSON.parse(a)); } catch {}
+      }
+    };
+    fetchAddress();
 
     const parsedUser = JSON.parse(savedUser);
     setUser(prev => ({ ...prev, name: parsedUser.name, email: parsedUser.email }));
@@ -495,12 +507,23 @@ export default function UserProfile() {
             <form className="bg-white p-8 border border-black/10 rounded-xl shadow-sm space-y-6 mt-6" onSubmit={async (e) => {
               e.preventDefault();
               setSavingAddress(true);
+              const token = localStorage.getItem('token');
               const fd = new FormData(e.target);
               const addr = { houseNo: fd.get('houseNo'), roadName: fd.get('roadName'), city: fd.get('city'), state: fd.get('state'), pincode: fd.get('pincode'), landmark: fd.get('landmark') };
-              setSavedAddress(addr);
-              localStorage.setItem('ck_address', JSON.stringify(addr));
-              setSavingAddress(false);
-              alert('Address saved!');
+              try {
+                const res = await safeFetch('/api/user/address', {
+                  method: 'PUT',
+                  headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }),
+                  credentials: 'include',
+                  body: JSON.stringify({ address: addr })
+                });
+                if (res.ok) {
+                  setSavedAddress(addr);
+                  localStorage.setItem('ck_address', JSON.stringify(addr));
+                  alert('Address saved!');
+                } else { alert('Failed to save address.'); }
+              } catch { alert('Network error.'); }
+              finally { setSavingAddress(false); }
             }}>
               <h3 className="text-[12px] font-bold tracking-widest uppercase text-black border-b border-black/10 pb-2">Default Shipping Address</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
