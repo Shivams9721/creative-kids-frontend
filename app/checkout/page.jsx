@@ -9,7 +9,6 @@ import { safeFetch } from "@/lib/safeFetch";
 import { CheckCircle2, ChevronLeft, MapPin, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import Script from "next/script";
 
 const SmartInput = ({ label, name, value, placeholder, error, type = "text", disabled = false, badge, onChange }) => (
     <div className="w-full relative">
