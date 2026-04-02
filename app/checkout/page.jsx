@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
 import { initializeRazorpay, processRazorpayPayment } from "@/lib/razorpay";
 import { safeFetch } from "@/lib/safeFetch";
+import AddressBook from "@/components/AddressBook";
 import { CheckCircle2, ChevronLeft, MapPin, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -334,78 +335,28 @@ export default function CheckoutPage() {
                         {/* MAIN CONTENT AREA */}
                         <div className="flex-1 bg-white border border-black/10 rounded-xl shadow-sm overflow-hidden">
 
-                            {/* STEP 1: SMART ADDRESS FORM */}
+                            {/* STEP 1: SELECT / ADD ADDRESS */}
                             {step === 1 && (
                                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="p-6 md:p-10">
                                     <div className="flex items-center gap-3 mb-8 pb-4 border-b border-black/5">
                                         <button onClick={() => router.back()} className="text-black/50 hover:text-black transition-colors"><ChevronLeft size={20} /></button>
-                                        <h2 className="text-[16px] font-medium tracking-wide text-black">Delivery Details</h2>
+                                        <h2 className="text-[16px] font-medium tracking-wide text-black">Select Delivery Address</h2>
                                     </div>
-
-                                    <div className="space-y-8">
-
-                                        {/* Saved address banner */}
-                                        {savedAddress?.houseNo && (
-                                            <div className="flex items-center justify-between bg-black/5 rounded-xl px-5 py-4 border border-black/10">
-                                                <div>
-                                                    <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-1">Saved Address</p>
-                                                    <p className="text-[13px] text-black">{savedAddress.houseNo}, {savedAddress.roadName}, {savedAddress.city} — {savedAddress.pincode}</p>
-                                                </div>
-                                                <button type="button" onClick={() => setAddress(prev => ({ ...prev, ...savedAddress }))} className="text-[11px] font-bold tracking-widest uppercase text-black border-b border-black pb-0.5 ml-4 whitespace-nowrap">Use This</button>
-                                            </div>
-                                        )}
-
-                                        {/* Contact Block */}
-                                        <div>
-                                            <h3 className="text-[10px] font-bold tracking-widest uppercase text-black/40 mb-3">1. Contact Information</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <SmartInput label="Full Name *" name="fullName" value={address.fullName} onChange={handleInputChange} error={errors.fullName} placeholder="Jane Doe" />
-                                                <SmartInput label="Phone Number *" name="phone" value={address.phone} onChange={handleInputChange} error={errors.phone} placeholder="10-digit mobile number" />
-                                            </div>
-
-                                            {/* ALTERNATE PHONE TOGGLE */}
-                                            <AnimatePresence>
-                                                {!showAltPhone ? (
-                                                    <button onClick={() => setShowAltPhone(true)} className="text-[10px] font-bold tracking-widest uppercase text-black/50 hover:text-black mt-3 transition-colors">
-                                                        + Add Alternate Phone Number
-                                                    </button>
-                                                ) : (
-                                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mt-4 w-full md:w-1/2">
-                                                        <SmartInput label="Alternate Phone" name="altPhone" value={address.altPhone} onChange={handleInputChange} placeholder="Optional secondary number" />
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-
-                                        {/* Regional Block */}
-                                        <div className="pt-6 border-t border-black/5">
-                                            <h3 className="text-[10px] font-bold tracking-widest uppercase text-black/40 mb-3 flex items-center gap-2">
-                                                2. Regional Details <span className="normal-case tracking-normal text-black/30 font-normal">(Auto-fills via Pincode)</span>
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <SmartInput
-                                                    label="Pincode *" name="pincode" value={address.pincode} onChange={handleInputChange} error={errors.pincode} placeholder="e.g. 110001"
-                                                    badge={isFetchingLocation ? <Loader2 size={16} className="animate-spin text-black/50" /> : (address.pincode.length === 6 && !errors.pincode ? <CheckCircle2 size={16} className="text-green-500" /> : null)}
-                                                />
-                                                <SmartInput label="City *" name="city" value={address.city} onChange={handleInputChange} error={errors.city} placeholder="City" disabled={isFetchingLocation} />
-                                                <SmartInput label="State *" name="state" value={address.state} onChange={handleInputChange} error={errors.state} placeholder="State" disabled={isFetchingLocation} />
-                                            </div>
-                                        </div>
-
-                                        {/* Exact Location Block */}
-                                        <div className="pt-6 border-t border-black/5">
-                                            <h3 className="text-[10px] font-bold tracking-widest uppercase text-black/40 mb-3">3. Exact Location</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                                <SmartInput label="House No., Building *" name="houseNo" value={address.houseNo} onChange={handleInputChange} error={errors.houseNo} placeholder="Flat/House No." />
-                                                <SmartInput label="Road Name, Area *" name="roadName" value={address.roadName} onChange={handleInputChange} error={errors.roadName} placeholder="Street, Sector, Area" />
-                                            </div>
-                                            <SmartInput label="Landmark (Optional)" name="landmark" value={address.landmark} onChange={handleInputChange} placeholder="e.g. Near Apollo Hospital" />
-                                        </div>
-
-                                        <button onClick={handleSaveAddress} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-8 text-[12px] transition-colors rounded-full">
-                                            Save & Continue to Summary
-                                        </button>
-                                    </div>
+                                    <AddressBook
+                                        selectable
+                                        onSelect={(addr) => setAddress(addr)}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (!address.fullName || !address.phone || !address.houseNo || !address.roadName || !address.city || !address.state || !address.pincode) {
+                                                alert('Please select or add a delivery address.');
+                                                return;
+                                            }
+                                            setStep(2); window.scrollTo(0, 0);
+                                        }}
+                                        className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-6 text-[12px] transition-colors rounded-full">
+                                        Continue to Summary
+                                    </button>
                                 </motion.div>
                             )}
 

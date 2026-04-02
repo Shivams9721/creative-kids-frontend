@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { csrfHeaders } from "@/lib/csrf";
 import { safeFetch, safeId } from "@/lib/safeFetch";
+import AddressBook from "@/components/AddressBook";
 
 // The timeline steps your admin panel uses
 const TRACKING_STEPS = ["Processing", "Shipped", "Delivered"];
@@ -504,60 +505,10 @@ export default function UserProfile() {
             </form>
 
             {/* Saved Address Form */}
-            <form className="bg-white p-8 border border-black/10 rounded-xl shadow-sm space-y-6 mt-6" onSubmit={async (e) => {
-              e.preventDefault();
-              setSavingAddress(true);
-              const token = localStorage.getItem('token');
-              const fd = new FormData(e.target);
-              const addr = { houseNo: fd.get('houseNo'), roadName: fd.get('roadName'), city: fd.get('city'), state: fd.get('state'), pincode: fd.get('pincode'), landmark: fd.get('landmark') };
-              try {
-                const res = await safeFetch('/api/user/address', {
-                  method: 'PUT',
-                  headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }),
-                  credentials: 'include',
-                  body: JSON.stringify({ address: addr })
-                });
-                if (res.ok) {
-                  setSavedAddress(addr);
-                  localStorage.setItem('ck_address', JSON.stringify(addr));
-                  alert('Address saved!');
-                } else { alert('Failed to save address.'); }
-              } catch { alert('Network error.'); }
-              finally { setSavingAddress(false); }
-            }}>
-              <h3 className="text-[12px] font-bold tracking-widest uppercase text-black border-b border-black/10 pb-2">Default Shipping Address</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">House No., Building</label>
-                  <input type="text" name="houseNo" defaultValue={savedAddress.houseNo} placeholder="Flat/House No." className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Road Name, Area</label>
-                  <input type="text" name="roadName" defaultValue={savedAddress.roadName} placeholder="Street, Sector, Area" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">City</label>
-                  <input type="text" name="city" defaultValue={savedAddress.city} placeholder="City" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">State</label>
-                  <input type="text" name="state" defaultValue={savedAddress.state} placeholder="State" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Pincode</label>
-                  <input type="text" name="pincode" defaultValue={savedAddress.pincode} placeholder="6-digit pincode" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Landmark (Optional)</label>
-                  <input type="text" name="landmark" defaultValue={savedAddress.landmark} placeholder="Near Apollo Hospital" className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" />
-                </div>
-              </div>
-              <div className="pt-6 border-t border-black/10 flex justify-end">
-                <button type="submit" disabled={savingAddress} className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-lg disabled:opacity-50">
-                  Save Address
-                </button>
-              </div>
-            </form>
+            <div className="bg-white p-8 border border-black/10 rounded-xl shadow-sm mt-6">
+              <h3 className="text-[12px] font-bold tracking-widest uppercase text-black border-b border-black/10 pb-2 mb-6">Saved Addresses</h3>
+              <AddressBook />
+            </div>
           </motion.div>
         )}
 
