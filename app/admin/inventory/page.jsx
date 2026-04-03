@@ -14,14 +14,34 @@ export default function AdminInventory() {
         if (!Array.isArray(products)) return;
         const rows = [];
         products.forEach(p => {
-          const variants = p.child_variants || [];
-          variants.forEach(v => {
+          const childVariants = p.child_variants || [];
+          childVariants.forEach(v => {
+            // Parse variants JSON string from DB
             let parsedVariants = [];
-            try { parsedVariants = typeof v.variants === "string" ? JSON.parse(v.variants) : (v.variants || []); } catch {}
+            try {
+              const raw = v.variants;
+              parsedVariants = typeof raw === "string" ? JSON.parse(raw) : (Array.isArray(raw) ? raw : []);
+            } catch { parsedVariants = []; }
+
+            // If no variants array, create a single row from the product itself
+            if (parsedVariants.length === 0) {
+              rows.push({
+                productId: v.id,
+                productTitle: (p.title || "").replace(/ - .+$/, ""),
+                color: v.color || "—",
+                size: "All sizes",
+                sku: v.sku || "—",
+                stock: 0,
+                variantIdx: 0,
+                allVariants: [],
+              });
+              return;
+            }
+
             parsedVariants.forEach((variant, idx) => {
               rows.push({
                 productId: v.id,
-                productTitle: (p.title || "").replace(/ - \w+$/, ""),
+                productTitle: (p.title || "").replace(/ - .+$/, ""),
                 color: v.color || variant.color || "—",
                 size: variant.size || "—",
                 sku: variant.sku || v.sku || "—",
