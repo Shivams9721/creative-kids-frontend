@@ -12,17 +12,56 @@ const buildApiPath = (params) => {
   return `/api/products${qs ? `?${qs}` : ''}`;
 };
 
+// Maps URL slugs back to the exact item_type values stored in the DB
+const SLUG_TO_ITEM_TYPE = {
+  'dresses': 'Dresses',
+  'tops-tees': 'Tops & Tees',
+  'co-ords-jumpsuits': 'Co-ords & Jumpsuits',
+  'jeans-joggers-trousers': 'Jeans Joggers & Trousers',
+  'shorts-skirts-skorts': 'Shorts, Skirts & Skorts',
+  'rompers': 'Rompers',
+  'onesies-rompers': 'Onesies & Rompers',
+  't-shirts-sweatshirts': 'T-Shirts & Sweatshirts',
+  'shirts': 'Shirts',
+  'bottomwear': 'Bottomwear',
+  'clothing-sets': 'Clothing Sets',
+  't-shirts': 'T-Shirts',
+  'jeans': 'Jeans',
+  'trousers-joggers': 'Trousers & Joggers',
+  'shorts': 'Shorts',
+  'co-ord-sets': 'Co-ord Sets',
+  'sweatshirts': 'Sweatshirts',
+};
+
+// Maps slug0 to the exact main_category values stored in DB
+const SLUG_TO_MAIN_CAT = {
+  'baby-boy':  'Baby boys',
+  'baby-girl': 'Baby girls',
+  'baby':      null, // both baby boys + baby girls — handled via baby_all param
+  'kids-boy':  'Boys clothing',
+  'kids-girl': 'Girls clothing',
+  'kids':      null, // both boys + girls clothing — handled via kids_all param
+};
+
 async function getProducts(params, searchParams) {
   const { slug } = params;
   const slugArray = Array.isArray(slug) ? slug : (slug ? [slug] : []);
   const slug0 = slugArray[0] || '';
+  const slug1 = slugArray[1] || '';
 
-  const mainCat = (slug0 === 'baby' || slug0 === 'baby-boy' || slug0 === 'baby-girl') ? 'Baby'
-      : (slug0 === 'kids-boy' || slug0 === 'kids-girl') ? 'Kids' : null;
+  // Convert slug to exact DB main_category value
+  const mainCat = SLUG_TO_MAIN_CAT[slug0] !== undefined ? SLUG_TO_MAIN_CAT[slug0] : null;
+  const isBabyAll = slug0 === 'baby';
+  const isKidsAll = slug0 === 'kids';
+
+  // Convert slug to exact DB item_type value
+  const itemType = slug1 ? (SLUG_TO_ITEM_TYPE[slug1] || slug1) : null;
       
   const queryParams = {
     main_category: mainCat,
-    item_type: slugArray[1] || null,
+    baby_all: isBabyAll ? 'true' : null,
+    kids_all: isKidsAll ? 'true' : null,
+    item_type: itemType,
     sort: searchParams.sort,
     sizes: searchParams.sizes,
     colors: searchParams.colors,
