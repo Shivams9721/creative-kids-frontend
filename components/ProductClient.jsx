@@ -124,7 +124,7 @@ export default function ProductClient({ product, relatedProducts }) {
   const handleAddToCart = () => {
     if (!product) return;
     
-    const matchedVariant = product.parsedVariants.find(v =>
+    const matchedVariant = (product.parsedVariants || []).find(v =>
       v.color === (selectedColor || "Default") && v.size === (selectedSize || "Default")
     );
     const cartItem = {
@@ -746,7 +746,7 @@ export default function ProductClient({ product, relatedProducts }) {
               {relatedProducts.map(p => (
                 <Link key={p.id} href={`/product/${p.id}`} className="group flex flex-col">
                   <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-3">
-                    <Image src={p.image_urls?.[0] || ''} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 50vw, 16vw" />
+                    <Image src={p.image_urls?.[0] || '/images/logo.png'} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 50vw, 16vw" />
                   </div>
                   <p className="text-[12px] text-black truncate">{p.title}</p>
                   <p className="text-[12px] font-bold text-black mt-0.5">₹{parseFloat(p.price).toFixed(2)}</p>

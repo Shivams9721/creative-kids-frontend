@@ -29,7 +29,15 @@ export default function SmartSearch({ isOpen, onClose }) {
     if (cachedProducts) { setProducts(cachedProducts); return; }
     safeFetch(`/api/products`)
       .then(res => res.json())
-      .then(data => { cachedProducts = data; setProducts(data); })
+      .then(data => {
+        // Parse image_urls from JSON string to array
+        const parsed = data.map(p => ({
+          ...p,
+          image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })()
+        }));
+        cachedProducts = parsed;
+        setProducts(parsed);
+      })
       .catch(err => console.error("Search fetch error:", err));
     return () => { document.body.style.overflow = "unset"; };
   }, [isOpen]);
@@ -195,7 +203,7 @@ export default function SmartSearch({ isOpen, onClose }) {
                           </button>
                           
                           <img 
-                            src={product.image_urls?.[0] || ''} 
+                            src={product.image_urls?.[0] || '/images/logo.png'} 
                             alt={product.title} 
                             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                           />

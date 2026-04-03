@@ -1,110 +1,81 @@
 "use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import { useState } from "react";
-import { LockKeyhole } from "lucide-react";
-import { motion } from "framer-motion";
-import { safeFetch } from "@/lib/safeFetch";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
 
-export default function AdminLogin() {
+export default function AdminLoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // If already logged in, redirect to admin
+  useEffect(() => {
+    if (localStorage.getItem("adminToken")) {
+      router.replace("/admin");
+    }
+  }, [router]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
-
+    setLoading(true);
     try {
-      const response = await safeFetch(`/api/admin/login`, {
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        localStorage.setItem("adminToken", data.token);
-        // Also set a cookie so the edge middleware can protect /admin routes
-        document.cookie = `adminToken=${data.token}; path=/; max-age=43200; SameSite=Strict`;
-        window.location.href = "/admin/dashboard";
-      } else {
+      const data = await res.json();
+      if (!res.ok) {
         setError(data.message || "Invalid credentials");
+        return;
       }
-    } catch (err) {
-      setError("Server connection failed");
+      // Store in localStorage for API calls
+      localStorage.setItem("adminToken", data.token);
+      // Also set a cookie so middleware can protect routes
+      document.cookie = `adminToken=${data.token}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
+      router.replace("/admin");
+    } catch {
+      setError("Failed to connect. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    // The fixed inset-0 z-[100] completely covers the customer Navbar and Footer!
-    <div className="fixed inset-0 z-[100] bg-[#0f172a] flex items-center justify-center p-4">
-      
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-600/20 blur-[120px] rounded-full"></div>
-        <div className="absolute top-[60%] -right-[10%] w-[40%] h-[50%] bg-purple-600/20 blur-[120px] rounded-full"></div>
-      </div>
-
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 md:p-12 rounded-3xl shadow-2xl w-full max-w-md relative z-10"
-      >
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/30">
-            <LockKeyhole size={28} className="text-white" />
-          </div>
-        </div>
-        
-        <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-white mb-2 tracking-wide">Admin Portal</h1>
-          <p className="text-white/60 text-[13px]">Authorized personnel only.</p>
-        </div>
-
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-200 text-[12px] p-3 rounded-lg mb-6 text-center font-medium">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-5">
+    <div className="min-h-screen bg-[#fafafa] flex items-center justify-center px-4">
+      <div className="bg-white border border-black/10 rounded-2xl shadow-sm p-10 w-full max-w-sm">
+        <h1 className="text-[11px] font-bold tracking-widest uppercase text-black/50 mb-1">Creative Kids</h1>
+        <h2 className="text-2xl font-light text-black mb-8">Admin Login</h2>
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="text-[11px] font-bold tracking-widest uppercase text-white/70 block mb-2">Admin Email</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-black/20 border border-white/10 text-white rounded-xl p-4 text-[14px] outline-none focus:border-blue-500 transition-colors placeholder:text-white/30"
-              placeholder="admin@creativekids.com"
-              required
+            <label className="block text-[10px] font-bold tracking-widest uppercase text-black/50 mb-1">Email</label>
+            <input
+              type="email" value={email} onChange={e => setEmail(e.target.value)} required
+              className="w-full border border-black/20 rounded-lg px-3 py-2.5 text-[14px] outline-none focus:border-black"
+              placeholder="admin@example.com"
             />
           </div>
           <div>
-            <label className="text-[11px] font-bold tracking-widest uppercase text-white/70 block mb-2">Password</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-black/20 border border-white/10 text-white rounded-xl p-4 text-[14px] outline-none focus:border-blue-500 transition-colors placeholder:text-white/30"
+            <label className="block text-[10px] font-bold tracking-widest uppercase text-black/50 mb-1">Password</label>
+            <input
+              type="password" value={password} onChange={e => setPassword(e.target.value)} required
+              className="w-full border border-black/20 rounded-lg px-3 py-2.5 text-[14px] outline-none focus:border-black"
               placeholder="••••••••"
-              required
             />
           </div>
-
-          <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold tracking-widest uppercase text-[12px] py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 mt-4"
+          {error && <p className="text-[12px] text-red-500">{error}</p>}
+          <button
+            type="submit" disabled={loading}
+            className="w-full bg-black text-white py-3 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors disabled:opacity-50"
           >
-            {loading ? "Authenticating..." : "Access Dashboard"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -52,8 +52,19 @@ export default function UserProfile() {
       try {
         const res = await safeFetch('/api/user/address', { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
-        if (data.address) setSavedAddress(data.address);
-        else {
+        // Backend returns an array of addresses
+        const list = Array.isArray(data) ? data : [];
+        const defaultAddr = list.find(a => a.is_default) || list[0];
+        if (defaultAddr) {
+          setSavedAddress({
+            houseNo: defaultAddr.house_no || "",
+            roadName: defaultAddr.road_name || "",
+            city: defaultAddr.city || "",
+            state: defaultAddr.state || "",
+            pincode: defaultAddr.pincode || "",
+            landmark: defaultAddr.landmark || "",
+          });
+        } else {
           try { const a = localStorage.getItem('ck_address'); if (a) setSavedAddress(JSON.parse(a)); } catch {}
         }
       } catch {
@@ -332,9 +343,8 @@ export default function UserProfile() {
                         <Heart strokeWidth={1.5} size={18} className="fill-red-500 text-red-500" />
                       </button>
                       <img
-                        src={product.image_urls?.[0] || ''}
-                        alt={product.title}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out cursor-pointer"
+                        src={(() => { try { const u = typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : product.image_urls; return Array.isArray(u) ? u[0] : '/images/logo.png'; } catch { return '/images/logo.png'; } })()}
+                        alt={product.title}                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out cursor-pointer"
                         onClick={() => window.location.href = `/product/${product.id}`}
                       />
                     </div>

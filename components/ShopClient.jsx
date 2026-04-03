@@ -479,7 +479,7 @@ export default function ShopClient({ initialProducts }) {
                         <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
                       </button>
                       <Image
-                        src={product.image_urls?.[0] || ''}
+                        src={product.image_urls?.[0] || '/images/logo.png'}
                         alt={product.title}
                         fill
                         className={`object-cover transition-transform duration-1000 group-hover:scale-105 ${soldOut ? 'opacity-50' : ''}`}

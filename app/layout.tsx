@@ -1,9 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import CartDrawer from '@/components/CartDrawer' // <-- ADDED BACK
 import { CartProvider } from '@/context/CartContext'
+import ConditionalShell from '@/components/ConditionalShell'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,15 +22,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <CartProvider>
-          {/* Global UI */}
-          <Navbar /> 
-          <CartDrawer /> {/* <-- ADDED BACK: This makes the cart slide out! */}
-          
-          {/* Page Content */}
-          {children}
-          
-          {/* Global Footer */}
-          <Footer />
+          <ConditionalShell>
+            {children}
+          </ConditionalShell>
         </CartProvider>
       </body>
     </html>

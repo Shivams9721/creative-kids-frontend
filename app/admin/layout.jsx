@@ -1,69 +1,112 @@
 "use client";
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, ListOrdered, Tag, PackagePlus, BarChart2, Ticket, RefreshCcw, LogOut, ShieldAlert } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import "./admin.css";
 
 const NAV = [
-  { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/admin/orders', label: 'Orders', icon: ListOrdered },
-  { href: '/admin/products', label: 'Inventory', icon: Tag },
-  { href: '/admin/products/new', label: 'List Product', icon: PackagePlus },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/admin/coupons', label: 'Coupons', icon: Ticket },
-  { href: '/admin/returns', label: 'Returns', icon: RefreshCcw },
+  { group: "Overview", items: [
+    { id: "dashboard", label: "Dashboard", href: "/admin", badge: null },
+    { id: "analytics", label: "Analytics", href: "/admin/analytics", badge: null },
+  ]},
+  { group: "Catalogue", items: [
+    { id: "list-product", label: "List product", href: "/admin/list-product", badge: "NEW" },
+    { id: "products", label: "All products", href: "/admin/products", badge: null },
+    { id: "inventory", label: "Inventory", href: "/admin/inventory", badge: null },
+  ]},
+  { group: "Commerce", items: [
+    { id: "orders", label: "Orders", href: "/admin/orders", badge: null },
+    { id: "returns", label: "Returns", href: "/admin/returns", badge: null },
+    { id: "coupons", label: "Coupons", href: "/admin/coupons", badge: null },
+    { id: "customers", label: "Customers", href: "/admin/customers", badge: null },
+  ]},
+  { group: "System", items: [
+    { id: "settings", label: "Settings", href: "/admin/settings", badge: null },
+  ]},
 ];
 
 export default function AdminLayout({ children }) {
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
+  const [authed, setAuthed] = useState(false);
 
-  // Client-side auth guard fallback
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) router.replace('/admin/login');
+    const token = localStorage.getItem("adminToken");
+    if (!token) { router.replace("/admin/login"); return; }
+    setAuthed(true);
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    document.cookie = 'adminToken=; path=/; max-age=0';
-    router.replace('/admin/login');
+    localStorage.removeItem("adminToken");
+    document.cookie = "adminToken=; path=/; max-age=0";
+    router.replace("/admin/login");
   };
 
+  if (!authed) return null;
+
+  const isActive = (href) => href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+
   return (
-    <div className="fixed inset-0 z-[100] flex bg-slate-100 font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 bg-[#0f172a] text-slate-300 flex flex-col border-r border-slate-800">
-        <div className="p-6 pb-4 flex items-center gap-3 border-b border-slate-800">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <ShieldAlert size={16} className="text-white" />
+    <div className="admin-root" style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      {/* SIDEBAR */}
+      <aside style={{ width: 224, flexShrink: 0, background: "var(--bg2)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+        <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg viewBox="0 0 16 16" fill="none" width={16} height={16}><path d="M8 2C5.2 2 3 4.2 3 7c0 2.4 1.6 4.4 3.8 5.1V13h2.4v-0.9C11.4 11.4 13 9.4 13 7c0-2.8-2.2-5-5-5z" fill="#0d0d0d"/></svg>
           </div>
-          <span className="text-sm font-bold tracking-widest uppercase text-white">Workspace</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>Creative Kids</div>
+            <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Admin Console</div>
+          </div>
         </div>
-        <nav className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto">
-          {NAV.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[12px] font-semibold tracking-wider transition-all ${
-                pathname === href || (href !== '/admin/dashboard' && pathname.startsWith(href))
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                  : 'hover:text-white hover:bg-white/10'
-              }`}>
-              <Icon size={17} /> {label}
-            </Link>
-          ))}
-        </nav>
-        <div className="p-6 border-t border-slate-800">
-          <button onClick={handleLogout}
-            className="flex items-center gap-3 text-[12px] font-semibold tracking-wider text-slate-400 hover:text-white transition-colors w-full">
-            <LogOut size={17} /> Secure Logout
+
+        {NAV.map(group => (
+          <div key={group.group} style={{ padding: "10px 0 4px" }}>
+            <div style={{ fontSize: 10, fontWeight: 500, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.1em", padding: "0 18px 6px" }}>{group.group}</div>
+            {group.items.map(item => (
+              <Link key={item.id} href={item.href} style={{
+                display: "flex", alignItems: "center", gap: 9, padding: "9px 18px",
+                borderLeft: `2px solid ${isActive(item.href) ? "var(--accent)" : "transparent"}`,
+                background: isActive(item.href) ? "var(--accent3)" : "transparent",
+                color: isActive(item.href) ? "var(--text)" : "var(--text2)",
+                textDecoration: "none", fontSize: 12.5, transition: "all 0.15s",
+              }}>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {item.badge && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 20, background: "var(--accent2)", color: "var(--accent)", letterSpacing: "0.04em" }}>{item.badge}</span>}
+              </Link>
+            ))}
+          </div>
+        ))}
+
+        <div style={{ marginTop: "auto", padding: "14px 18px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, var(--accent) 0%, #8ee000 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#0d0d0d", flexShrink: 0 }}>CK</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 500 }}>Admin</div>
+            <div style={{ fontSize: 10, color: "var(--text3)" }}>Super admin</div>
+          </div>
+          <button onClick={handleLogout} title="Logout" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", padding: 4 }}>
+            <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/><polyline points="11,11 14,8 11,5"/><line x1="14" y1="8" x2="6" y2="8"/></svg>
           </button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-y-auto p-8">
-        {children}
-      </main>
+      {/* MAIN */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* TOPBAR */}
+        <div style={{ height: 52, flexShrink: 0, background: "var(--bg2)", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", gap: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>
+            {NAV.flatMap(g => g.items).find(i => isActive(i.href))?.label || "Admin"}
+          </div>
+          <Link href="/admin/list-product" style={{ padding: "7px 14px", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", background: "var(--accent)", color: "#0d0d0d", border: "1px solid var(--accent)", textDecoration: "none" }}>
+            + List product
+          </Link>
+        </div>
+
+        {/* PAGE CONTENT */}
+        <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

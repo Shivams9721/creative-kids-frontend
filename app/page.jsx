@@ -32,7 +32,7 @@ function GridCard({ product, wishlist, toggleWishlist }) {
           <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
         </button>
         <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-          <Image src={product.image_urls?.[0] || ""} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
+          <Image src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 25vw" />
         </Link>
       </div>
       <Link href={`/product/${product.id}`} className="flex flex-col px-1">
@@ -98,9 +98,13 @@ export default function Home() {
     safeFetch(`/api/homepage`)
       .then(r => r.json())
       .then(data => {
-        setGirlsProducts(data.newArrivals || [null, null, null, null]);
-        setBestsellerProducts(data.bestsellers || [null, null, null, null]);
-        setFeaturedProducts(data.featured || []);
+        const parse = (arr) => (arr || []).map(p => ({
+          ...p,
+          image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })()
+        }));
+        setGirlsProducts(parse(data.newArrivals) || [null, null, null, null]);
+        setBestsellerProducts(parse(data.bestsellers) || [null, null, null, null]);
+        setFeaturedProducts(parse(data.featured) || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -240,7 +244,7 @@ export default function Home() {
                             <Heart strokeWidth={1} size={20} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
                           </button>
                           <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-                            <Image src={product.image_urls?.[0] || ""} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 30vw" />
+                            <Image src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 75vw, 30vw" />
                           </Link>
                         </div>
                         <Link href={`/product/${product.id}`} className="flex flex-col px-1">

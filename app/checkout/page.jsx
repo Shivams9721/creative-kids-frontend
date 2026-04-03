@@ -69,9 +69,18 @@ export default function CheckoutPage() {
         safeFetch('/api/user/address', { headers: { Authorization: `Bearer ${token}` } })
             .then(r => r.json())
             .then(data => {
-                if (data.address) {
-                    setAddress(prev => ({ ...prev, ...data.address }));
-                    setSavedAddress(data.address);
+                // Backend returns an array of addresses
+                const list = Array.isArray(data) ? data : [];
+                const defaultAddr = list.find(a => a.is_default) || list[0];
+                if (defaultAddr) {
+                    const formatted = {
+                        fullName: defaultAddr.full_name, phone: defaultAddr.phone,
+                        houseNo: defaultAddr.house_no, roadName: defaultAddr.road_name,
+                        city: defaultAddr.city, state: defaultAddr.state,
+                        pincode: defaultAddr.pincode, landmark: defaultAddr.landmark || "", altPhone: ""
+                    };
+                    setAddress(prev => ({ ...prev, ...formatted }));
+                    setSavedAddress(formatted);
                 }
             })
             .catch(() => {
@@ -238,13 +247,13 @@ export default function CheckoutPage() {
             const data = await response.json();
 
             if (data.success) {
-                // Save address to DB for next time
+                // Save address to DB for next time (POST creates if not exists)
                 const token2 = localStorage.getItem('token');
                 safeFetch('/api/user/address', {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: await csrfHeaders({ 'Content-Type': 'application/json', Authorization: `Bearer ${token2}` }),
                     credentials: 'include',
-                    body: JSON.stringify({ address })
+                    body: JSON.stringify({ ...address, is_default: true })
                 }).catch(() => {});
                 setOrderSuccess(true);
                 localStorage.setItem('lastOrder', JSON.stringify({

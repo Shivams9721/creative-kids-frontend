@@ -46,7 +46,7 @@ export default function CartDrawer() {
                   <div key={item.cartId} className="flex gap-4 items-start">
                     <div className="w-20 aspect-[3/4] bg-gray-50 flex-shrink-0 relative overflow-hidden rounded-md">
                       <img
-                        src={item.image || (item.image_urls && item.image_urls[0]) || ''}
+                        src={item.image || (item.image_urls && item.image_urls[0]) || '/images/logo.png'}
                         alt={item.title}
                         className="absolute inset-0 w-full h-full object-cover"
                       />
