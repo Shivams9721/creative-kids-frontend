@@ -30,19 +30,27 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const [authed, setAuthed] = useState(false);
 
+  // Don't apply auth guard or shell to the login page
+  const isLoginPage = pathname === "/admin/login";
+
   useEffect(() => {
+    if (isLoginPage) return; // login page handles itself
     const token = localStorage.getItem("adminToken");
     if (!token) { router.replace("/admin/login"); return; }
     setAuthed(true);
-  }, [router]);
+  }, [router, isLoginPage]);
+
+  // Login page renders without the admin shell
+  if (isLoginPage) return <>{children}</>;
+
+  // Other admin pages wait for auth check
+  if (!authed) return null;
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     document.cookie = "adminToken=; path=/; max-age=0";
     router.replace("/admin/login");
   };
-
-  if (!authed) return null;
 
   const isActive = (href) => href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 

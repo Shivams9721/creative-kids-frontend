@@ -11,12 +11,18 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [checking, setChecking] = useState(true);
+
   // If already logged in, redirect to admin
   useEffect(() => {
     if (localStorage.getItem("adminToken")) {
       router.replace("/admin");
+    } else {
+      setChecking(false);
     }
   }, [router]);
+
+  if (checking) return null;
 
   const handleLogin = async (e) => {
     e.preventDefault();
