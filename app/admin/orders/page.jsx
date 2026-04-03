@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { safeFetch } from "../api";
 
 const STATUS_COLORS = { Processing: "tag-blue", Shipped: "tag-purple", Delivered: "tag-green", Cancelled: "tag-red", New: "tag-amber" };
@@ -8,29 +8,39 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [updating, setUpdating] = useState(null);
   const [pipeline, setPipeline] = useState({});
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [o, funnel] = await Promise.all([
-          safeFetch("/api/admin/orders"),
-          safeFetch("/api/admin/analytics/order-funnel"),
-        ]);
-        const list = Array.isArray(o) ? o : [];
-        setOrders(list);
-        setFiltered(list);
-        const map = {};
-        (Array.isArray(funnel) ? funnel : []).forEach(r => { map[r.status] = parseInt(r.count); });
-        setPipeline(map);
-      } catch { setOrders([]); setFiltered([]); }
-      finally { setLoading(false); }
-    }
-    load();
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+    try {
+      const [o, funnel] = await Promise.all([
+        safeFetch("/api/admin/orders"),
+        safeFetch("/api/admin/analytics/order-funnel"),
+      ]);
+      const list = Array.isArray(o) ? o : [];
+      setOrders(list);
+      const map = {};
+      (Array.isArray(funnel) ? funnel : []).forEach(r => { map[r.status] = parseInt(r.count); });
+      setPipeline(map);
+      setLastRefresh(new Date());
+    } catch { setOrders([]); }
+    finally { setLoading(false); setRefreshing(false); }
   }, []);
+
+  // Initial load
+  useEffect(() => { load(); }, [load]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => load(true), 30000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   useEffect(() => {
     let list = orders;
@@ -76,6 +86,20 @@ export default function AdminOrders() {
           <option value="All">All status</option>
           {["New","Processing","Shipped","Delivered","Cancelled"].map(s => <option key={s}>{s}</option>)}
         </select>
+        <button className="btn btn-sm" onClick={() => load(true)} disabled={refreshing}
+          style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <svg width={12} height={12} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2}
+            style={{ animation: refreshing ? "spin 1s linear infinite" : "none" }}>
+            <path d="M14 8A6 6 0 1 1 8 2" strokeLinecap="round"/>
+            <polyline points="14,2 14,8 8,8"/>
+          </svg>
+          {refreshing ? "Refreshing…" : "Refresh"}
+        </button>
+        {lastRefresh && (
+          <span style={{ fontSize: 10, color: "var(--text3)", flexShrink: 0 }}>
+            Updated {lastRefresh.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        )}
       </div>
 
       <div className="card" style={{ overflow: "hidden" }}>
