@@ -44,7 +44,7 @@ const SLUG_TO_MAIN_CAT = {
 };
 
 async function getProducts(params, searchParams) {
-  const { slug } = params;
+  const slug = params.slug;
   const slugArray = Array.isArray(slug) ? slug : (slug ? [slug] : []);
   const slug0 = slugArray[0] || '';
   const slug1 = slugArray[1] || '';
@@ -99,7 +99,9 @@ async function getProducts(params, searchParams) {
 }
 
 export default async function Shop({ params, searchParams }) {
-  const initialProducts = await getProducts(params, searchParams);
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const initialProducts = await getProducts(resolvedParams, resolvedSearchParams);
 
   return (
     <Suspense fallback={

@@ -20,7 +20,7 @@ async function getProductData(id) {
     };
     
     // Fetch related products
-    const relatedRes = await safeFetch(`/api/products?sub_category=${encodeURIComponent(product.sub_category)}&limit=7`, { next: { revalidate: 3600 } });
+    const relatedRes = await safeFetch(`/api/products?item_type=${encodeURIComponent(product.item_type || product.sub_category || '')}&limit=7`, { cache: 'no-store' });
     let relatedProducts = [];
     if (relatedRes.ok) {
         const allRelated = await relatedRes.json();
