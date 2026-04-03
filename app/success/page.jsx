@@ -24,117 +24,196 @@ export default function OrderSuccess() {
 
     const addr = order.address;
     const items = order.items || [];
-    const subtotal = parseFloat(order.total);
-    // Indian GST: 5% for kids clothing (HSN 6111/6209)
-    const gstRate = 0.05;
-    const isIntraState = addr.state?.toLowerCase().includes("haryana");
-    const gstAmount = subtotal * gstRate;
-    const cgst = isIntraState ? gstAmount / 2 : 0;
-    const sgst = isIntraState ? gstAmount / 2 : 0;
-    const igst = isIntraState ? 0 : gstAmount;
-    const grandTotal = subtotal; // price is inclusive, so we just break it down
-
     const pageW = doc.internal.pageSize.getWidth();
-    let y = 20;
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 14;
 
-    // Header
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, 33, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
+    // ── Helpers ──────────────────────────────────────────────
+    const rupee = (n) => `INR ${parseFloat(n || 0).toFixed(2)}`;
+    const invoiceNo = `INV-${(order.orderNumber || "").replace("Creativekids-O-", "") || Date.now()}`;
+    const orderDate = new Date(order.date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+    // ── GST calculation ───────────────────────────────────────
+    const subtotalBeforeDiscount = items.reduce((s, i) => s + parseFloat(i.price) * (i.quantity || 1), 0);
+    const discountAmount = parseFloat(order.discountAmount || 0);
+    const taxableAmount = subtotalBeforeDiscount - discountAmount;
+    const gstRate = 0.05; // 5% GST on kids clothing HSN 6111
+    const isIntraState = (addr.state || "").toLowerCase().includes("haryana");
+    const gstAmount = parseFloat((taxableAmount * gstRate / (1 + gstRate)).toFixed(2)); // GST is inclusive
+    const cgst = isIntraState ? parseFloat((gstAmount / 2).toFixed(2)) : 0;
+    const sgst = isIntraState ? parseFloat((gstAmount / 2).toFixed(2)) : 0;
+    const igst = isIntraState ? 0 : gstAmount;
+    const grandTotal = taxableAmount; // prices are GST-inclusive
+
+    // ── HEADER BAND ───────────────────────────────────────────
+    doc.setFillColor(10, 10, 10);
+    doc.rect(0, 0, pageW, 36, "F");
+
+    doc.setTextColor(200, 245, 62); // accent green
+    doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("CREATIVE KIDS", 14, 11);
+    doc.text("CREATIVE IMPRESSION", margin, 13);
+
+    doc.setTextColor(180, 180, 180);
     doc.setFontSize(7);
     doc.setFont("helvetica", "normal");
-    doc.text("Creative Impression | Plot No.-667, Pace City - II, Sector - 37, Gurugram, Haryana - 122001", 14, 17);
-    doc.text("creativekids.co.in  |  GSTIN: 06AAJPM1384L1ZE  |  PAN: AAJPM1384L", 14, 22);
-    doc.setFontSize(10);
+    doc.text("Creative Impression  |  Plot No.-667, Pace City-II, Sector-37, Gurugram, Haryana - 122001", margin, 20);
+    doc.text("creativekids.co.in  |  support@creativekids.co.in  |  GSTIN: 06AAJPM1384L1ZE  |  PAN: AAJPM1384L", margin, 26);
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
-    doc.text("TAX INVOICE", pageW - 14, 13, { align: "right" });
+    doc.text("TAX INVOICE", pageW - margin, 13, { align: "right" });
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`Date: ${new Date(order.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`, pageW - 14, 20, { align: "right" });
+    doc.setTextColor(180, 180, 180);
+    doc.text(`Invoice No: ${invoiceNo}`, pageW - margin, 21, { align: "right" });
+    doc.text(`Date: ${orderDate}`, pageW - margin, 27, { align: "right" });
 
-    y = 43;
+    // ── ORDER + BILLING INFO ──────────────────────────────────
+    let y = 46;
     doc.setTextColor(0, 0, 0);
 
-    // Order number
-    if (order.orderNumber) {
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Order: ${order.orderNumber}`, 14, y);
-      y += 8;
-    }
-
-    // Bill to
-    doc.setFontSize(8);
+    // Two-column info block
+    // Left: Bill To
+    doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
-    doc.text("BILL TO:", 14, y);
-    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text("BILL TO", margin, y);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
     y += 5;
-    doc.text(addr.fullName || "", 14, y); y += 4;
-    doc.text(`${addr.houseNo}, ${addr.roadName}`, 14, y); y += 4;
-    if (addr.landmark) { doc.text(`Landmark: ${addr.landmark}`, 14, y); y += 4; }
-    doc.text(`${addr.city}, ${addr.state} - ${addr.pincode}`, 14, y); y += 4;
-    doc.text(`Phone: ${addr.phone}`, 14, y); y += 4;
-    doc.text(`Payment: ${order.paymentMethod}`, 14, y); y += 10;
-
-    // Table header
-    doc.setFillColor(241, 245, 249);
-    doc.rect(14, y, pageW - 28, 8, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.text("Item", 16, y + 5.5);
-    doc.text("Size", 110, y + 5.5);
-    doc.text("Color", 130, y + 5.5);
-    doc.text("Qty", 155, y + 5.5);
-    doc.text("Price", pageW - 16, y + 5.5, { align: "right" });
-    y += 10;
-
-    // Table rows
+    doc.text(addr.fullName || "", margin, y); y += 5;
     doc.setFont("helvetica", "normal");
-    items.forEach((item) => {
-      const title = item.title?.length > 40 ? item.title.slice(0, 38) + "…" : item.title;
-      doc.text(title || "", 16, y);
-      doc.text(item.selectedSize || item.size || "—", 110, y);
-      doc.text(item.selectedColor || item.color || "—", 130, y);
-      doc.text(String(item.quantity || 1), 155, y);
-      doc.text(`Rs.${parseFloat(item.price).toFixed(2)}`, pageW - 16, y, { align: "right" });
-      y += 7;
-      doc.setDrawColor(230, 230, 230);
-      doc.line(14, y - 1, pageW - 14, y - 1);
+    doc.setFontSize(8);
+    doc.text(`${addr.houseNo}, ${addr.roadName}`, margin, y); y += 4;
+    if (addr.landmark) { doc.text(`Near ${addr.landmark}`, margin, y); y += 4; }
+    doc.text(`${addr.city}, ${addr.state} - ${addr.pincode}`, margin, y); y += 4;
+    doc.text(`Phone: ${addr.phone}`, margin, y);
+
+    // Right: Order details
+    const rx = pageW / 2 + 10;
+    let ry = 46;
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(100, 100, 100);
+    doc.text("ORDER DETAILS", rx, ry);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    ry += 5;
+    const details = [
+      ["Order Number", order.orderNumber || "—"],
+      ["Payment Method", order.paymentMethod || "—"],
+      ["Order Status", "Confirmed"],
+    ];
+    details.forEach(([k, v]) => {
+      doc.setFont("helvetica", "bold"); doc.text(`${k}:`, rx, ry);
+      doc.setFont("helvetica", "normal"); doc.text(v, rx + 35, ry);
+      ry += 5;
     });
 
+    // Divider
+    y = Math.max(y, ry) + 8;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(margin, y, pageW - margin, y);
     y += 6;
 
-    // GST breakdown
-    const taxX = pageW - 80;
+    // ── ITEMS TABLE ───────────────────────────────────────────
+    // Header
+    doc.setFillColor(245, 245, 245);
+    doc.rect(margin, y, pageW - margin * 2, 8, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(80, 80, 80);
+    doc.text("ITEM DESCRIPTION", margin + 2, y + 5.5);
+    doc.text("HSN", 105, y + 5.5);
+    doc.text("SIZE", 118, y + 5.5);
+    doc.text("COLOR", 133, y + 5.5);
+    doc.text("QTY", 152, y + 5.5);
+    doc.text("UNIT PRICE", 162, y + 5.5);
+    doc.text("TOTAL", pageW - margin - 2, y + 5.5, { align: "right" });
+    y += 10;
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text("Subtotal (incl. GST):", taxX, y);
-    doc.text(`Rs.${subtotal.toFixed(2)}`, pageW - 16, y, { align: "right" }); y += 6;
+    doc.setTextColor(0, 0, 0);
+
+    items.forEach((item, idx) => {
+      // Page break check
+      if (y > pageH - 60) {
+        doc.addPage();
+        y = 20;
+      }
+
+      const rowBg = idx % 2 === 0;
+      if (rowBg) { doc.setFillColor(252, 252, 252); doc.rect(margin, y - 2, pageW - margin * 2, 9, "F"); }
+
+      const title = (item.title || "").length > 38 ? (item.title || "").slice(0, 36) + "…" : (item.title || "");
+      const qty = item.quantity || 1;
+      const unitPrice = parseFloat(item.price);
+      const lineTotal = unitPrice * qty;
+
+      doc.text(title, margin + 2, y + 4);
+      doc.text("6111", 105, y + 4);
+      doc.text(item.selectedSize || item.size || "—", 118, y + 4);
+      doc.text(item.selectedColor || item.color || "—", 133, y + 4);
+      doc.text(String(qty), 152, y + 4);
+      doc.text(rupee(unitPrice), 162, y + 4);
+      doc.text(rupee(lineTotal), pageW - margin - 2, y + 4, { align: "right" });
+
+      doc.setDrawColor(235, 235, 235);
+      doc.line(margin, y + 7, pageW - margin, y + 7);
+      y += 9;
+    });
+
+    y += 4;
+
+    // ── TOTALS BLOCK ─────────────────────────────────────────
+    const totalsX = pageW - margin - 70;
+    const valX = pageW - margin;
+
+    const addTotalRow = (label, value, bold = false, color = null) => {
+      if (color) doc.setTextColor(...color);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(bold ? 9 : 8);
+      doc.text(label, totalsX, y);
+      doc.text(value, valX, y, { align: "right" });
+      if (color) doc.setTextColor(0, 0, 0);
+      y += bold ? 7 : 5.5;
+    };
+
+    doc.setDrawColor(220, 220, 220);
+    doc.line(totalsX - 4, y, valX, y);
+    y += 4;
+
+    addTotalRow("Subtotal:", rupee(subtotalBeforeDiscount));
+    if (discountAmount > 0) addTotalRow(`Discount (${order.couponCode || "coupon"}):`, `- ${rupee(discountAmount)}`, false, [34, 139, 34]);
+    addTotalRow("Taxable Amount:", rupee(taxableAmount));
 
     if (isIntraState) {
-      doc.text(`CGST (2.5%):`, taxX, y);
-      doc.text(`Rs.${cgst.toFixed(2)}`, pageW - 16, y, { align: "right" }); y += 6;
-      doc.text(`SGST (2.5%):`, taxX, y);
-      doc.text(`Rs.${sgst.toFixed(2)}`, pageW - 16, y, { align: "right" }); y += 6;
+      addTotalRow("CGST @ 2.5% (incl.):", rupee(cgst));
+      addTotalRow("SGST @ 2.5% (incl.):", rupee(sgst));
     } else {
-      doc.text(`IGST (5%):`, taxX, y);
-      doc.text(`Rs.${igst.toFixed(2)}`, pageW - 16, y, { align: "right" }); y += 6;
+      addTotalRow("IGST @ 5% (incl.):", rupee(igst));
     }
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.text("Grand Total:", taxX, y);
-    doc.text(`Rs.${grandTotal.toFixed(2)}`, pageW - 16, y, { align: "right" }); y += 12;
+    doc.setDrawColor(10, 10, 10);
+    doc.line(totalsX - 4, y, valX, y);
+    y += 4;
+    addTotalRow("GRAND TOTAL", rupee(grandTotal), true);
 
-    // Footer
+    // ── FOOTER ───────────────────────────────────────────────
+    const footerY = pageH - 18;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(margin, footerY - 4, pageW - margin, footerY - 4);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);
-    doc.text("This is a computer-generated invoice and does not require a signature.", 14, y);
-    doc.text("Thank you for shopping with Creative Kids!", 14, y + 4);
+    doc.text("This is a computer-generated invoice and does not require a physical signature.", margin, footerY);
+    doc.text("Goods once sold will not be taken back or exchanged unless defective. Subject to Gurugram jurisdiction.", margin, footerY + 4);
+    doc.text("Thank you for shopping with Creative Kids!", pageW - margin, footerY, { align: "right" });
 
     doc.save(`CreativeKids-Invoice-${order.orderNumber || "order"}.pdf`);
   };
