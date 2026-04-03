@@ -79,7 +79,7 @@ async function getProducts(params, searchParams) {
   const apiPath = buildApiPath(queryParams);
 
   try {
-    const res = await safeFetch(apiPath, { next: { revalidate: 60 } }); // Revalidate every 60s
+    const res = await safeFetch(apiPath, { cache: 'no-store' }); // Always fresh — category pages must not be cached
     if (!res.ok) throw new Error("Failed to fetch products");
     
     const products = await res.json();
