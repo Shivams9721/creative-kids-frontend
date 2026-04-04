@@ -1,6 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { CartProvider } from '@/context/CartContext'
+import { SettingsProvider } from '@/context/SettingsContext'
 import ConditionalShell from '@/components/ConditionalShell'
 import RecentlyViewed from '@/components/RecentlyViewed'
 
@@ -33,10 +34,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <CartProvider>
-          <ConditionalShell>
-            {children}
-          </ConditionalShell>
-          <RecentlyViewed />
+          <SettingsProvider>
+            <ConditionalShell>
+              {children}
+            </ConditionalShell>
+            <RecentlyViewed />
+          </SettingsProvider>
         </CartProvider>
       </body>
     </html>

@@ -1,47 +1,176 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { safeFetch } from "../api";
 
 export default function AdminSettings() {
-  const [codEnabled, setCodEnabled] = useState(true);
-  const [reviewsEnabled, setReviewsEnabled] = useState(true);
-  const [maintenance, setMaintenance] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [changingPw, setChangingPw] = useState(false);
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
+  const [pwError, setPwError] = useState("");
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  const [settings, setSettings] = useState({
+    store_name: "Creative Kids",
+    gstin: "06AAJPM1384L1ZE",
+    address: "Plot No. 667, Pace City-II, Sector 37, Gurugram, Haryana – 122001",
+    support_email: "support@creativekids.co.in",
+    maintenance_mode: false,
+    cod_enabled: true,
+    reviews_enabled: true,
+  });
+
+  useEffect(() => {
+    safeFetch("/api/settings")
+      .then(data => setSettings(prev => ({ ...prev, ...data })))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const set = (k, v) => setSettings(s => ({ ...s, [k]: v }));
+
+  const saveSettings = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await safeFetch("/api/admin/settings", {
+        method: "PUT",
+        body: JSON.stringify(settings),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch { alert("Failed to save settings"); }
+    finally { setSaving(false); }
+  };
+
+  const saveToggle = async (key, value) => {
+    set(key, value);
+    try {
+      await safeFetch("/api/admin/settings", {
+        method: "PUT",
+        body: JSON.stringify({ [key]: value }),
+      });
+    } catch { alert("Failed to save"); set(key, !value); }
+  };
+
+  const changePassword = async (e) => {
+    e.preventDefault();
+    if (pwForm.next !== pwForm.confirm) { setPwError("Passwords don't match"); return; }
+    if (pwForm.next.length < 6) { setPwError("Min 6 characters"); return; }
+    setChangingPw(true); setPwError("");
+    try {
+      // Use the admin email from localStorage to send OTP reset
+      const token = localStorage.getItem("adminToken");
+      // Decode JWT to get admin email
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const adminId = payload.id;
+      // Direct password update via admin endpoint
+      const res = await safeFetch(`/api/admin/change-password`, {
+        method: "POST",
+        body: JSON.stringify({ adminId, newPassword: pwForm.next }),
+      });
+      setPwSuccess(true);
+      setPwForm({ current: "", next: "", confirm: "" });
+      setTimeout(() => setPwSuccess(false), 3000);
+    } catch { setPwError("Failed to change password"); }
+    finally { setChangingPw(false); }
+  };
+
+  if (loading) return <div style={{ padding: 24, color: "var(--text3)" }}>Loading settings…</div>;
 
   return (
     <div className="page-anim" style={{ padding: 24 }}>
       <div className="g2">
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+          {/* STORE DETAILS */}
           <div className="card card-pad">
             <div className="card-title">Store details</div>
-            <div className="field-label">Store name</div>
-            <input className="field-input mb12" defaultValue="Creative Kids" style={{ marginBottom: 12 }} />
-            <div className="field-label">GSTIN</div>
-            <input className="field-input mb12" defaultValue="06AAJPM1384L1ZE" style={{ marginBottom: 12, fontFamily: "'DM Mono', monospace" }} />
-            <div className="field-label">Address</div>
-            <textarea className="field-input" style={{ marginBottom: 12, minHeight: 64 }} defaultValue="Plot No. 667, Pace City-II, Sector 37, Gurugram, Haryana – 122001" />
-            <div className="field-label">Support email</div>
-            <input className="field-input" placeholder="support@creativekids.co.in" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[
+                { label: "Store name", key: "store_name", placeholder: "Creative Kids" },
+                { label: "GSTIN", key: "gstin", placeholder: "06AAJPM1384L1ZE", mono: true },
+                { label: "Support email", key: "support_email", placeholder: "support@creativekids.co.in" },
+              ].map(f => (
+                <div key={f.key}>
+                  <div className="field-label">{f.label}</div>
+                  <input
+                    className="field-input"
+                    value={settings[f.key] || ""}
+                    onChange={e => set(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                    style={f.mono ? { fontFamily: "'DM Mono', monospace" } : {}}
+                  />
+                </div>
+              ))}
+              <div>
+                <div className="field-label">Address</div>
+                <textarea
+                  className="field-input"
+                  value={settings.address || ""}
+                  onChange={e => set("address", e.target.value)}
+                  style={{ minHeight: 64 }}
+                />
+              </div>
+              <button
+                className="btn btn-accent btn-sm"
+                disabled={saving}
+                onClick={saveSettings}
+                style={{ alignSelf: "flex-start" }}
+              >
+                {saving ? "Saving…" : saved ? "✓ Saved" : "Save Details"}
+              </button>
+            </div>
           </div>
 
+          {/* ADMIN ACCOUNT */}
           <div className="card card-pad">
             <div className="card-title">Admin account</div>
             <div className="setting-row">
-              <div><div className="setting-label">Change password</div><div className="setting-sub">Update admin password</div></div>
-              <button className="btn btn-sm">Change</button>
+              <div>
+                <div className="setting-label">Change password</div>
+                <div className="setting-sub">Update admin login password</div>
+              </div>
+              <button className="btn btn-sm" onClick={() => { setChangingPw(v => !v); setPwError(""); setPwSuccess(false); }}>
+                {changingPw ? "Cancel" : "Change"}
+              </button>
             </div>
-            <div className="setting-row" style={{ border: "none" }}>
-              <div><div className="setting-label">Session timeout</div><div className="setting-sub">Auto-logout after inactivity</div></div>
-              <select className="field-input" style={{ width: "auto", padding: "5px 10px" }}>
-                <option>12 hours</option><option>24 hours</option><option>7 days</option>
-              </select>
-            </div>
+            {changingPw && (
+              <form onSubmit={changePassword} style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+                {[
+                  { label: "New password", key: "next", type: "password" },
+                  { label: "Confirm password", key: "confirm", type: "password" },
+                ].map(f => (
+                  <div key={f.key}>
+                    <div className="field-label">{f.label}</div>
+                    <input
+                      type={f.type}
+                      className="field-input"
+                      value={pwForm[f.key]}
+                      onChange={e => setPwForm(p => ({ ...p, [f.key]: e.target.value }))}
+                      placeholder="Min 6 characters"
+                      required
+                    />
+                  </div>
+                ))}
+                {pwError && <p style={{ fontSize: 11, color: "var(--red)" }}>{pwError}</p>}
+                {pwSuccess && <p style={{ fontSize: 11, color: "var(--green)" }}>✓ Password updated</p>}
+                <button type="submit" className="btn btn-accent btn-sm" disabled={changingPw} style={{ alignSelf: "flex-start" }}>
+                  Update Password
+                </button>
+              </form>
+            )}
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+          {/* INTEGRATIONS */}
           <div className="card card-pad">
             <div className="card-title">Integrations</div>
             {[
-              { logo: "RP", name: "Razorpay", sub: "Payment gateway", color: "var(--blue)", connected: true },
+              { logo: "RP", name: "Razorpay", sub: "Payment gateway · live", color: "var(--blue)", connected: true },
               { logo: "S3", name: "AWS S3", sub: "Image storage · ap-south-1", color: "var(--amber)", connected: true },
               { logo: "SES", name: "AWS SES", sub: "Email delivery · SMTP configured", color: "var(--purple)", connected: true },
               { logo: "SR", name: "Shiprocket", sub: "Shipping & auto-tracking", color: "var(--text3)", connected: false },
@@ -52,26 +181,80 @@ export default function AdminSettings() {
                   <div className="int-name">{i.name}</div>
                   <div className="int-sub">{i.sub}</div>
                 </div>
-                {i.connected ? <span className="tag tag-green">Connected</span> : <button className="btn btn-sm btn-accent">Connect</button>}
+                {i.connected
+                  ? <span className="tag tag-green">Connected</span>
+                  : <button className="btn btn-sm btn-accent">Connect</button>}
               </div>
             ))}
           </div>
 
+          {/* STORE TOGGLES */}
           <div className="card card-pad">
             <div className="card-title">Store toggles</div>
             {[
-              { label: "Maintenance mode", sub: "Show maintenance page to visitors", val: maintenance, set: setMaintenance },
-              { label: "COD availability", sub: "Allow cash on delivery orders", val: codEnabled, set: setCodEnabled },
-              { label: "Review system", sub: "Allow verified buyers to review", val: reviewsEnabled, set: setReviewsEnabled },
+              {
+                key: "maintenance_mode",
+                label: "Maintenance mode",
+                sub: "Customers see a maintenance page — admin still works",
+                danger: true,
+              },
+              {
+                key: "cod_enabled",
+                label: "COD availability",
+                sub: "Allow cash on delivery at checkout",
+              },
+              {
+                key: "reviews_enabled",
+                label: "Review system",
+                sub: "Allow verified buyers to submit reviews",
+              },
             ].map((row, i, arr) => (
-              <div key={row.label} className="setting-row" style={i === arr.length - 1 ? { border: "none" } : {}}>
-                <div><div className="setting-label">{row.label}</div><div className="setting-sub">{row.sub}</div></div>
+              <div key={row.key} className="setting-row" style={i === arr.length - 1 ? { border: "none" } : {}}>
+                <div>
+                  <div className="setting-label" style={row.danger && settings[row.key] ? { color: "var(--red)" } : {}}>
+                    {row.label}
+                    {row.danger && settings[row.key] && (
+                      <span className="tag tag-red" style={{ marginLeft: 8, fontSize: 9 }}>ACTIVE</span>
+                    )}
+                  </div>
+                  <div className="setting-sub">{row.sub}</div>
+                </div>
                 <label className="toggle">
-                  <input type="checkbox" checked={row.val} onChange={e => row.set(e.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={!!settings[row.key]}
+                    onChange={e => saveToggle(row.key, e.target.checked)}
+                  />
                   <div className="toggle-track" /><div className="toggle-thumb" />
                 </label>
               </div>
             ))}
+          </div>
+
+          {/* LIVE STATUS */}
+          <div className="card card-pad">
+            <div className="card-title">Live status</div>
+            <div className="setting-row">
+              <div><div className="setting-label">Storefront</div><div className="setting-sub">Customer-facing website</div></div>
+              <span className={`tag ${settings.maintenance_mode ? "tag-red" : "tag-green"}`}>
+                <span className="tag-dot" />
+                {settings.maintenance_mode ? "Maintenance" : "Live"}
+              </span>
+            </div>
+            <div className="setting-row">
+              <div><div className="setting-label">COD</div><div className="setting-sub">Cash on delivery</div></div>
+              <span className={`tag ${settings.cod_enabled ? "tag-green" : "tag-gray"}`}>
+                <span className="tag-dot" />
+                {settings.cod_enabled ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+            <div className="setting-row" style={{ border: "none" }}>
+              <div><div className="setting-label">Reviews</div><div className="setting-sub">Product reviews</div></div>
+              <span className={`tag ${settings.reviews_enabled ? "tag-green" : "tag-gray"}`}>
+                <span className="tag-dot" />
+                {settings.reviews_enabled ? "Enabled" : "Disabled"}
+              </span>
+            </div>
           </div>
         </div>
       </div>

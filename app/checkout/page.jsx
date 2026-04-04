@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
+import { useSettings } from "@/context/SettingsContext";
 import { useRouter } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
 import { initializeRazorpay, processRazorpayPayment } from "@/lib/razorpay";
@@ -31,6 +32,7 @@ const SmartInput = ({ label, name, value, placeholder, error, type = "text", dis
 
 export default function CheckoutPage() {
     const { cart, cartTotal, setCart, clearCart } = useCart();
+    const { cod_enabled } = useSettings();
     const router = useRouter();
 
     // SECURITY STATE
@@ -441,11 +443,14 @@ export default function CheckoutPage() {
                                             <input type="radio" name="payment" value="Card" checked={paymentMethod === 'Card'} onChange={() => setPaymentMethod('Card')} className="w-4 h-4 accent-black" />
                                             <span className="text-[14px] font-medium text-black">Credit / Debit Card</span>
                                         </label>
-                                        <label className={`flex items-center gap-4 p-5 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'COD' ? 'border-black bg-[#fcfcfc]' : 'border-black/10 hover:border-black/30'}`}>
-                                            <input type="radio" name="payment" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} className="w-4 h-4 accent-black" />
+                                        <label className={`flex items-center gap-4 p-5 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'COD' ? 'border-black bg-[#fcfcfc]' : 'border-black/10 hover:border-black/30'} ${!cod_enabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                                            <input type="radio" name="payment" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} className="w-4 h-4 accent-black" disabled={!cod_enabled} />
                                             <div>
                                                 <span className="text-[14px] font-medium block text-black">Cash on Delivery</span>
-                                                <span className="text-[11px] text-black/50 mt-1 block">Pay directly to the delivery executive when your order arrives.</span>
+                                                {cod_enabled
+                                                  ? <span className="text-[11px] text-black/50 mt-1 block">Pay directly to the delivery executive when your order arrives.</span>
+                                                  : <span className="text-[11px] text-red-400 mt-1 block">COD is currently unavailable.</span>
+                                                }
                                             </div>
                                         </label>
                                     </div>

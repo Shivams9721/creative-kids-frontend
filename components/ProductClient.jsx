@@ -10,11 +10,13 @@ import { csrfHeaders } from "@/lib/csrf";
 
 import { safeFetch } from "@/lib/safeFetch";
 import { recordView } from "@/components/RecentlyViewed";
+import { useSettings } from "@/context/SettingsContext";
 
 
 
 export default function ProductClient({ product, relatedProducts }) {
   const { addToCart } = useCart();
+  const { reviews_enabled } = useSettings();
   
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
@@ -690,6 +692,7 @@ export default function ProductClient({ product, relatedProducts }) {
             </div>
 
             {/* REVIEWS SECTION */}
+            {reviews_enabled && (
             <div className="mt-12 border-t border-black/10 pt-10">
               <h2 className="text-[12px] font-bold tracking-widest uppercase mb-6">
                 Customer Reviews
@@ -747,6 +750,7 @@ export default function ProductClient({ product, relatedProducts }) {
                 </div>
               )}
             </div>
+            )}
 
           </div>
         </div>
