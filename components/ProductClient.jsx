@@ -423,10 +423,19 @@ export default function ProductClient({ product, relatedProducts }) {
                   <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-2">What's my size? — Select age</p>
                   <div className="flex flex-wrap gap-2">
                     {[
-                      { label: '0-3M', size: '0-3M' }, { label: '3-6M', size: '3-6M' }, { label: '6-12M', size: '6-9M' },
-                      { label: '1Y', size: '1-2Y' }, { label: '2Y', size: '2-3Y' }, { label: '3Y', size: '3-4Y' },
-                      { label: '4Y', size: '4-5Y' }, { label: '5-6Y', size: '5-6Y' }, { label: '7-8Y', size: '7-8Y' },
-                      { label: '9-10Y', size: '9-10Y' }, { label: '11-12Y', size: '11-12Y' },
+                      { label: '0–3M',  size: '0M–3M'   },
+                      { label: '3–6M',  size: '3M–6M'   },
+                      { label: '6–9M',  size: '6M–9M'   },
+                      { label: '9–12M', size: '9M–12M'  },
+                      { label: '12–18M',size: '12M–18M' },
+                      { label: '18–24M',size: '18M–24M' },
+                      { label: '2–3Y',  size: '2Y–3Y'   },
+                      { label: '3–4Y',  size: '3Y–4Y'   },
+                      { label: '4–5Y',  size: '4Y–5Y'   },
+                      { label: '5–6Y',  size: '5Y–6Y'   },
+                      { label: '7–8Y',  size: '7Y–8Y'   },
+                      { label: '9–10Y', size: '9Y–10Y'  },
+                      { label: '11–12Y',size: '11Y–12Y' },
                     ].filter(a => availableSizes.some(s => s === a.size)).map(a => (
                       <button key={a.label} onClick={() => setSelectedSize(a.size)}
                         className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider border transition-colors ${

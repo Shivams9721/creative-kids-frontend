@@ -7,12 +7,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, SlidersHorizontal, Heart, X } from "lucide-react";
 
-// Filter Constants
+// Filter Constants — sizes match exactly what's stored in DB (admin form format)
 const SIZE_GROUPS = {
-  'BABY': ['0-3M', '3-6M', '6-9M', '9-12M', '12-18M', '18-24M'],
-  'TODDLER': ['1-2Y', '2-3Y', '3-4Y', '4-5Y'],
-  'KIDS': ['5-6Y', '6-7Y', '7-8Y', '8-9Y', '9-10Y', '10-11Y', '11-12Y', '12-13Y'],
-  'TEEN': ['13-14Y', '14-15Y', '15-16Y', '16-17Y', '17-18Y']
+  'BABY':    ['0M–3M', '3M–6M', '6M–9M', '9M–12M', '12M–18M', '18M–24M'],
+  'TODDLER': ['2Y–3Y', '3Y–4Y', '4Y–5Y'],
+  'KIDS':    ['5Y–6Y', '6Y–7Y', '7Y–8Y', '8Y–9Y', '9Y–10Y', '10Y–11Y', '11Y–12Y', '12Y–13Y'],
+  'TEEN':    ['13Y–14Y', '14Y–15Y', '15Y–16Y', '16Y–17Y', '17Y–18Y']
 };
 
 export const ALL_SIZES = Object.values(SIZE_GROUPS).flat();

@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { safeFetch } from "../api";
 
 const BABY_SIZES = ["0M–3M","3M–6M","6M–9M","9M–12M","12M–18M","18M–24M"];
-const KIDS_SIZES = ["2Y–3Y","3Y–4Y","4Y–5Y","5Y–6Y","6Y–7Y","7Y–8Y","8Y–9Y","9Y–10Y","10Y–11Y","11Y–12Y","12Y–13Y","13Y–14Y"];
+const KIDS_SIZES = ["2Y–3Y","3Y–4Y","4Y–5Y","5Y–6Y","6Y–7Y","7Y–8Y","8Y–9Y","9Y–10Y","10Y–11Y","11Y–12Y","12Y–13Y","13Y–14Y","14Y–15Y","15Y–16Y","16Y–17Y","17Y–18Y"];
 const COLORS = [
   { name: "Pink", hex: "#F4A0B5" }, { name: "Black", hex: "#0F0F0E" }, { name: "White", hex: "#FFFFFF" },
   { name: "Blue", hex: "#4A9EE8" }, { name: "Red", hex: "#D62828" }, { name: "Lavender", hex: "#C2A8F0" },
