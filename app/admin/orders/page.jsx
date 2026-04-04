@@ -307,6 +307,20 @@ export default function AdminOrders() {
                           Track
                         </a>
                       )}
+                      {o.status === "Shipped" && o.awb_number && (
+                        <button className="btn btn-sm btn-danger" disabled={updating === o.id}
+                          onClick={async () => {
+                            if (!window.confirm(`Cancel Delhivery shipment for ${o.order_number}?\n\nThis only works before pickup. If already picked up, contact Delhivery support.`)) return;
+                            setUpdating(o.id);
+                            try {
+                              await safeFetch(`/api/admin/orders/${o.id}/cancel-shipment`, { method: "POST" });
+                              setOrders(prev => prev.map(x => x.id === o.id ? { ...x, status: "Processing", awb_number: null, tracking_url: null } : x));
+                            } catch (e) { alert(e.message || "Could not cancel shipment"); }
+                            finally { setUpdating(null); }
+                          }}>
+                          {updating === o.id ? "…" : "Cancel Ship"}
+                        </button>
+                      )}
                       <button className="btn btn-sm" onClick={() => setDetailOrder(o)}>Details</button>
                     </div>
                   </td>
