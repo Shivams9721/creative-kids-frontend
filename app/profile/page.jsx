@@ -321,14 +321,21 @@ export default function UserProfile() {
                           <td className="p-4 text-[13px] text-black/70">{new Date(order.created_at).toLocaleDateString()}</td>
                           <td className="p-4 text-[13px] text-black font-bold">₹{parseFloat(order.total_amount).toFixed(2)}</td>
                           <td className="p-4">
-                            <span className={`px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full ${
-                              order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                              order.status === 'Shipped' ? 'bg-purple-100 text-purple-700' :
-                              order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                              'bg-blue-100 text-blue-700'
-                            }`}>
-                              {order.status}
-                            </span>
+                            <div>
+                              <span className={`px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full ${
+                                order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                                order.status === 'Shipped' ? 'bg-purple-100 text-purple-700' :
+                                order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                                'bg-blue-100 text-blue-700'
+                              }`}>
+                                {order.status}
+                              </span>
+                              {order.status === 'Cancelled' && order.refund_status && (
+                                <div className={`text-[9px] font-bold tracking-widest uppercase mt-1 ${order.refund_status === 'Initiated' ? 'text-green-600' : 'text-amber-600'}`}>
+                                  Refund {order.refund_status}
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex items-center justify-end gap-3">
@@ -341,19 +348,29 @@ export default function UserProfile() {
                               {order.status === 'Processing' && (
                                 <button
                                   onClick={async () => {
-                                    if (!window.confirm('Cancel this order?')) return;
+                                    const reason = window.prompt('Reason for cancellation (optional):', 'Wrong size / changed my mind');
+                                    if (reason === null) return; // user clicked Cancel on prompt
+                                    if (!window.confirm('Cancel this order? This cannot be undone.')) return;
                                     const token = localStorage.getItem('token');
-                                    const res = await safeFetch(`/api/orders/${safeId(order.id)}/cancel`, {
-                                      method: 'POST',
-                                      headers: await csrfHeaders({ Authorization: `Bearer ${token}` }),
-                                      credentials: 'include'
-                                    });
-                                    if (res.ok) setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Cancelled' } : o));
-                                    else alert('Could not cancel order.');
+                                    try {
+                                      const res = await safeFetch(`/api/orders/${safeId(order.id)}/cancel`, {
+                                        method: 'POST',
+                                        headers: await csrfHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }),
+                                        credentials: 'include',
+                                        body: JSON.stringify({ reason: reason || 'Customer requested cancellation' })
+                                      });
+                                      const data = await res.json();
+                                      if (res.ok) {
+                                        setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'Cancelled' } : o));
+                                        alert(data.message || 'Order cancelled successfully.');
+                                      } else {
+                                        alert(data.error || 'Could not cancel order.');
+                                      }
+                                    } catch { alert('Network error. Please try again.'); }
                                   }}
                                   className="text-[11px] font-bold tracking-widest uppercase text-red-500 hover:text-red-700 transition-colors border-b border-red-300 pb-0.5"
                                 >
-                                  Cancel
+                                  Cancel Order
                                 </button>
                               )}
                             </div>

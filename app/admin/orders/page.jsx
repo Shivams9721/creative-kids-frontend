@@ -287,6 +287,7 @@ export default function AdminOrders() {
                     <div>
                       <span className={`tag ${STATUS_COLORS[o.status] || "tag-gray"}`}><span className="tag-dot" />{o.status}</span>
                       {o.awb_number && <div style={{ fontSize: 9, color: "var(--text3)", marginTop: 2, fontFamily: "'DM Mono', monospace" }}>{o.awb_number}</div>}
+                      {o.refund_status && <div style={{ fontSize: 9, color: o.refund_status === 'Initiated' ? "var(--green)" : "var(--amber)", marginTop: 2, fontWeight: 600 }}>Refund {o.refund_status}</div>}
                     </div>
                   </td>
                   <td>
@@ -336,6 +337,21 @@ export default function AdminOrders() {
                         </button>
                       )}
                       <button className="btn btn-sm" onClick={() => setDetailOrder(o)}>Details</button>
+                      {o.status === "Cancelled" && o.refund_status === 'Failed' && (
+                        <button className="btn btn-sm" style={{ color: "var(--amber)", borderColor: "var(--amber)" }}
+                          disabled={updating === o.id}
+                          onClick={async () => {
+                            if (!window.confirm(`Manually initiate refund of ₹${o.total_amount} for ${o.order_number}?`)) return;
+                            setUpdating(o.id);
+                            try {
+                              await safeFetch(`/api/admin/orders/${o.id}/refund`, { method: "POST" });
+                              setOrders(prev => prev.map(x => x.id === o.id ? { ...x, refund_status: 'Initiated' } : x));
+                            } catch (e) { alert(e.message || "Refund failed"); }
+                            finally { setUpdating(null); }
+                          }}>
+                          Refund
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
