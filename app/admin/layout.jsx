@@ -36,23 +36,43 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     if (isLoginPage) return;
-    // Token can be in localStorage OR cookie — check both
-    const lsToken = localStorage.getItem("adminToken");
-    const cookieToken = document.cookie.split(';')
-      .map(c => c.trim())
-      .find(c => c.startsWith('adminToken='))
-      ?.split('=').slice(1).join('=');
-    const token = lsToken || cookieToken;
-    if (!token) {
-      router.replace("/admin/login");
-      return;
-    }
-    // Keep both in sync
-    if (!lsToken && cookieToken) localStorage.setItem("adminToken", cookieToken);
-    if (lsToken && !cookieToken) {
-      document.cookie = `adminToken=${lsToken}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
-    }
-    setAuthed(true);
+
+    const getToken = () => {
+      const lsToken = localStorage.getItem("adminToken");
+      const cookieToken = document.cookie.split(';')
+        .map(c => c.trim()).find(c => c.startsWith('adminToken='))
+        ?.split('=').slice(1).join('=');
+      return lsToken || cookieToken || null;
+    };
+
+    const clearTokens = () => {
+      localStorage.removeItem("adminToken");
+      document.cookie = "adminToken=; path=/; max-age=0";
+    };
+
+    const token = getToken();
+    if (!token) { router.replace("/admin/login"); return; }
+
+    // Verify token is still valid against backend
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://vbaumdstnz.ap-south-1.awsapprunner.com';
+    fetch(`${API_BASE}/api/admin/stats`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => {
+      if (res.status === 401 || res.status === 403) {
+        // Token is expired or invalid — clear everything and redirect
+        clearTokens();
+        router.replace("/admin/login");
+      } else {
+        // Token is valid — sync both storage locations
+        localStorage.setItem("adminToken", token);
+        document.cookie = `adminToken=${token}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
+        setAuthed(true);
+      }
+    }).catch(() => {
+      // Network error — trust the token and proceed (offline tolerance)
+      localStorage.setItem("adminToken", token);
+      setAuthed(true);
+    });
   }, [router, isLoginPage]);
 
   // Login page renders without the admin shell
