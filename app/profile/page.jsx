@@ -9,8 +9,67 @@ import { csrfHeaders } from "@/lib/csrf";
 import { safeFetch, safeId } from "@/lib/safeFetch";
 import AddressBook from "@/components/AddressBook";
 
-// The timeline steps your admin panel uses
 const TRACKING_STEPS = ["Processing", "Shipped", "Delivered"];
+
+// Live Delhivery tracking component
+function LiveTracking({ awb, trackingUrl }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    safeFetch(`/api/tracking/${awb}`)
+      .then(r => r.json())
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [awb]);
+
+  if (loading) return <p className="text-[12px] text-black/40 animate-pulse">Loading live tracking…</p>;
+  if (!data || !data.events) return (
+    <div className="text-center py-4">
+      <p className="text-[12px] text-black/50 mb-3">Tracking data not available yet.</p>
+      {trackingUrl && (
+        <a href={trackingUrl} target="_blank" rel="noopener noreferrer"
+          className="text-[11px] font-bold tracking-widest uppercase text-black border-b border-black pb-0.5">
+          Track on Delhivery ↗
+        </a>
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <span className="px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full bg-purple-100 text-purple-700">{data.status}</span>
+        {data.expected_delivery && (
+          <span className="text-[11px] text-black/50 flex items-center">
+            Expected: {new Date(data.expected_delivery).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+          </span>
+        )}
+        {trackingUrl && (
+          <a href={trackingUrl} target="_blank" rel="noopener noreferrer"
+            className="text-[10px] font-bold tracking-widest uppercase text-black/40 hover:text-black ml-auto">
+            Delhivery ↗
+          </a>
+        )}
+      </div>
+      <div className="space-y-4 relative pl-4">
+        <div className="absolute left-[5px] top-2 bottom-2 w-[2px] bg-gray-100" />
+        {data.events.slice(0, 8).map((e, i) => (
+          <div key={i} className="relative flex gap-4 items-start">
+            <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-0.5 border-2 border-white ${i === 0 ? 'bg-black' : 'bg-gray-300'}`} style={{ marginLeft: -1 }} />
+            <div>
+              <p className={`text-[12px] font-medium ${i === 0 ? 'text-black' : 'text-black/60'}`}>{e.status}</p>
+              <p className="text-[10px] text-black/40 mt-0.5">
+                {e.location}{e.location && e.time ? ' · ' : ''}{e.time ? new Date(e.time).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ''}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -522,14 +581,11 @@ export default function UserProfile() {
           </motion.div>
         )}
 
-        {/* ========================================== */}
-        {/* VISUAL TRACKING TIMELINE MODAL             */}
-        {/* ========================================== */}
+        {/* ── LIVE TRACKING MODAL ── */}
         <AnimatePresence>
           {selectedOrder && (
             <>
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={() => setSelectedOrder(null)}
                 className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
               />
@@ -539,102 +595,84 @@ export default function UserProfile() {
                 exit={{ opacity: 0, y: 50, scale: 0.95 }}
                 className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 z-50 border border-black/10 max-h-[85vh] overflow-y-auto"
               >
-                <div className="flex justify-between items-start mb-8">
+                <div className="flex justify-between items-start mb-6">
                   <div>
                     <h2 className="text-xl font-light text-black">Track Package</h2>
-                    <p className="text-[12px] text-black/50 font-medium mt-1">Order {selectedOrder.order_number}</p>
+                    <p className="text-[12px] text-black/50 mt-1">{selectedOrder.order_number}</p>
                   </div>
-                  <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <button onClick={() => setSelectedOrder(null)} className="p-2 hover:bg-gray-100 rounded-full">
                     <X size={20} className="text-black/60" />
                   </button>
                 </div>
 
-                <div className="relative pl-4 space-y-8">
-                  <div className="absolute left-[27px] top-4 bottom-8 w-[2px] bg-gray-100 z-0"></div>
-                  
-                  {/* Status Cancelled logic */}
-                  {selectedOrder.status === "Cancelled" ? (
-                    <div className="relative z-10 flex gap-6 items-start">
-                      <div className="bg-white py-1">
-                        <X size={24} className="text-red-500 bg-red-50 rounded-full p-1" />
-                      </div>
-                      <div className="pt-1">
-                        <h4 className="text-[13px] font-bold tracking-widest uppercase text-red-600">Order Cancelled</h4>
-                        <p className="text-[11px] text-gray-500 mt-1">This order has been cancelled.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    TRACKING_STEPS.map((stepName) => {
+                {/* Status bar */}
+                <div className="flex gap-2 mb-6 flex-wrap">
+                  <span className={`px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full ${
+                    selectedOrder.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                    selectedOrder.status === 'Shipped' ? 'bg-purple-100 text-purple-700' :
+                    selectedOrder.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                    'bg-blue-100 text-blue-700'
+                  }`}>{selectedOrder.status}</span>
+                  {selectedOrder.awb_number && (
+                    <span className="px-3 py-1 text-[10px] font-mono bg-gray-100 text-gray-600 rounded-full">
+                      AWB: {selectedOrder.awb_number}
+                    </span>
+                  )}
+                </div>
+
+                {/* Live Delhivery tracking */}
+                {selectedOrder.awb_number ? (
+                  <LiveTracking awb={selectedOrder.awb_number} trackingUrl={selectedOrder.tracking_url} />
+                ) : (
+                  <div className="space-y-6 relative pl-4">
+                    <div className="absolute left-[27px] top-4 bottom-8 w-[2px] bg-gray-100" />
+                    {TRACKING_STEPS.map(stepName => {
                       const status = getStepStatus(selectedOrder.status, stepName);
                       return (
                         <div key={stepName} className="relative z-10 flex gap-6 items-start">
                           <div className="bg-white py-1">
                             {status === "completed" && <CheckCircle2 size={24} className="text-green-500 fill-green-50" />}
-                            {status === "current" && (
-                              <div className="relative flex items-center justify-center w-6 h-6">
-                                <span className="absolute w-full h-full bg-blue-400 rounded-full animate-ping opacity-30"></span>
-                                <Circle size={20} className="text-blue-600 fill-blue-600" />
-                              </div>
-                            )}
+                            {status === "current" && <div className="relative flex items-center justify-center w-6 h-6"><span className="absolute w-full h-full bg-blue-400 rounded-full animate-ping opacity-30" /><Circle size={20} className="text-blue-600 fill-blue-600" /></div>}
                             {status === "pending" && <Circle size={24} className="text-gray-300" />}
                           </div>
                           <div className="pt-1">
-                            <h4 className={`text-[13px] font-bold tracking-widest uppercase ${status === 'pending' ? 'text-gray-400' : 'text-black'}`}>
-                              {stepName}
-                            </h4>
+                            <h4 className={`text-[13px] font-bold tracking-widest uppercase ${status === 'pending' ? 'text-gray-400' : 'text-black'}`}>{stepName}</h4>
                             <p className="text-[11px] text-gray-500 mt-1">
-                              {status === "completed" && "Completed successfully."}
-                              {status === "current" && "Your package is currently in this stage."}
-                              {status === "pending" && "Waiting for previous step to complete."}
+                              {status === "completed" && "Completed."}{status === "current" && "In progress."}{status === "pending" && "Pending."}
                             </p>
-                            {stepName === "Shipped" && status !== "pending" && selectedOrder.awb_number && (
-                              <div className="mt-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-                                <p className="text-[10px] font-bold tracking-widest uppercase text-blue-600">Courier: {selectedOrder.courier_name}</p>
-                                <p className="text-[11px] font-bold text-blue-800 mt-0.5">AWB: {selectedOrder.awb_number}</p>
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
-                    })
-                  )}
-                </div>
-
-                {selectedOrder.status !== "Cancelled" && (
-                  <div className="mt-10 pt-6 border-t border-black/10">
-                    <p className="text-[10px] text-black/50 tracking-widest uppercase font-medium text-center mb-6">Estimated Delivery: 3-5 Business Days</p>
-
-                    {/* Order Items Breakdown */}
-                    {(() => {
-                      let items = [];
-                      try { items = typeof selectedOrder.items === 'string' ? JSON.parse(selectedOrder.items) : (selectedOrder.items || []); } catch {}
-                      return items.length > 0 ? (
-                        <div>
-                          <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-3">Items in this order</p>
-                          <div className="space-y-3">
-                            {items.map((item, i) => (
-                              <div key={i} className="flex items-center gap-3">
-                                {item.image && <img src={item.image} alt={item.title} className="w-12 h-14 object-cover rounded-lg flex-shrink-0" />}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[12px] font-medium text-black truncate">{item.title}</p>
-                                  <p className="text-[10px] text-black/50">
-                                    {[item.selectedSize || item.size, item.selectedColor || item.color].filter(Boolean).join(' · ')}
-                                    {item.quantity > 1 ? ` · Qty ${item.quantity}` : ''}
-                                  </p>
-                                </div>
-                                <p className="text-[12px] font-bold text-black flex-shrink-0">₹{parseFloat(item.price).toFixed(2)}</p>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="mt-4 pt-3 border-t border-black/10 flex justify-between">
-                            <span className="text-[11px] font-bold tracking-widest uppercase text-black/60">Total</span>
-                            <span className="text-[13px] font-bold text-black">₹{parseFloat(selectedOrder.total_amount).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      ) : null;
-                    })()}
+                    })}
                   </div>
                 )}
+
+                {/* Items */}
+                {(() => {
+                  let items = [];
+                  try { items = typeof selectedOrder.items === 'string' ? JSON.parse(selectedOrder.items) : (selectedOrder.items || []); } catch {}
+                  return items.length > 0 ? (
+                    <div className="mt-6 pt-6 border-t border-black/10">
+                      <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-3">Items</p>
+                      <div className="space-y-3">
+                        {items.map((item, i) => (
+                          <div key={i} className="flex items-center gap-3">
+                            {item.image && <img src={item.image} alt={item.title} className="w-12 h-14 object-cover rounded-lg flex-shrink-0" />}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[12px] font-medium text-black truncate">{item.title}</p>
+                              <p className="text-[10px] text-black/50">{[item.selectedSize || item.size, item.selectedColor || item.color].filter(Boolean).join(' · ')}</p>
+                            </div>
+                            <p className="text-[12px] font-bold text-black">₹{parseFloat(item.price).toFixed(2)}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-black/10 flex justify-between">
+                        <span className="text-[11px] font-bold tracking-widest uppercase text-black/60">Total</span>
+                        <span className="text-[13px] font-bold text-black">₹{parseFloat(selectedOrder.total_amount).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
               </motion.div>
             </>
           )}
