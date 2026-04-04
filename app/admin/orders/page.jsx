@@ -114,9 +114,25 @@ function OrderDetailModal({ order, onClose }) {
           <div style={{ marginBottom: 14 }}>
             <div className="card-title">Items</div>
             {items.map((item, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
-                <span>{item.title} — {item.selectedSize} / {item.selectedColor}</span>
-                <span style={{ color: "var(--text3)" }}>×{item.quantity || 1}</span>
+              <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
+                {/* Product image */}
+                {item.image && (
+                  <img src={item.image} alt={item.title}
+                    style={{ width: 48, height: 60, objectFit: "cover", borderRadius: 6, flexShrink: 0, border: "1px solid var(--border)" }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title}</div>
+                  <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 2 }}>
+                    {[item.selectedSize || item.size, item.selectedColor || item.color].filter(Boolean).join(" / ")}
+                    {item.quantity > 1 && ` · Qty ${item.quantity}`}
+                  </div>
+                  {(item.sku || item.baseSku) && (
+                    <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "var(--text3)", background: "var(--bg4)", padding: "1px 6px", borderRadius: 4, display: "inline-block" }}>
+                      SKU: {item.sku || item.baseSku}
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 600, flexShrink: 0 }}>₹{parseFloat(item.price).toFixed(2)}</div>
               </div>
             ))}
           </div>
