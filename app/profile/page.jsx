@@ -91,7 +91,7 @@ export default function UserProfile() {
   // Returns state
   const [returns, setReturns] = useState([]);
   const [loadingReturns, setLoadingReturns] = useState(true);
-  const [returnForm, setReturnForm] = useState({ order_id: '', order_number: '', reason: '', comments: '' });
+  const [returnForm, setReturnForm] = useState({ order_id: '', order_number: '', reason: '', comments: '', refund_preference: 'bank', bank_account_name: '', bank_account_number: '', bank_ifsc: '', bank_upi: '', _payment_method: '' });
   const [submittingReturn, setSubmittingReturn] = useState(false);
 
   // ==========================================
@@ -457,39 +457,39 @@ export default function UserProfile() {
                   const data = await res.json();
                   if (!res.ok) return alert(data.error || 'Failed to submit.');
                   setReturns(prev => [data, ...prev]);
-                  setReturnForm({ order_id: '', order_number: '', reason: '', comments: '' });
-                  alert('Return request submitted successfully.');
+                  setReturnForm({ order_id: '', order_number: '', reason: '', comments: '', refund_preference: 'bank', bank_account_name: '', bank_account_number: '', bank_ifsc: '', bank_upi: '' });
+                  alert('Return request submitted. We will arrange a pickup within 2-3 business days.');
                 } catch { alert('Network error.'); }
                 finally { setSubmittingReturn(false); }
               }}
             >
               <h3 className="text-[12px] font-bold tracking-widest uppercase text-black border-b border-black/10 pb-2">Request a Return</h3>
               <p className="text-[11px] text-black/50">Only delivered orders are eligible. Returns must be requested within 7 days of delivery.</p>
+
+              {/* Order select */}
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Select Order</label>
                 <select
                   value={returnForm.order_id}
                   onChange={(e) => {
                     const order = orders.find(o => String(o.id) === e.target.value);
-                    setReturnForm(f => ({ ...f, order_id: e.target.value, order_number: order?.order_number || '' }));
+                    setReturnForm(f => ({ ...f, order_id: e.target.value, order_number: order?.order_number || '', _payment_method: order?.payment_method || '' }));
                   }}
                   className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black"
                   required
                 >
                   <option value="">-- Select a delivered order --</option>
                   {orders.filter(o => o.status === 'Delivered').map(o => (
-                    <option key={o.id} value={o.id}>{o.order_number} — ₹{parseFloat(o.total_amount).toFixed(2)}</option>
+                    <option key={o.id} value={o.id}>{o.order_number} — ₹{parseFloat(o.total_amount).toFixed(2)} ({o.payment_method})</option>
                   ))}
                 </select>
               </div>
+
+              {/* Reason */}
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Reason for Return</label>
-                <select
-                  value={returnForm.reason}
-                  onChange={(e) => setReturnForm(f => ({ ...f, reason: e.target.value }))}
-                  className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black"
-                  required
-                >
+                <select value={returnForm.reason} onChange={(e) => setReturnForm(f => ({ ...f, reason: e.target.value }))}
+                  className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black" required>
                   <option value="">-- Select a reason --</option>
                   <option>Wrong size received</option>
                   <option>Damaged / defective product</option>
@@ -498,18 +498,75 @@ export default function UserProfile() {
                   <option>Changed my mind</option>
                 </select>
               </div>
+
+              {/* Comments */}
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold tracking-widest uppercase text-black/70">Additional Comments (Optional)</label>
-                <textarea
-                  value={returnForm.comments}
-                  onChange={(e) => setReturnForm(f => ({ ...f, comments: e.target.value }))}
-                  rows={3}
-                  placeholder="Describe the issue in detail..."
-                  className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black resize-none"
-                />
+                <textarea value={returnForm.comments} onChange={(e) => setReturnForm(f => ({ ...f, comments: e.target.value }))}
+                  rows={2} placeholder="Describe the issue..." className="border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black resize-none" />
               </div>
+
+              {/* REFUND DETAILS — shown for COD orders */}
+              {returnForm._payment_method === 'COD' && (
+                <div className="border border-black/10 rounded-xl p-5 bg-[#fafafa] space-y-4">
+                  <div>
+                    <p className="text-[12px] font-bold text-black mb-1">Refund Details</p>
+                    <p className="text-[11px] text-black/50">Since this was a Cash on Delivery order, we'll transfer the refund to your bank account or UPI after we verify the returned product.</p>
+                  </div>
+
+                  {/* Refund preference */}
+                  <div className="flex gap-4">
+                    {['bank', 'upi'].map(pref => (
+                      <label key={pref} className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="refund_pref" value={pref}
+                          checked={returnForm.refund_preference === pref}
+                          onChange={() => setReturnForm(f => ({ ...f, refund_preference: pref }))}
+                          className="accent-black" />
+                        <span className="text-[12px] font-medium capitalize">{pref === 'bank' ? 'Bank Transfer (NEFT)' : 'UPI'}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {returnForm.refund_preference === 'bank' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {[
+                        { label: 'Account Holder Name', key: 'bank_account_name', placeholder: 'As per bank records' },
+                        { label: 'Account Number', key: 'bank_account_number', placeholder: '1234567890' },
+                        { label: 'IFSC Code', key: 'bank_ifsc', placeholder: 'SBIN0001234' },
+                      ].map(f => (
+                        <div key={f.key} className={f.key === 'bank_account_name' ? 'md:col-span-2' : ''}>
+                          <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">{f.label} *</label>
+                          <input type="text" value={returnForm[f.key] || ''} onChange={e => setReturnForm(p => ({ ...p, [f.key]: e.target.value }))}
+                            placeholder={f.placeholder} required
+                            className="w-full border border-black/20 p-2.5 rounded-lg text-[13px] outline-none focus:border-black" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {returnForm.refund_preference === 'upi' && (
+                    <div>
+                      <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">UPI ID *</label>
+                      <input type="text" value={returnForm.bank_upi || ''} onChange={e => setReturnForm(p => ({ ...p, bank_upi: e.target.value }))}
+                        placeholder="yourname@upi" required
+                        className="w-full border border-black/20 p-2.5 rounded-lg text-[13px] outline-none focus:border-black" />
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-black/40">Refund will be processed within 5-7 business days after product verification.</p>
+                </div>
+              )}
+
+              {/* Online payment info */}
+              {returnForm._payment_method && returnForm._payment_method !== 'COD' && (
+                <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+                  <p className="text-[12px] text-green-700 font-medium">✓ Refund will be credited back to your original payment method within 5-7 business days after product verification.</p>
+                </div>
+              )}
+
               <div className="flex justify-end">
-                <button type="submit" disabled={submittingReturn} className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors disabled:opacity-50">
+                <button type="submit" disabled={submittingReturn}
+                  className="bg-black text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors disabled:opacity-50">
                   {submittingReturn ? 'Submitting...' : 'Submit Return Request'}
                 </button>
               </div>
@@ -524,19 +581,53 @@ export default function UserProfile() {
             ) : (
               <div className="space-y-3">
                 {returns.map(r => (
-                  <div key={r.id} className="bg-white border border-black/10 rounded-xl p-5 flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-[13px] font-bold text-black">{r.order_number}</p>
-                      <p className="text-[12px] text-black/60 mt-1">{r.reason}</p>
-                      {r.comments && <p className="text-[11px] text-black/40 mt-1">{r.comments}</p>}
-                      <p className="text-[10px] text-black/30 mt-2">{new Date(r.created_at).toLocaleDateString()}</p>
+                  <div key={r.id} className="bg-white border border-black/10 rounded-xl p-5">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div>
+                        <p className="text-[13px] font-bold text-black">{r.order_number}</p>
+                        <p className="text-[12px] text-black/60 mt-0.5">{r.reason}</p>
+                        {r.comments && <p className="text-[11px] text-black/40 mt-0.5">{r.comments}</p>}
+                        <p className="text-[10px] text-black/30 mt-1">{new Date(r.created_at).toLocaleDateString("en-IN")}</p>
+                      </div>
+                      <span className={`px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full flex-shrink-0 ${
+                        r.status === 'Approved' || r.status === 'Verified' ? 'bg-green-100 text-green-700' :
+                        r.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                        r.status === 'Refund Initiated' ? 'bg-blue-100 text-blue-700' :
+                        r.status === 'Completed' ? 'bg-gray-100 text-gray-600' :
+                        'bg-yellow-100 text-yellow-700'
+                      }`}>{r.status}</span>
                     </div>
-                    <span className={`px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full flex-shrink-0 ${
-                      r.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                      r.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                      r.status === 'Completed' ? 'bg-gray-100 text-gray-600' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>{r.status}</span>
+
+                    {/* Status timeline */}
+                    <div className="flex gap-0 text-[9px] font-bold tracking-widest uppercase">
+                      {['Pending','Approved','Verified','Refund Initiated','Completed'].map((s, i, arr) => {
+                        const statuses = ['Pending','Approved','Verified','Refund Initiated','Completed'];
+                        const currentIdx = statuses.indexOf(r.status);
+                        const stepIdx = statuses.indexOf(s);
+                        const done = stepIdx <= currentIdx;
+                        return (
+                          <div key={s} className="flex items-center flex-1">
+                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${done ? 'bg-black' : 'bg-black/15'}`} />
+                            {i < arr.length - 1 && <div className={`flex-1 h-[1px] ${done && stepIdx < currentIdx ? 'bg-black' : 'bg-black/15'}`} />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-[8px] text-black/30 mt-1 tracking-widest uppercase">
+                      <span>Requested</span><span>Approved</span><span>Verified</span><span>Refund</span><span>Done</span>
+                    </div>
+
+                    {/* Refund info */}
+                    {r.status === 'Refund Initiated' && (
+                      <div className="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                        <p className="text-[11px] text-blue-700 font-medium">
+                          {r.payment_method === 'COD'
+                            ? `Refund of ₹${r.refund_amount} initiated to your ${r.refund_preference === 'upi' ? `UPI (${r.bank_upi})` : `bank account (${r.bank_account_number?.slice(-4).padStart(r.bank_account_number?.length, '*')})`}. Expected in 5-7 business days.`
+                            : `Refund of ₹${r.refund_amount} initiated to your original payment method. Expected in 5-7 business days.`
+                          }
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
