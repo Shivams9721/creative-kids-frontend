@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { CartProvider } from '@/context/CartContext'
 import ConditionalShell from '@/components/ConditionalShell'
+import RecentlyViewed from '@/components/RecentlyViewed'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -35,6 +36,7 @@ export default function RootLayout({
           <ConditionalShell>
             {children}
           </ConditionalShell>
+          <RecentlyViewed />
         </CartProvider>
       </body>
     </html>

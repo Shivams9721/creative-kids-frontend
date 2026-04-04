@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { csrfHeaders } from "@/lib/csrf";
 
 import { safeFetch } from "@/lib/safeFetch";
+import { recordView } from "@/components/RecentlyViewed";
 
 
 
@@ -45,6 +46,9 @@ export default function ProductClient({ product, relatedProducts }) {
     if (colors.length > 0) setSelectedColor(colors[0]);
     if (sizes.length > 0) setSelectedSize(sizes[0]);
     setMainImage(product.image_urls?.[0] || "");
+
+    // Record this product as recently viewed
+    recordView(product);
 
     const imgMap = {};
     parsedVariants.forEach(v => {
