@@ -205,6 +205,7 @@ export default function ProductClient({ product, relatedProducts }) {
   const availableSizes = [...new Set(product.parsedVariants.map(v => v.size))].filter(s => s !== "Default");
 
   return (
+    <>
      <main className="min-h-screen bg-white pt-[64px] md:pt-[72px]">
 
       {/* ZOOM MODAL */}
@@ -816,5 +817,6 @@ export default function ProductClient({ product, relatedProducts }) {
       </div>
       {/* Spacer so content isn't hidden behind sticky bar on mobile */}
       <div className="h-20 md:hidden" />
+    </>
   );
 }
