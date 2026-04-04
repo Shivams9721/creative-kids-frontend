@@ -13,6 +13,7 @@ const NAV = [
     { id: "list-product", label: "List product", href: "/admin/list-product", badge: "NEW" },
     { id: "products", label: "All products", href: "/admin/products", badge: null },
     { id: "inventory", label: "Inventory", href: "/admin/inventory", badge: null },
+    { id: "sku-reconciliation", label: "SKU Reconciliation", href: "/admin/sku-reconciliation", badge: null },
   ]},
   { group: "Commerce", items: [
     { id: "orders", label: "Orders", href: "/admin/orders", badge: null },

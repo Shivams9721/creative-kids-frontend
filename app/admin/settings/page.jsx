@@ -173,6 +173,7 @@ export default function AdminSettings() {
               { logo: "RP", name: "Razorpay", sub: "Payment gateway · live", color: "var(--blue)", connected: true },
               { logo: "S3", name: "AWS S3", sub: "Image storage · ap-south-1", color: "var(--amber)", connected: true },
               { logo: "SES", name: "AWS SES", sub: "Email delivery · SMTP configured", color: "var(--purple)", connected: true },
+              { logo: "EE", name: "EasyEcom", sub: "Inventory management", color: "var(--green)", connected: false, action: "easyecom" },
               { logo: "SR", name: "Shiprocket", sub: "Shipping & auto-tracking", color: "var(--text3)", connected: false },
             ].map(i => (
               <div key={i.name} className="int-card">
@@ -183,7 +184,14 @@ export default function AdminSettings() {
                 </div>
                 {i.connected
                   ? <span className="tag tag-green">Connected</span>
-                  : <button className="btn btn-sm btn-accent">Connect</button>}
+                  : i.action === "easyecom"
+                    ? <button className="btn btn-sm btn-accent" onClick={async () => {
+                        try {
+                          await safeFetch("/api/admin/easyecom/connect", { method: "POST" });
+                          alert("EasyEcom connected! Go to SKU Reconciliation to sync inventory.");
+                        } catch (e) { alert(e.message || "Connection failed"); }
+                      }}>Connect</button>
+                    : <button className="btn btn-sm btn-accent">Connect</button>}
               </div>
             ))}
           </div>
