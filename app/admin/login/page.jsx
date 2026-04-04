@@ -15,7 +15,20 @@ export default function AdminLoginPage() {
 
   // If already logged in, redirect to admin
   useEffect(() => {
-    if (localStorage.getItem("adminToken")) {
+    // Check both localStorage and cookie
+    const lsToken = localStorage.getItem("adminToken");
+    const cookieToken = document.cookie.split(';')
+      .map(c => c.trim())
+      .find(c => c.startsWith('adminToken='))
+      ?.split('=').slice(1).join('=');
+    if (lsToken || cookieToken) {
+      // Sync both
+      if (lsToken && !cookieToken) {
+        document.cookie = `adminToken=${lsToken}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
+      }
+      if (!lsToken && cookieToken) {
+        localStorage.setItem("adminToken", cookieToken);
+      }
       router.replace("/admin");
     } else {
       setChecking(false);

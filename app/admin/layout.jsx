@@ -36,13 +36,22 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     if (isLoginPage) return;
-    // Check localStorage first, then cookie as fallback
+    // Token can be in localStorage OR cookie — check both
     const lsToken = localStorage.getItem("adminToken");
-    const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('adminToken='))?.split('=')?.[1];
+    const cookieToken = document.cookie.split(';')
+      .map(c => c.trim())
+      .find(c => c.startsWith('adminToken='))
+      ?.split('=').slice(1).join('=');
     const token = lsToken || cookieToken;
-    if (!token) { router.replace("/admin/login"); return; }
-    // Ensure localStorage is in sync with cookie
+    if (!token) {
+      router.replace("/admin/login");
+      return;
+    }
+    // Keep both in sync
     if (!lsToken && cookieToken) localStorage.setItem("adminToken", cookieToken);
+    if (lsToken && !cookieToken) {
+      document.cookie = `adminToken=${lsToken}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
+    }
     setAuthed(true);
   }, [router, isLoginPage]);
 
