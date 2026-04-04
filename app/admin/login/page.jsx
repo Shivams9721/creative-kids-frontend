@@ -22,7 +22,11 @@ export default function AdminLoginPage() {
     }
   }, [router]);
 
-  if (checking) return null;
+  if (checking) return (
+    <div style={{ minHeight: "100vh", background: "#fafafa", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: "#999", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase" }}>Loading…</div>
+    </div>
+  );
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -44,8 +44,14 @@ export default function AdminLayout({ children }) {
   // Login page renders without the admin shell
   if (isLoginPage) return <>{children}</>;
 
-  // Other admin pages wait for auth check
-  if (!authed) return null;
+  // Show loading while checking auth (prevents blank flash)
+  if (!authed) return (
+    <div style={{ minHeight: "100vh", background: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: "#555", fontSize: 11, fontFamily: "sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        Loading…
+      </div>
+    </div>
+  );
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
