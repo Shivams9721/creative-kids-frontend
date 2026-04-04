@@ -5,8 +5,14 @@ import { X, Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 
+const FREE_SHIPPING_THRESHOLD = 599;
+
 export default function CartDrawer() {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal } = useCart();
+
+  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
+  const progress = Math.min(100, (cartTotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const unlocked = cartTotal >= FREE_SHIPPING_THRESHOLD;
 
   return (
     <AnimatePresence>
@@ -30,6 +36,32 @@ export default function CartDrawer() {
               <button onClick={() => setIsCartOpen(false)} className="p-2 hover:opacity-50 transition-opacity">
                 <X strokeWidth={1.5} size={20} />
               </button>
+            </div>
+
+            {/* Free shipping progress bar */}
+            <div className="px-6 py-3 bg-[#fafafa] border-b border-black/5">
+              {unlocked ? (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[11px] font-bold tracking-widest uppercase text-green-600 text-center"
+                >
+                  🎉 Free shipping unlocked!
+                </motion.p>
+              ) : (
+                <p className="text-[11px] tracking-widest uppercase text-black/50 mb-2">
+                  Add <span className="font-bold text-black">₹{remaining.toFixed(0)}</span> more for free shipping
+                </p>
+              )}
+              <div className="h-1 bg-black/10 rounded-full overflow-hidden mt-1">
+                <motion.div
+                  className="h-full rounded-full bg-black"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  style={{ background: unlocked ? '#16a34a' : '#000' }}
+                />
+              </div>
             </div>
 
             {/* Items */}
