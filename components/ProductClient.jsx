@@ -766,5 +766,51 @@ export default function ProductClient({ product, relatedProducts }) {
         </section>
       )}
     </main>
+
+      {/* ── STICKY MOBILE CTA BAR ── */}
+      {/* Only visible on mobile, hidden on md+ where the full CTA is already visible */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-black/10 px-4 py-3 flex items-center gap-3 shadow-2xl">
+        {/* Colour dot */}
+        {selectedColor && selectedColor !== 'Default' && (
+          <div className="w-8 h-8 rounded-full border border-black/20 flex-shrink-0 overflow-hidden relative">
+            {product.color_images?.[selectedColor]?.[0] ? (
+              <Image src={product.color_images[selectedColor][0]} alt={selectedColor} fill className="object-cover" sizes="32px" />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <span className="text-[7px] text-black/40 uppercase">{selectedColor.slice(0,3)}</span>
+              </div>
+            )}
+          </div>
+        )}
+        {/* Size selector */}
+        <div className="flex-1 overflow-x-auto flex gap-1.5 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+          {availableSizes.map(size => (
+            <button
+              key={size}
+              onClick={() => isSizeAvailableForColor(size) && setSelectedSize(size)}
+              disabled={!isSizeAvailableForColor(size)}
+              className={`flex-shrink-0 px-3 py-1.5 border rounded-full text-[10px] font-bold tracking-wider transition-all ${
+                selectedSize === size
+                  ? 'border-black bg-black text-white'
+                  : isSizeAvailableForColor(size)
+                  ? 'border-black/20 text-black/70'
+                  : 'border-black/10 text-black/20 line-through'
+              }`}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
+        {/* Add to cart */}
+        <button
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+          className="flex-shrink-0 bg-black text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-widest uppercase disabled:opacity-40"
+        >
+          {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
+        </button>
+      </div>
+      {/* Spacer so content isn't hidden behind sticky bar on mobile */}
+      <div className="h-20 md:hidden" />
   );
 }
