@@ -302,10 +302,24 @@ export default function AdminOrders() {
                         </button>
                       )}
                       {o.status === "Shipped" && o.awb_number && (
-                        <a href={o.tracking_url || `https://www.delhivery.com/track/package/${o.awb_number}`}
-                          target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ textDecoration: "none" }}>
-                          Track
-                        </a>
+                        <>
+                          <a href={o.tracking_url || `https://www.delhivery.com/track/package/${o.awb_number}`}
+                            target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{ textDecoration: "none" }}>
+                            Track
+                          </a>
+                          <button className="btn btn-sm btn-danger" disabled={updating === o.id}
+                            onClick={async () => {
+                              if (!window.confirm(`Cancel Delhivery shipment for ${o.order_number}? This will cancel the AWB on Delhivery and mark the order as Cancelled.`)) return;
+                              setUpdating(o.id);
+                              try {
+                                await safeFetch(`/api/admin/orders/${o.id}/cancel-shipment`, { method: "POST" });
+                                setOrders(prev => prev.map(x => x.id === o.id ? { ...x, status: "Cancelled", awb_number: null, tracking_url: null } : x));
+                              } catch (e) { alert(e.message || "Failed to cancel shipment"); }
+                              finally { setUpdating(null); }
+                            }}>
+                            {updating === o.id ? "…" : "Cancel"}
+                          </button>
+                        </>
                       )}
                       {o.status === "Shipped" && o.awb_number && (
                         <button className="btn btn-sm btn-danger" disabled={updating === o.id}
