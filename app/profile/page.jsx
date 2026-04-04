@@ -73,6 +73,7 @@ function LiveTracking({ awb, trackingUrl }) {
 
 export default function UserProfile() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [authChecked, setAuthChecked] = useState(false);
 
   // Real data states
   const [user, setUser] = useState({ name: "Loading...", email: "...", phone: "", address: "", points: 0 });
@@ -105,7 +106,7 @@ export default function UserProfile() {
       window.location.href = "/login";
       return;
     }
-
+    setAuthChecked(true);
     // Load saved address from DB
     const fetchAddress = async () => {
       try {
@@ -143,8 +144,8 @@ export default function UserProfile() {
         });
         if (response.status === 401) { window.location.href = "/login"; return; }
         if (response.ok) setOrders(await response.json());
-      } catch (error) {
-        console.error("Failed to fetch orders", error);
+      } catch {
+        // silently fail — orders will show empty state
       } finally {
         setLoadingOrders(false);
       }
@@ -159,8 +160,8 @@ export default function UserProfile() {
         });
         if (response.status === 401) { window.location.href = "/login"; return; }
         if (response.ok) setWishlist(await response.json());
-      } catch (error) {
-        console.error("Failed to fetch wishlist", error);
+      } catch {
+        // silently fail — wishlist is non-critical
       } finally {
         setLoadingWishlist(false);
       }
@@ -209,6 +210,12 @@ export default function UserProfile() {
   // ==========================================
   // 3. RENDER UI
   // ==========================================
+  if (!authChecked) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <span className="text-[11px] tracking-widest uppercase text-black/40 animate-pulse">Loading...</span>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#f6f5f3] flex flex-col md:flex-row pt-[64px] md:pt-[72px]">
 

@@ -105,14 +105,16 @@ export default function CheckoutPage() {
                     const response = await fetch(`https://api.postalpincode.in/pincode/${address.pincode}`);
                     const data = await response.json();
 
-                    if (data[0].Status === "Success") {
-                        const postOffice = data[0].PostOffice[0];
-                        setAddress(prev => ({
-                            ...prev,
-                            city: postOffice.District,
-                            state: postOffice.State
-                        }));
-                        setErrors(prev => ({ ...prev, city: null, state: null, pincode: null }));
+                    if (data[0]?.Status === "Success") {
+                        const postOffice = data[0]?.PostOffice?.[0];
+                        if (postOffice) {
+                          setAddress(prev => ({
+                              ...prev,
+                              city: postOffice.District,
+                              state: postOffice.State
+                          }));
+                          setErrors(prev => ({ ...prev, city: null, state: null, pincode: null }));
+                        }
                     } else {
                         setErrors(prev => ({ ...prev, pincode: "Invalid Pincode" }));
                     }

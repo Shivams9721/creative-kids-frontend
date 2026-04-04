@@ -128,7 +128,7 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
             setFetchingPin(true);
             fetch(`https://api.postalpincode.in/pincode/${form.pincode}`)
                 .then(r => r.json())
-                .then(d => { if (d[0]?.Status === "Success") { const p = d[0].PostOffice[0]; setForm(f => ({ ...f, city: p.District, state: p.State })); } })
+                .then(d => { if (d[0]?.Status === "Success") { const p = d[0]?.PostOffice?.[0]; if (p) setForm(f => ({ ...f, city: p.District, state: p.State })); } })
                 .catch(() => {})
                 .finally(() => setFetchingPin(false));
         }
