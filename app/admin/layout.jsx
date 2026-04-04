@@ -35,9 +35,14 @@ export default function AdminLayout({ children }) {
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    if (isLoginPage) return; // login page handles itself
-    const token = localStorage.getItem("adminToken");
+    if (isLoginPage) return;
+    // Check localStorage first, then cookie as fallback
+    const lsToken = localStorage.getItem("adminToken");
+    const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('adminToken='))?.split('=')?.[1];
+    const token = lsToken || cookieToken;
     if (!token) { router.replace("/admin/login"); return; }
+    // Ensure localStorage is in sync with cookie
+    if (!lsToken && cookieToken) localStorage.setItem("adminToken", cookieToken);
     setAuthed(true);
   }, [router, isLoginPage]);
 
