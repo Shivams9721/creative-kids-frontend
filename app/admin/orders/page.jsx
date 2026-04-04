@@ -112,29 +112,64 @@ function OrderDetailModal({ order, onClose }) {
         {/* Items */}
         {items.length > 0 && (
           <div style={{ marginBottom: 14 }}>
-            <div className="card-title">Items</div>
-            {items.map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-                {/* Product image */}
-                {item.image && (
-                  <img src={item.image} alt={item.title}
-                    style={{ width: 48, height: 60, objectFit: "cover", borderRadius: 6, flexShrink: 0, border: "1px solid var(--border)" }} />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title}</div>
-                  <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 2 }}>
-                    {[item.selectedSize || item.size, item.selectedColor || item.color].filter(Boolean).join(" / ")}
-                    {item.quantity > 1 && ` · Qty ${item.quantity}`}
+            <div className="card-title">Items ({items.length})</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {items.map((item, i) => (
+                <div key={i} style={{
+                  display: "flex", gap: 12, padding: 10,
+                  background: "var(--bg3)", borderRadius: 10,
+                  border: "1px solid var(--border)", cursor: "pointer",
+                  transition: "border-color 0.15s"
+                }}
+                  onClick={() => window.open(`/product/${item.id}`, "_blank")}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "var(--border2)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
+                >
+                  {/* Image */}
+                  <div style={{ width: 52, height: 64, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "var(--bg4)", border: "1px solid var(--border)" }}>
+                    {item.image
+                      ? <img src={item.image} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "var(--text3)" }}>No img</div>
+                    }
                   </div>
-                  {(item.sku || item.baseSku) && (
-                    <div style={{ fontSize: 10, fontFamily: "'DM Mono', monospace", color: "var(--text3)", background: "var(--bg4)", padding: "1px 6px", borderRadius: 4, display: "inline-block" }}>
-                      SKU: {item.sku || item.baseSku}
+
+                  {/* Details */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {item.title}
                     </div>
-                  )}
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+                      {item.selectedSize && item.selectedSize !== "Default" && (
+                        <span style={{ fontSize: 10, background: "var(--bg4)", padding: "1px 7px", borderRadius: 20, color: "var(--text2)" }}>
+                          {item.selectedSize}
+                        </span>
+                      )}
+                      {item.selectedColor && item.selectedColor !== "Default" && (
+                        <span style={{ fontSize: 10, background: "var(--bg4)", padding: "1px 7px", borderRadius: 20, color: "var(--text2)" }}>
+                          {item.selectedColor}
+                        </span>
+                      )}
+                      {item.quantity > 1 && (
+                        <span style={{ fontSize: 10, background: "var(--accent2)", padding: "1px 7px", borderRadius: 20, color: "var(--accent)" }}>
+                          ×{item.quantity}
+                        </span>
+                      )}
+                    </div>
+                    {(item.sku || item.baseSku) && (
+                      <div style={{ fontSize: 9, fontFamily: "'DM Mono', monospace", color: "var(--text3)", background: "var(--bg4)", padding: "1px 6px", borderRadius: 4, display: "inline-block" }}>
+                        {item.sku || item.baseSku}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price + arrow */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "space-between", flexShrink: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>₹{parseFloat(item.price).toFixed(2)}</div>
+                    <div style={{ fontSize: 9, color: "var(--text3)" }}>↗</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, fontWeight: 600, flexShrink: 0 }}>₹{parseFloat(item.price).toFixed(2)}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -295,7 +330,15 @@ export default function AdminOrders() {
                     <div style={{ fontWeight: 500 }}>{o.customer_name || "—"}</div>
                     <div style={{ fontSize: 10, color: "var(--text3)" }}>{o.user_email}</div>
                   </td>
-                  <td>{o.items_count ?? "—"}</td>
+                  <td>
+                    <div>{o.items_count ?? "—"} item{o.items_count !== 1 ? "s" : ""}</div>
+                    {(() => {
+                      let items = [];
+                      try { items = typeof o.items === "string" ? JSON.parse(o.items) : (o.items || []); } catch {}
+                      const sku = items[0]?.sku || items[0]?.baseSku;
+                      return sku ? <div style={{ fontSize: 9, fontFamily: "'DM Mono', monospace", color: "var(--text3)", marginTop: 2 }}>{sku}{items.length > 1 ? ` +${items.length - 1}` : ""}</div> : null;
+                    })()}
+                  </td>
                   <td>₹{o.total_amount}</td>
                   <td><span className={`tag ${o.payment_method === "COD" ? "tag-amber" : "tag-green"}`}>{o.payment_method || "—"}</span></td>
                   <td style={{ fontSize: 11, color: "var(--text3)" }}>{fmtDate(o.created_at)}</td>
