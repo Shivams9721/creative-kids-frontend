@@ -6,8 +6,18 @@ import ConditionalShell from '@/components/ConditionalShell'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Creative Kids | Luxury Childrenswear',
-  description: 'Premium fashion for babies, toddlers, and kids.',
+  title: {
+    default: 'Creative Kids | Premium Children\'s Clothing India',
+    template: '%s | Creative Kids',
+  },
+  description: 'Shop premium children\'s clothing at Creative Kids. Baby, toddler & kids fashion. Free shipping above ₹599. Easy 7-day returns.',
+  keywords: ['kids clothing', 'children fashion', 'baby clothes india', 'toddler clothing', 'kids wear online'],
+  metadataBase: new URL('https://www.creativekids.co.in'),
+  openGraph: {
+    siteName: 'Creative Kids',
+    locale: 'en_IN',
+    type: 'website',
+  },
   icons: {
     icon: '/images/logo.png',
   },

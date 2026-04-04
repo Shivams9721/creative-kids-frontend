@@ -2,35 +2,35 @@ import ProductClient from "@/components/ProductClient";
 import { Suspense } from "react";
 import { safeFetch } from "@/lib/safeFetch";
 
+const SITE_URL = "https://www.creativekids.co.in";
+
 async function getProductData(id) {
   const safeId = parseInt(id, 10);
   if (!safeId || safeId <= 0) return { product: null, relatedProducts: [] };
   try {
-    const res = await safeFetch(`/api/products/${safeId}`, { next: { revalidate: 60 } });
+    const res = await safeFetch(`/api/products/${safeId}`, { cache: 'no-store' });
     if (!res.ok) return { product: null, relatedProducts: [] };
 
     const product = await res.json();
 
-    // Safely parse JSON fields
     const parsedData = {
       ...product,
       image_urls: (() => { try { return typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : (product.image_urls || []); } catch { return []; } })(),
       parsedVariants: (() => { try { return typeof product.variants === 'string' ? JSON.parse(product.variants) : (product.variants || []); } catch { return []; } })(),
       color_images: (() => { try { return typeof product.color_images === 'string' ? JSON.parse(product.color_images) : (product.color_images || {}); } catch { return {}; } })(),
     };
-    
-    // Fetch related products
-    const relatedRes = await safeFetch(`/api/products?item_type=${encodeURIComponent(product.item_type || product.sub_category || '')}&limit=7`, { cache: 'no-store' });
+
+    const relatedRes = await safeFetch(`/api/products?item_type=${encodeURIComponent(product.item_type || product.sub_category || '')}`, { cache: 'no-store' });
     let relatedProducts = [];
     if (relatedRes.ok) {
-        const allRelated = await relatedRes.json();
-        relatedProducts = allRelated
-            .filter(p => p.id !== parseInt(id))
-            .slice(0, 6)
-            .map(p => ({
-                ...p,
-                image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })()
-            }));
+      const allRelated = await relatedRes.json();
+      relatedProducts = allRelated
+        .filter(p => p.id !== parseInt(id))
+        .slice(0, 6)
+        .map(p => ({
+          ...p,
+          image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })()
+        }));
     }
 
     return { product: parsedData, relatedProducts };
@@ -40,6 +40,37 @@ async function getProductData(id) {
   }
 }
 
+// ── SEO Metadata ─────────────────────────────────────────────────────────────
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const { product } = await getProductData(id);
+  if (!product) return { title: "Product Not Found — Creative Kids" };
+
+  const title = `${product.title} | Creative Kids`;
+  const description = product.description
+    ? product.description.slice(0, 155).replace(/\n/g, " ")
+    : `Buy ${product.title} online at Creative Kids. Premium children's clothing in India.`;
+  const image = product.image_urls?.[0] || "";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/product/${id}`,
+      images: image ? [{ url: image, width: 800, height: 1000, alt: product.title }] : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: image ? [image] : [],
+    },
+    alternates: { canonical: `${SITE_URL}/product/${id}` },
+  };
+}
 
 export default async function ProductPage({ params }) {
   const { id } = await params;
@@ -54,13 +85,39 @@ export default async function ProductPage({ params }) {
     );
   }
 
+  // ── JSON-LD structured data for Google Shopping ───────────────────────────
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description || "",
+    image: product.image_urls || [],
+    sku: product.sku || String(product.id),
+    brand: { "@type": "Brand", name: "Creative Kids" },
+    offers: {
+      "@type": "Offer",
+      url: `${SITE_URL}/product/${id}`,
+      priceCurrency: "INR",
+      price: parseFloat(product.price).toFixed(2),
+      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      availability: "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: "Creative Kids" },
+    },
+  };
+
   return (
-    <Suspense fallback={
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center pt-20">
-            <span className="text-[11px] tracking-widest uppercase text-black animate-pulse">Loading Product...</span>
+          <span className="text-[11px] tracking-widest uppercase text-black animate-pulse">Loading Product...</span>
         </div>
-    }>
-      <ProductClient product={product} relatedProducts={relatedProducts} />
-    </Suspense>
+      }>
+        <ProductClient product={product} relatedProducts={relatedProducts} />
+      </Suspense>
+    </>
   );
 }
