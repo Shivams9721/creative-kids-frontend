@@ -186,8 +186,18 @@ export default function AdminSettings() {
                   ? <span className="tag tag-green">Connected</span>
                   : i.action === "easyecom"
                     ? <button className="btn btn-sm btn-accent" onClick={async () => {
+                        const email = prompt("EasyEcom email:", "shrawan@creativeimpression.in");
+                        if (!email) return;
+                        const password = prompt("EasyEcom password:");
+                        if (!password) return;
+                        const location_key = prompt("Location key (ve11697504025 or try en8090462809):", "ve11697504025");
+                        const api_key = prompt("X-API-Key:");
+                        if (!api_key) return;
                         try {
-                          await safeFetch("/api/admin/easyecom/connect", { method: "POST" });
+                          await safeFetch("/api/admin/easyecom/connect", {
+                            method: "POST",
+                            body: JSON.stringify({ email, password, location_key, api_key }),
+                          });
                           alert("EasyEcom connected! Go to SKU Reconciliation to sync inventory.");
                         } catch (e) { alert(e.message || "Connection failed"); }
                       }}>Connect</button>
