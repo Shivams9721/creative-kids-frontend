@@ -190,7 +190,7 @@ export default function AdminSettings() {
                         if (!email) return;
                         const password = prompt("EasyEcom password:");
                         if (!password) return;
-                        const location_key = prompt("Location key (try en11628818569):", "en11628818569");
+                        const location_key = prompt("EasyEcom location key:", "");
                         const api_key = prompt("X-API-Key:");
                         if (!api_key) return;
                         try {
