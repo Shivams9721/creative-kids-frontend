@@ -109,8 +109,8 @@ export default function ListProductInner() {
     setSaving(true);
     try {
       const payload = { ...form, is_draft: isDraft, variants: buildVariants(), image_urls: Object.values(form.color_images).flat(), primary_category: form.main_category, cross_listed_categories: [] };
-      if (editId) await safeFetch(`/api/products/${editId}`, { method: "PUT", body: JSON.stringify(payload) });
-      else await safeFetch("/api/products", { method: "POST", body: JSON.stringify(payload) });
+      if (editId) await safeFetch(`/api/products/${editId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      else await safeFetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       router.push("/admin/products");
     } catch (e) { alert(e.message || "Failed to save product"); }
     finally { setSaving(false); }

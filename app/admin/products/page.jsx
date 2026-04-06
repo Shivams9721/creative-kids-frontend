@@ -20,8 +20,6 @@ export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [viewMode, setViewMode] = useState("cards"); // "cards" or "table"
-
   useEffect(() => {
     safeFetch("/api/admin/products")
       .then(d => { const list = Array.isArray(d) ? d : []; setProducts(list); setFiltered(list); })
@@ -37,7 +35,7 @@ export default function AdminProducts() {
     else if (statusFilter === "Inactive") list = list.filter(p => !p.is_active);
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(p => (p.title || "").toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q));
+      list = list.filter(p => (p.title || "").toLowerCase().includes(q) || (p.base_sku || "").toLowerCase().includes(q));
     }
     setFiltered(list);
   }, [search, catFilter, statusFilter, products]);
@@ -54,9 +52,22 @@ export default function AdminProducts() {
   };
 
   const parseJson = (raw) => { try { return typeof raw === "string" ? JSON.parse(raw) : (raw || []); } catch { return []; } };
-  const parseImages = (raw) => parseJson(raw);
-  const parseSizes = (raw) => parseJson(raw);
-  const parseColors = (raw) => parseJson(raw);
+  const parseImages = (raw, childVariants) => {
+    const parsed = parseJson(raw);
+    if (parsed.length > 0) return parsed;
+    return Array.isArray(childVariants) ? parseJson(childVariants[0]?.image_urls) : [];
+  };
+  const parseSizes = (raw, childVariants) => {
+    const parsed = parseJson(raw);
+    if (parsed.length > 0) return parsed;
+    if (!Array.isArray(childVariants) || childVariants.length === 0) return [];
+    return parseJson(childVariants[0]?.variants).map(v => v?.size).filter(Boolean);
+  };
+  const parseColors = (raw, childVariants) => {
+    const parsed = parseJson(raw);
+    if (parsed.length > 0) return parsed;
+    return Array.isArray(childVariants) ? [...new Set(childVariants.map(v => v.color).filter(Boolean))] : [];
+  };
 
   // Group products by variant_group_id to show color variants together
   const groupedProducts = {};
@@ -95,90 +106,80 @@ export default function AdminProducts() {
           <button className="btn btn-accent btn-sm" onClick={() => router.push("/admin/list-product")}>Create your first product</button>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(380px, 1fr))" }}>
-          {Object.values(groupedProducts).map((colorGroup, idx) => {
-            const mainProduct = colorGroup[0];
-            const colors = parseColors(mainProduct.colors);
-            const sizes = parseSizes(mainProduct.sizes);
-            const images = parseImages(mainProduct.image_urls);
-            const isLive = mainProduct.is_active && !mainProduct.is_draft;
-            
-            return (
-              <div key={idx} className="card" style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                {/* Image */}
-                <div style={{ width: "100%", height: 180, background: "var(--bg2)", overflow: "hidden" }}>
-                  {images[0] ? (
-                    <img src={images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)" }}>No image</div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div style={{ padding: 16, flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
-                  {/* Title & Status */}
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{(mainProduct.title || "").replace(/ - \w+$/, "")}</div>
-                    <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4 }}>SKU: {mainProduct.sku || "—"}</div>
-                  </div>
-
-                  {/* Price */}
-                  <div>
-                    <div style={{ fontSize: 12, color: "var(--text2)" }}>₹{mainProduct.price} <span style={{ fontSize: 10, textDecoration: "line-through", color: "var(--text3)" }}>₹{mainProduct.mrp}</span></div>
-                    <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 2 }}>{Math.round(((mainProduct.mrp - mainProduct.price) / mainProduct.mrp) * 100)}% off</div>
-                  </div>
-
-                  {/* Category */}
-                  <div>
-                    <span className="tag tag-gray" style={{ fontSize: 10 }}>{mainProduct.sub_category || mainProduct.main_category || "—"}</span>
-                  </div>
-
-                  {/* Colors */}
-                  {colors.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 6 }}>Colors ({colors.length})</div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {colors.map((col, i) => (
-                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ width: 14, height: 14, borderRadius: "50%", border: "1px solid var(--border)", backgroundColor: getColorHex(col) }} />
-                            <span style={{ fontSize: 11 }}>{col}</span>
-                          </div>
-                        ))}
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 960 }}>
+            <thead>
+              <tr style={{ textAlign: "left", borderBottom: "1px solid var(--border)", background: "var(--bg2)" }}>
+                <th style={{ padding: "12px 16px" }}>Product</th>
+                <th style={{ padding: "12px 16px" }}>SKU</th>
+                <th style={{ padding: "12px 16px" }}>Category</th>
+                <th style={{ padding: "12px 16px" }}>Price</th>
+                <th style={{ padding: "12px 16px" }}>Colors</th>
+                <th style={{ padding: "12px 16px" }}>Sizes</th>
+                <th style={{ padding: "12px 16px" }}>Status</th>
+                <th style={{ padding: "12px 16px" }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.values(groupedProducts).map((colorGroup, idx) => {
+                const mainProduct = colorGroup[0];
+                const colors = parseColors(mainProduct.colors, mainProduct.child_variants);
+                const sizes = parseSizes(mainProduct.sizes, mainProduct.child_variants);
+                const images = parseImages(mainProduct.image_urls, mainProduct.child_variants);
+                const isLive = mainProduct.is_active && !mainProduct.is_draft;
+                return (
+                  <tr key={idx} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={{ padding: "16px", verticalAlign: "top", maxWidth: 260 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 72, height: 72, background: "var(--bg2)", overflow: "hidden", borderRadius: 8, flexShrink: 0 }}>
+                          {images[0] ? <img src={images[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text3)" }}>No image</div>}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600 }}>{mainProduct.title || "Untitled product"}</div>
+                          <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 4 }}>ID: {mainProduct.id}</div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Sizes */}
-                  {sizes.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 6 }}>Sizes ({sizes.length})</div>
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "top", fontSize: 12 }}>{mainProduct.base_sku || "—"}</td>
+                    <td style={{ padding: "16px", verticalAlign: "top", fontSize: 12 }}>{mainProduct.sub_category || mainProduct.main_category || "—"}</td>
+                    <td style={{ padding: "16px", verticalAlign: "top", fontSize: 12 }}>₹{mainProduct.price || "0"} <span style={{ display: "block", fontSize: 11, color: "var(--text3)", textDecoration: "line-through" }}>₹{mainProduct.mrp || "0"}</span></td>
+                    <td style={{ padding: "16px", verticalAlign: "top" }}>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {sizes.map((s, i) => (
-                          <span key={i} style={{ fontSize: 10, padding: "3px 8px", background: "var(--bg3)", borderRadius: 4, color: "var(--text2)" }}>{s}</span>
+                        {colors.slice(0, 4).map((col, i) => (
+                          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px", fontSize: 11, background: "var(--bg3)", borderRadius: 999 }}>
+                            <span style={{ width: 10, height: 10, borderRadius: "50%", backgroundColor: getColorHex(col), border: "1px solid var(--border)" }} />{col}
+                          </span>
                         ))}
+                        {colors.length > 4 && <span style={{ fontSize: 11, color: "var(--text3)" }}>+{colors.length - 4}</span>}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Status */}
-                  <div style={{ marginTop: 6 }}>
-                    {mainProduct.is_draft ? <span className="tag tag-amber"><span className="tag-dot" />Draft</span>
-                      : mainProduct.is_active ? <span className="tag tag-green"><span className="tag-dot" />Live</span>
-                      : <span className="tag tag-gray"><span className="tag-dot" />Inactive</span>}
-                  </div>
-
-                  {/* Actions */}
-                  <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
-                    <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => router.push(`/admin/products/${mainProduct.variant_group_id || mainProduct.id}`)}>View Details</button>
-                    <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => router.push(`/admin/list-product?edit=${mainProduct.id}`)}>Edit</button>
-                    <button className="btn btn-sm" onClick={() => toggleActive(mainProduct.id, mainProduct.is_active)}>
-                      {mainProduct.is_active ? "Deactivate" : "Restore"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "top" }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {sizes.slice(0, 5).map((size, i) => (
+                          <span key={i} style={{ fontSize: 11, padding: "4px 8px", background: "var(--bg3)", borderRadius: 999 }}>{size}</span>
+                        ))}
+                        {sizes.length > 5 && <span style={{ fontSize: 11, color: "var(--text3)" }}>+{sizes.length - 5}</span>}
+                      </div>
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "top" }}>
+                      {mainProduct.is_draft ? <span className="tag tag-amber"><span className="tag-dot" />Draft</span>
+                        : isLive ? <span className="tag tag-green"><span className="tag-dot" />Live</span>
+                        : <span className="tag tag-gray"><span className="tag-dot" />Inactive</span>}
+                    </td>
+                    <td style={{ padding: "16px", verticalAlign: "top" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <button className="btn btn-sm" style={{ width: "100%" }} onClick={() => router.push(`/product/${mainProduct.id}`)}>View more</button>
+                        <button className="btn btn-sm" style={{ width: "100%" }} onClick={() => router.push(`/admin/list-product?edit=${mainProduct.id}`)}>Edit</button>
+                        <button className="btn btn-sm" style={{ width: "100%" }} onClick={() => toggleActive(mainProduct.id, mainProduct.is_active)}>
+                          {mainProduct.is_active ? "Deactivate" : "Restore"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
