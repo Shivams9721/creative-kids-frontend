@@ -2,40 +2,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { safeFetch } from "../api";
+import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
 
 const BABY_SIZES = ["0M–3M","3M–6M","6M–9M","9M–12M","12M–18M","18M–24M"];
 const KIDS_SIZES = ["2Y–3Y","3Y–4Y","4Y–5Y","5Y–6Y","6Y–7Y","7Y–8Y","8Y–9Y","9Y–10Y","10Y–11Y","11Y–12Y","12Y–13Y","13Y–14Y","14Y–15Y","15Y–16Y","16Y–17Y","17Y–18Y"];
-const COLORS = [
-  { name: "Pink", hex: "#F4A0B5" }, { name: "Black", hex: "#0F0F0E" }, { name: "White", hex: "#FFFFFF" },
-  { name: "Blue", hex: "#4A9EE8" }, { name: "Red", hex: "#D62828" }, { name: "Lavender", hex: "#C2A8F0" },
-  { name: "Yellow", hex: "#F6C94E" }, { name: "Green", hex: "#4CAF72" }, { name: "Grey", hex: "#888780" },
-  { name: "Orange", hex: "#E87B37" }, { name: "Mint", hex: "#8FD5B2" }, { name: "Navy", hex: "#1B2A4A" },
-  { name: "Purple", hex: "#9B59B6" }, { name: "Coral", hex: "#FF6B6B" }, { name: "Teal", hex: "#1ABC9C" },
-  { name: "Gold", hex: "#F39C12" }, { name: "Silver", hex: "#C0C0C0" }, { name: "Burgundy", hex: "#800020" },
-  { name: "Cream", hex: "#FFFDD0" }, { name: "Beige", hex: "#F5DEB3" }, { name: "Brown", hex: "#8B4513" },
-  { name: "Maroon", hex: "#800000" }, { name: "Turquoise", hex: "#40E0D0" }, { name: "Peach", hex: "#FFDAB9" },
-  { name: "Rose", hex: "#FF007F" }, { name: "Khaki", hex: "#F0E68C" }, { name: "Olive", hex: "#808000" },
-];
-const FABRICS = [
-  "Cotton", "Linen", "Rayon", "Viscose", "Polyester", "Denim", "Chambray",
-  "Chiffon", "Georgette", "Crepe", "Satin", "Organza", "Dobby", "Jacquard",
-  "Seersucker", "Twill", "Poplin", "Cotton Blend", "Poly Cotton", "Rayon Blend",
-  "Viscose Blend", "Cotton Poplin", "Viscose Rayon", "Poly Chiffon", "Denim Cotton"
-];
-const PATTERNS = [
-  "Animal print", "Checkered", "Colourblock", "Embellished", "Embroidered",
-  "Floral print", "Geometric print", "Graphic print", "All over print", "Printed",
-  "Self design", "Solid"
-];
-const NECK_TYPES = [
-  "Boat neck", "Collared neck", "Crew neck", "Gathered neck", "Hooded neck",
-  "Keyhole neck", "Mandarin collar", "Off shoulder", "One shoulder neck", "Round neck",
-  "Square neck", "Turtle neck", "V neck", "Wrap neck"
-];
-const CARE_INSTRUCTIONS = [
-  "Do not iron", "Machine wash", "Hand wash", "Reverse and dry", "Reverse and iron",
-  "Gentle machine wash", "Do not bleach"
-];
+const COLORS = PRODUCT_ATTRIBUTES.COLORS;
+const FABRICS = PRODUCT_ATTRIBUTES.FABRICS;
+const PATTERNS = PRODUCT_ATTRIBUTES.PATTERNS;
+const NECK_TYPES = PRODUCT_ATTRIBUTES.NECK_TYPES;
+const CARE_INSTRUCTIONS = PRODUCT_ATTRIBUTES.CARE_INSTRUCTIONS;
 const MAIN_CATS = ["Baby boys","Baby girls","Boys clothing","Girls clothing"];
 const ITEM_TYPES = {
   "Baby boys": ["Onesies & Rompers","T-Shirts & Sweatshirts","Shirts","Bottomwear","Clothing Sets"],

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, SlidersHorizontal, Heart, X } from "lucide-react";
+import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
 
 // Filter Constants — sizes match exactly what's stored in DB (admin form format)
 const SIZE_GROUPS = {
@@ -32,30 +33,9 @@ const PRICE_RANGES = [
   { label: 'Over ₹999', min: 999, max: 999999 }
 ];
 
-const FABRICS = [
-  'Cotton','Linen','Rayon','Viscose','Polyester','Denim','Chambray',
-  'Chiffon','Georgette','Crepe','Satin','Organza',
-  'Dobby','Jacquard','Seersucker','Twill','Poplin',
-  'Cotton Blend','Poly Cotton','Rayon Blend','Viscose Blend',
-  'Cotton Poplin','Viscose Rayon','Poly Chiffon','Denim Cotton'
-];
-
-const PATTERNS = [
-  'No Pattern','Animal Prints','Brocade','Checkered','Floral','Basket Weave','Damask',
-  'Chevron','Flame Stitch','Geometric','Harlequin','Houndstooth','Ikat',
-  'Jacquard','Polka Dots','Stripes','Trellis','Chintz','Ditsy',
-  'Greek Key','Herringbone','Fruit Pattern'
-];
-
-const NECK_TYPES = [
-  'Round Neck','Crew Neck','V-Neck','Scoop Neck','Square Neck','Boat Neck',
-  'Bateau','Polo Neck','Henley Neck','Mandarin Collar','Band Collar',
-  'Button-Down Collar','Peter Pan Collar','Turtleneck','Mock Neck','Cowl Neck',
-  'Funnel Neck','Sweetheart Neck','Halter Neck','Jewel Neck','Keyhole Neck',
-  'Off-the-Shoulder','Bardot','Asymmetrical Neck','One-Shoulder Neck',
-  'Queen Anne Neck','Sabrina Neck','Illusion Neck','Greta Neck','Notched Neck',
-  'U-Neck','Portrait Neck','Plunge Neck'
-];
+const FABRICS = PRODUCT_ATTRIBUTES.FABRICS;
+const PATTERNS = PRODUCT_ATTRIBUTES.PATTERNS;
+const NECK_TYPES = PRODUCT_ATTRIBUTES.NECK_TYPES;
 
 import { safeFetch } from "@/lib/safeFetch";
 
