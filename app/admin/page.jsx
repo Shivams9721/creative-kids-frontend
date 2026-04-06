@@ -100,6 +100,97 @@ export default function AdminDashboard() {
           <span className="alert-msg"><b>{stats.lowStockProducts} products</b> are low on stock · <b>{stats.activeOrders} orders</b> awaiting action</span>
         </div>
       )}
+
+      {/* EASYECOM INTEGRATION */}
+      <EasyEcomCard />
+    </div>
+  );
+}
+
+function EasyEcomCard() {
+  const [status, setStatus] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    safeFetch("/api/admin/easyecom/status")
+      .then(s => setStatus(s))
+      .catch(() => setStatus({ connected: false, reason: "Could not reach server" }))
+      .finally(() => setChecking(false));
+  }, []);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await safeFetch("/api/admin/easyecom/sync-inventory", { method: "POST" });
+      setSyncResult(res);
+    } catch (err) {
+      setSyncResult({ error: err.message || "Sync failed" });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  return (
+    <div className="card card-pad" style={{ marginTop: 16 }}>
+      <div className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 16 }}>📦</span> EasyEcom Integration
+      </div>
+
+      {/* Connection status */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "10px 14px", background: "var(--bg3)", borderRadius: 8, border: "1px solid var(--border)" }}>
+        <div style={{
+          width: 10, height: 10, borderRadius: "50%", flexShrink: 0,
+          background: checking ? "var(--text3)" : status?.connected ? "var(--green)" : "var(--red)",
+          boxShadow: checking ? "none" : status?.connected ? "0 0 6px var(--green)" : "0 0 6px var(--red)",
+        }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 12, fontWeight: 500 }}>
+            {checking ? "Checking connection…" : status?.connected ? "Connected" : "Not connected"}
+          </div>
+          {status?.connected && (
+            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 2 }}>
+              {status.email} · Location: {status.locationKey}
+            </div>
+          )}
+          {!checking && !status?.connected && (
+            <div style={{ fontSize: 10, color: "var(--red)", marginTop: 2 }}>
+              {status?.reason || "Unknown error"}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sync inventory button */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <button className="btn btn-accent btn-sm" onClick={handleSync} disabled={syncing || !status?.connected} style={{ flex: 1 }}>
+          {syncing ? "⟳ Syncing inventory…" : "↓ Sync Inventory from EasyEcom"}
+        </button>
+      </div>
+
+      {/* Sync result */}
+      {syncResult && (
+        <div style={{ marginTop: 12, padding: "10px 14px", background: syncResult.error ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)", borderRadius: 8, border: `1px solid ${syncResult.error ? "var(--red)" : "var(--green)"}`, fontSize: 12 }}>
+          {syncResult.error ? (
+            <div style={{ color: "var(--red)" }}>✗ {syncResult.error}</div>
+          ) : (
+            <div>
+              <div style={{ fontWeight: 500, color: "var(--green)", marginBottom: 4 }}>✓ Inventory synced</div>
+              <div style={{ color: "var(--text2)" }}>
+                {syncResult.updated} updated · {syncResult.skipped} skipped · {syncResult.errors} errors
+                {syncResult.totalFromEasyEcom != null && <span> · {syncResult.totalFromEasyEcom} items from EasyEcom</span>}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Info */}
+      <div style={{ marginTop: 12, fontSize: 10, color: "var(--text3)", lineHeight: 1.5 }}>
+        Orders are automatically pushed to EasyEcom after checkout. Use "Sync Inventory" to pull latest stock levels.
+      </div>
     </div>
   );
 }
