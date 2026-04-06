@@ -674,7 +674,13 @@ export default function ProductClient({ product, relatedProducts }) {
                         {product.care_instructions && (
                           <div>
                             <h4 className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-2">Wash Care</h4>
-                            <p className="text-[12px] text-black leading-relaxed">{product.care_instructions}</p>
+                            {typeof product.care_instructions === 'string' ? (
+                              <p className="text-[12px] text-black leading-relaxed">{product.care_instructions}</p>
+                            ) : Array.isArray(product.care_instructions) ? (
+                              <ul className="text-[12px] text-black leading-relaxed space-y-1 list-disc list-inside">
+                                {product.care_instructions.map((instr, i) => <li key={i}>{instr}</li>)}
+                              </ul>
+                            ) : null}
                           </div>
                         )}
                         {product.manufacturer_details && (

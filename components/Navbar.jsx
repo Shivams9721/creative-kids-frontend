@@ -37,7 +37,7 @@ const ANNOUNCEMENTS = [
     id: 2,
     content: (
       <>
-      On Purchase Above ₹599, Get Free Shipping!
+      On Purchase Above ₹499, Get Free Shipping!
       </>
     )
   },

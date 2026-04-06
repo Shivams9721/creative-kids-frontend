@@ -10,6 +10,31 @@ const COLORS = [
   { name: "Blue", hex: "#4A9EE8" }, { name: "Red", hex: "#D62828" }, { name: "Lavender", hex: "#C2A8F0" },
   { name: "Yellow", hex: "#F6C94E" }, { name: "Green", hex: "#4CAF72" }, { name: "Grey", hex: "#888780" },
   { name: "Orange", hex: "#E87B37" }, { name: "Mint", hex: "#8FD5B2" }, { name: "Navy", hex: "#1B2A4A" },
+  { name: "Purple", hex: "#9B59B6" }, { name: "Coral", hex: "#FF6B6B" }, { name: "Teal", hex: "#1ABC9C" },
+  { name: "Gold", hex: "#F39C12" }, { name: "Silver", hex: "#C0C0C0" }, { name: "Burgundy", hex: "#800020" },
+  { name: "Cream", hex: "#FFFDD0" }, { name: "Beige", hex: "#F5DEB3" }, { name: "Brown", hex: "#8B4513" },
+  { name: "Maroon", hex: "#800000" }, { name: "Turquoise", hex: "#40E0D0" }, { name: "Peach", hex: "#FFDAB9" },
+  { name: "Rose", hex: "#FF007F" }, { name: "Khaki", hex: "#F0E68C" }, { name: "Olive", hex: "#808000" },
+];
+const FABRICS = [
+  "Cotton", "Linen", "Rayon", "Viscose", "Polyester", "Denim", "Chambray",
+  "Chiffon", "Georgette", "Crepe", "Satin", "Organza", "Dobby", "Jacquard",
+  "Seersucker", "Twill", "Poplin", "Cotton Blend", "Poly Cotton", "Rayon Blend",
+  "Viscose Blend", "Cotton Poplin", "Viscose Rayon", "Poly Chiffon", "Denim Cotton"
+];
+const PATTERNS = [
+  "Animal print", "Checkered", "Colourblock", "Embellished", "Embroidered",
+  "Floral print", "Geometric print", "Graphic print", "All over print", "Printed",
+  "Self design", "Solid"
+];
+const NECK_TYPES = [
+  "Boat neck", "Collared neck", "Crew neck", "Gathered neck", "Hooded neck",
+  "Keyhole neck", "Mandarin collar", "Off shoulder", "One shoulder neck", "Round neck",
+  "Square neck", "Turtle neck", "V neck", "Wrap neck"
+];
+const CARE_INSTRUCTIONS = [
+  "Do not iron", "Machine wash", "Hand wash", "Reverse and dry", "Reverse and iron",
+  "Gentle machine wash", "Do not bleach"
 ];
 const MAIN_CATS = ["Baby boys","Baby girls","Boys clothing","Girls clothing"];
 const ITEM_TYPES = {
@@ -33,7 +58,7 @@ export default function ListProductInner() {
   const [form, setForm] = useState({
     title: "", price: "", mrp: "", sku: "", hsn_code: "",
     main_category: "Baby girls", sub_category: "", item_type: "",
-    description: "", fabric: "", pattern: "", neck_type: "", care_instructions: "",
+    description: "", fabric: "", pattern: "", neck_type: "", care_instructions: [],
     sizes: [], colors: [], color_images: {},
     is_featured: false, is_new_arrival: false, is_draft: false, is_cod_eligible: true,
   });
@@ -45,24 +70,31 @@ export default function ListProductInner() {
     safeFetch(`/api/products/${editId}`)
       .then(p => {
         const parse = (v, fallback) => { try { return typeof v === "string" ? JSON.parse(v) : (v || fallback); } catch { return fallback; } };
-        setForm(f => ({ ...f, ...p, sizes: parse(p.sizes, []), colors: parse(p.colors, []), color_images: parse(p.color_images, {}) }));
+        setForm(f => ({ ...f, ...p, sizes: parse(p.sizes, []), colors: parse(p.colors, []), color_images: parse(p.color_images, {}), care_instructions: parse(p.care_instructions, []) }));
       }).catch(() => {});
   }, [editId]);
 
   const toggleSize = (s) => set("sizes", form.sizes.includes(s) ? form.sizes.filter(x => x !== s) : [...form.sizes, s]);
   const toggleColor = (c) => set("colors", form.colors.includes(c) ? form.colors.filter(x => x !== c) : [...form.colors, c]);
 
-  const uploadImage = async (file, color) => {
+  const uploadImage = async (files, color) => {
+    if (!files || files.length === 0) return;
     setUploadingImg(true);
     try {
-      const fd = new FormData();
-      fd.append("image", file);
-      const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com"}/api/upload`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
-      });
-      const data = await res.json();
-      if (data.imageUrl) set("color_images", { ...form.color_images, [color]: [...(form.color_images[color] || []), data.imageUrl] });
+      const uploadedUrls = [];
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append("image", file);
+        const token = localStorage.getItem("adminToken");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com"}/api/upload`, {
+          method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
+        });
+        const data = await res.json();
+        if (data.imageUrl) uploadedUrls.push(data.imageUrl);
+      }
+      if (uploadedUrls.length > 0) {
+        set("color_images", { ...form.color_images, [color]: [...(form.color_images[color] || []), ...uploadedUrls] });
+      }
     } catch { alert("Image upload failed"); }
     finally { setUploadingImg(false); }
   };
@@ -95,6 +127,7 @@ export default function ListProductInner() {
     if (step === 1) return form.main_category && form.item_type;
     if (step === 2) return form.sizes.length > 0;
     if (step === 3) return form.colors.length > 0;
+    if (step === 4) return form.fabric && form.pattern && form.neck_type;
     return true;
   };
 
@@ -187,7 +220,7 @@ export default function ListProductInner() {
               </div>
               {form.colors.map(color => (
                 <div key={color} style={{ marginBottom: 16, padding: 12, background: "var(--bg3)", borderRadius: 8, border: "1px solid var(--border)" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>{color} — images</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>{color} — images (upload multiple at once)</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {(form.color_images[color] || []).map((url, i) => (
                       <div key={i} style={{ position: "relative", width: 60, height: 72 }}>
@@ -202,8 +235,8 @@ export default function ListProductInner() {
                   </div>
                 </div>
               ))}
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }}
-                onChange={e => { if (e.target.files[0]) uploadImage(e.target.files[0], fileRef.current._color); e.target.value = ""; }} />
+              <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }}
+                onChange={e => { if (e.target.files && e.target.files.length > 0) uploadImage(Array.from(e.target.files), fileRef.current._color); e.target.value = ""; }} />
             </div>
           )}
 
@@ -211,10 +244,41 @@ export default function ListProductInner() {
             <div className="card card-pad">
               <div className="card-title">Fabric & attributes</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {[["fabric","Fabric","100% Cotton"],["pattern","Pattern","Floral"],["neck_type","Neck type","Round neck"]].map(([k, label, ph]) => (
-                  <div key={k}><div className="field-label">{label}</div><input className="field-input" value={form[k] || ""} onChange={e => set(k, e.target.value)} placeholder={ph} /></div>
-                ))}
-                <div><div className="field-label">Care instructions</div><textarea className="field-input" value={form.care_instructions || ""} onChange={e => set("care_instructions", e.target.value)} placeholder="Machine wash cold…" /></div>
+                <div>
+                  <div className="field-label">Fabric *</div>
+                  <select className="field-input" value={form.fabric || ""} onChange={e => set("fabric", e.target.value)} required>
+                    <option value="">Select fabric</option>
+                    {FABRICS.map(f => <option key={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div className="field-label">Pattern *</div>
+                  <select className="field-input" value={form.pattern || ""} onChange={e => set("pattern", e.target.value)} required>
+                    <option value="">Select pattern</option>
+                    {PATTERNS.map(p => <option key={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div className="field-label">Neck type *</div>
+                  <select className="field-input" value={form.neck_type || ""} onChange={e => set("neck_type", e.target.value)} required>
+                    <option value="">Select neck type</option>
+                    {NECK_TYPES.map(n => <option key={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <div className="field-label">Care instructions</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {CARE_INSTRUCTIONS.map(care => (
+                      <label key={care} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13 }}>
+                        <input type="checkbox" checked={(form.care_instructions || []).includes(care)} onChange={e => {
+                          const current = form.care_instructions || [];
+                          set("care_instructions", e.target.checked ? [...current, care] : current.filter(c => c !== care));
+                        }} />
+                        {care}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
