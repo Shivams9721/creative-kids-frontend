@@ -1,7 +1,40 @@
+"use client";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "";
+
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState(null); // null | 'loading' | 'success' | 'error'
+  const [msg, setMsg] = useState("");
+
+  const subscribe = async (e) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) { setStatus("error"); setMsg("Please enter a valid email"); return; }
+    setStatus("loading");
+    try {
+      const res = await fetch(`${API}/api/newsletter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus("success");
+        setMsg(data.message || "You're subscribed!");
+        setEmail("");
+        setTimeout(() => { setStatus(null); setMsg(""); }, 5000);
+      } else {
+        setStatus("error");
+        setMsg(data.error || "Something went wrong");
+      }
+    } catch {
+      setStatus("error");
+      setMsg("Connection error. Try again.");
+    }
+  };
   return (
     <footer className="w-full bg-white border-t border-black/10 py-16 md:py-24 mt-auto">
       <div className="max-w-[1600px] mx-auto px-6 md:px-12">
@@ -14,12 +47,19 @@ export default function Footer() {
             <p className="text-[11px] tracking-wider text-black/60 uppercase mb-8 leading-loose max-w-sm">
               Discover new arrivals, exclusive offers, and the latest from Creative Kids.
             </p>
-            <form className="flex items-center justify-between border-b border-black pb-2 group">
-              <input type="email" placeholder="EMAIL ADDRESS" className="w-full bg-transparent text-[11px] tracking-widest uppercase outline-none text-black placeholder:text-black/40" />
-              <button type="button" className="pl-4 hover:opacity-50 transition-opacity">
-                <ArrowRight strokeWidth={1} size={18} className="text-black group-hover:translate-x-1 transition-transform" />
+            <form onSubmit={subscribe} className="flex items-center justify-between border-b border-black pb-2 group">
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="EMAIL ADDRESS" required className="w-full bg-transparent text-[11px] tracking-widest uppercase outline-none text-black placeholder:text-black/40" />
+              <button type="submit" disabled={status === "loading"} className="pl-4 hover:opacity-50 transition-opacity">
+                {status === "loading"
+                  ? <span className="text-[10px] tracking-widest text-black/40">...</span>
+                  : <ArrowRight strokeWidth={1} size={18} className="text-black group-hover:translate-x-1 transition-transform" />}
               </button>
             </form>
+            {msg && (
+              <p className={`text-[10px] tracking-widest uppercase mt-3 ${status === "success" ? "text-green-600" : "text-red-500"}`}>
+                {msg}
+              </p>
+            )}
           </div>
 
           {/* MIDDLE: Legal Links */}
