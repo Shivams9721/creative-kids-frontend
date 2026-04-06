@@ -109,9 +109,18 @@ export default function ListProductInner() {
     setSaving(true);
     try {
       const payload = { ...form, is_draft: isDraft, variants: buildVariants(), image_urls: Object.values(form.color_images).flat(), primary_category: form.main_category, cross_listed_categories: [] };
-      if (editId) await safeFetch(`/api/products/${editId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      else await safeFetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      router.push("/admin/products");
+      let result;
+      if (editId) {
+        result = await safeFetch(`/api/products/${editId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      } else {
+        result = await safeFetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      }
+      // Tag the session so the detail page shows the success banner
+      const targetId = result?.id || editId;
+      if (targetId && typeof window !== "undefined") {
+        sessionStorage.setItem("freshPublish", String(targetId));
+      }
+      router.push(targetId ? `/admin/products/${targetId}` : "/admin/products");
     } catch (e) { alert(e.message || "Failed to save product"); }
     finally { setSaving(false); }
   };
@@ -329,14 +338,60 @@ export default function ListProductInner() {
 
           {step === 5 && (
             <div className="card card-pad">
-              <div className="card-title">Ready to publish</div>
-              <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 20 }}>Review your product before publishing. You can save as draft and publish later.</div>
+              <div className="card-title">Review before publishing</div>
+              <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 16 }}>Check all details carefully. Once published, the product will be live on the storefront.</div>
+
+              {/* Quick visual check: show first image per color */}
+              {form.colors.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Images per colour</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                    {form.colors.map((color) => {
+                      const imgs = form.color_images[color] || [];
+                      return (
+                        <div key={color} style={{ textAlign: "center" }}>
+                          <div style={{ width: 64, height: 80, borderRadius: 8, overflow: "hidden", border: "1px solid var(--border)", background: "var(--bg3)", marginBottom: 5 }}>
+                            {imgs[0]
+                              ? <img src={imgs[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📷</div>
+                            }
+                          </div>
+                          <div style={{ fontSize: 9, color: "var(--text2)" }}>{color}</div>
+                          <div style={{ fontSize: 9, color: "var(--text3)" }}>{imgs.length} img{imgs.length !== 1 ? "s" : ""}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Summary rows */}
+              <div style={{ display: "grid", gap: 0, marginBottom: 16 }}>
+                {[
+                  ["Title", form.title || "—"],
+                  ["Price", form.price ? `₹${form.price} (MRP ₹${form.mrp})` : "—"],
+                  ["Base SKU", form.sku || "—"],
+                  ["Category", `${form.main_category} › ${form.item_type || "—"}`],
+                  ["Sizes", form.sizes.length ? `${form.sizes.length} selected: ${form.sizes.slice(0, 4).join(", ")}${form.sizes.length > 4 ? "…" : ""}` : "None"],
+                  ["Colours", form.colors.length ? form.colors.join(", ") : "None"],
+                  ["Fabric", form.fabric || "—"],
+                  ["Pattern", form.pattern || "—"],
+                  ["Homepage", form.show_on_homepage ? `Yes · ${(form.homepage_section || "").replace(/_/g, " ")}` : "No"],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: 12 }}>
+                    <span style={{ color: "var(--text3)" }}>{k}</span>
+                    <span style={{ fontWeight: 500, textAlign: "right", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+
               <div style={{ display: "flex", gap: 10 }}>
                 <button className="btn btn-sm" style={{ flex: 1 }} disabled={saving} onClick={() => handleSubmit(true)}>{saving ? "Saving…" : "Save as draft"}</button>
                 <button className="btn btn-accent btn-sm" style={{ flex: 1 }} disabled={saving} onClick={() => handleSubmit(false)}>{saving ? "Publishing…" : editId ? "Update product" : "Publish product"}</button>
               </div>
             </div>
           )}
+
 
           <div style={{ display: "flex", gap: 10 }}>
             {step > 0 && <button className="btn btn-sm" style={{ flex: 1 }} onClick={() => setStep(s => s - 1)}>← Back</button>}
