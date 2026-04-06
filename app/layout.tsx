@@ -21,7 +21,7 @@ export const metadata = {
     type: 'website',
   },
   icons: {
-    icon: '/images/Creative-Kid\'s---Logo (1).png',
+    icon: '/images/Creative-Kid\'s--Logo.jpg.jpeg',
   },
 }
 
