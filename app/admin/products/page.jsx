@@ -184,14 +184,3 @@ export default function AdminProducts() {
     </div>
   );
 }
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
-}
