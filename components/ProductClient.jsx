@@ -12,6 +12,7 @@ import { csrfHeaders } from "@/lib/csrf";
 
 import { safeFetch } from "@/lib/safeFetch";
 import { recordView } from "@/components/RecentlyViewed";
+import { cleanTitle } from "@/lib/cleanTitle";
 import { useSettings } from "@/context/SettingsContext";
 
 
@@ -354,7 +355,7 @@ export default function ProductClient({ product, relatedProducts }) {
             
             <div className="mb-8">
               <p className="text-[10px] tracking-widest uppercase text-black/50 mb-3">{product.sub_category || product.category}</p>
-              <h1 className="text-3xl md:text-4xl font-light text-black mb-4">{product.title}</h1>
+              <h1 className="text-3xl md:text-4xl font-light text-black mb-4">{cleanTitle(product.title)}</h1>
               
               {/* PRICE & DISCOUNT LOGIC */}
               <div className="flex items-center gap-4">

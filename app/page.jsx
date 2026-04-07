@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
+import { cleanTitle } from "@/lib/cleanTitle";
 
 const HERO_SLIDE = { image: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", href: "/shop" };
 
@@ -32,7 +33,7 @@ function GridCard({ product, wishlist, toggleWishlist }) {
         </Link>
       </div>
       <Link href={`/product/${product.id}`} className="flex flex-col px-1">
-        <h3 className="text-[13px] text-black mb-1">{product.title}</h3>
+        <h3 className="text-[13px] text-black mb-1 truncate">{cleanTitle(product.title)}</h3>
         <div className="flex items-center gap-2 mt-1">
           <p className="text-[12px] text-black font-medium">₹{product.price ? parseFloat(product.price).toFixed(2) : "0.00"}</p>
           {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
@@ -228,7 +229,7 @@ export default function Home() {
                           </Link>
                         </div>
                         <Link href={`/product/${product.id}`} className="flex flex-col px-1">
-                          <h3 className="text-[12px] text-black mb-0.5 truncate">{product.title}</h3>
+                          <h3 className="text-[12px] text-black mb-0.5 truncate">{cleanTitle(product.title)}</h3>
                           <div className="flex items-center gap-2">
                             <p className="text-[12px] text-black font-medium">₹{product.price ? parseFloat(product.price).toFixed(2) : "0.00"}</p>
                             {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (

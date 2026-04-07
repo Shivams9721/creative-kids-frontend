@@ -38,6 +38,7 @@ const PATTERNS = PRODUCT_ATTRIBUTES.PATTERNS;
 const NECK_TYPES = PRODUCT_ATTRIBUTES.NECK_TYPES;
 
 import { safeFetch } from "@/lib/safeFetch";
+import { cleanTitle } from "@/lib/cleanTitle";
 
 
 
@@ -472,7 +473,7 @@ export default function ShopClient({ initialProducts }) {
                       )}
                     </div>
                     <div className="px-5 flex flex-col">
-                      <h4 className="text-[12px] font-medium text-black mb-1.5 capitalize truncate">{product.title}</h4>
+                      <h4 className="text-[12px] font-medium text-black mb-1.5 capitalize truncate">{cleanTitle(product.title)}</h4>
                       <div className="flex items-center gap-2">
                         <span className={`text-[12px] font-bold ${product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? 'text-[#D32F2F]' : 'text-black'}`}>
                           ₹{parseFloat(product.price).toFixed(2)}
