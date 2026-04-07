@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Instagram, Facebook } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -91,6 +91,14 @@ export default function Footer() {
             <a href="tel:+911244130381" className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity">
               Call: +911244130381
             </a>
+            <div className="flex gap-4 mt-6 md:justify-end">
+              <a href="https://www.instagram.com/creativekids.co.in?igsh=MW4yOXZ3MXF6ZTUzNQ==" target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity text-black">
+                <Instagram strokeWidth={1.5} size={20} />
+              </a>
+              <a href="https://www.facebook.com/profile.php?id=61564971024317&mibextid=rS40aB7S9Ucbxw6v" target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity text-black">
+                <Facebook strokeWidth={1.5} size={20} />
+              </a>
+            </div>
           </div>
 
         </div>
