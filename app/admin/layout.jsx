@@ -20,6 +20,7 @@ const NAV = [
     { id: "returns", label: "Returns", href: "/admin/returns", badge: null },
     { id: "coupons", label: "Coupons", href: "/admin/coupons", badge: null },
     { id: "customers", label: "Customers", href: "/admin/customers", badge: null },
+    { id: "contacts", label: "Contact Requests", href: "/admin/contacts", badge: null },
   ]},
   { group: "System", items: [
     { id: "settings", label: "Settings", href: "/admin/settings", badge: null },
