@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, Menu, User, X, Plus, Minus, ChevronDown, Play, Heart } from "lucide-react";
+import { Search, ShoppingBag, Menu, User, X, Plus, Minus, ChevronDown, Play, Heart, Instagram, Facebook } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
@@ -308,6 +308,12 @@ export default function Navbar() {
               <Search size={18} />
               <span className="text-[11px] font-bold tracking-widest uppercase">Search</span>
             </button>
+            <a href="https://www.instagram.com/creativekids.co.in?igsh=MW4yOXZ3MXF6ZTUzNQ==" target="_blank" rel="noopener noreferrer" className="hidden lg:block hover:opacity-40 transition-opacity duration-300 ease-in-out">
+              <Instagram strokeWidth={1.5} size={20} />
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61564971024317&mibextid=rS40aB7S9Ucbxw6v" target="_blank" rel="noopener noreferrer" className="hidden lg:block hover:opacity-40 transition-opacity duration-300 ease-in-out">
+              <Facebook strokeWidth={1.5} size={20} />
+            </a>
             <a href="tel:+911244130381" className="hidden xl:block text-[12px] font-medium tracking-widest uppercase hover:opacity-40 transition-opacity duration-300 ease-in-out">
               Call Us
             </a>
@@ -500,10 +506,19 @@ export default function Navbar() {
                 </p>
                 <a
                   href="tel:+911244130381"
-                  className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity mt-4 inline-block"
+                  className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity mt-2 inline-block"
                 >
                   Call: +911244130381
                 </a>
+                
+                <div className="flex gap-4 mt-6">
+                  <a href="https://www.instagram.com/creativekids.co.in?igsh=MW4yOXZ3MXF6ZTUzNQ==" target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity text-black">
+                    <Instagram strokeWidth={1.5} size={20} />
+                  </a>
+                  <a href="https://www.facebook.com/profile.php?id=61564971024317&mibextid=rS40aB7S9Ucbxw6v" target="_blank" rel="noopener noreferrer" className="hover:opacity-50 transition-opacity text-black">
+                    <Facebook strokeWidth={1.5} size={20} />
+                  </a>
+                </div>
               </div>
             </motion.div>
           </>
