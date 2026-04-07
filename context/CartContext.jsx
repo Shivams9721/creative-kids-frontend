@@ -75,11 +75,30 @@ export function CartProvider({ children }) {
     setCart([]);
   };
 
+  // Buy Now — replace cart with single item, don't open drawer
+  const buyNow = (product) => {
+    const compositeId = `${product.id}-${product.selectedColor || 'Default'}-${product.selectedSize || 'Default'}`;
+    const slimProduct = {
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      mrp: product.mrp,
+      image: product.image,
+      selectedColor: product.selectedColor || 'Default',
+      selectedSize: product.selectedSize || 'Default',
+      sku: product.sku,
+      baseSku: product.baseSku,
+      quantity: product.quantity || 1,
+      cartId: compositeId,
+    };
+    setCart([slimProduct]);
+  };
+
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
   const cartTotal = cart.reduce((total, item) => total + parseFloat(item.price) * (item.quantity || 1), 0);
 
   return (
-    <CartContext.Provider value={{ cart, setCart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal, isCartOpen, setIsCartOpen }}>
+    <CartContext.Provider value={{ cart, setCart, addToCart, removeFromCart, updateQuantity, clearCart, buyNow, cartCount, cartTotal, isCartOpen, setIsCartOpen }}>
       {children}
     </CartContext.Provider>
   );

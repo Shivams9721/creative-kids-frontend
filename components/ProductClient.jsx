@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
+import { Zap } from "lucide-react";
 import { ShoppingBag, ChevronDown, ChevronUp, Heart, Share2, Truck, ShieldCheck, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { csrfHeaders } from "@/lib/csrf";
@@ -15,8 +17,9 @@ import { useSettings } from "@/context/SettingsContext";
 
 
 export default function ProductClient({ product, relatedProducts }) {
-  const { addToCart } = useCart();
+  const { addToCart, buyNow } = useCart();
   const { reviews_enabled } = useSettings();
+  const router = useRouter();
   
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
@@ -127,16 +130,15 @@ export default function ProductClient({ product, relatedProducts }) {
     } catch (error) {}
   };
 
-  const handleAddToCart = () => {
-    if (!product) return;
-    
+  const buildCartItem = () => {
     const matchedVariant = (product.parsedVariants || []).find(v =>
       v.color === (selectedColor || "Default") && v.size === (selectedSize || "Default")
     );
-    const cartItem = {
+    return {
       id: product.id,
       title: product.title,
       price: product.price,
+      mrp: product.mrp,
       image: mainImage,
       selectedColor: selectedColor || "Default",
       selectedSize: selectedSize || "Default",
@@ -144,8 +146,28 @@ export default function ProductClient({ product, relatedProducts }) {
       baseSku: product.sku || null,
       quantity: 1
     };
-    
-    addToCart(cartItem);
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    addToCart(buildCartItem());
+  };
+
+  const handleBuyNow = () => {
+    if (!product || isOutOfStock) return;
+    buyNow(buildCartItem());
+    router.push('/checkout');
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const text = `Check out ${product.title} on Creative Kids!`;
+    if (navigator.share) {
+      try { await navigator.share({ title: product.title, text, url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    }
   };
 
   const handleColorSelect = (color) => {
@@ -529,28 +551,39 @@ export default function ProductClient({ product, relatedProducts }) {
               </div>
             )}
 
-            {/* ADD TO CART BUTTON */}
-            <div className="flex flex-col gap-4 mb-10">
+            {/* BUY NOW + ADD TO CART BUTTONS */}
+            <div className="flex flex-col gap-3 mb-10">
               {isOutOfStock && (
                 <div className="w-full py-3 text-center bg-red-50 border border-red-100 rounded-full text-[11px] font-bold tracking-widest uppercase text-red-500">
                   Out of Stock
                 </div>
               )}
               <button
-                onClick={handleAddToCart}
+                onClick={handleBuyNow}
                 disabled={isOutOfStock}
                 className="w-full bg-black text-white h-[54px] flex items-center justify-center gap-3 text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors shadow-xl rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <ShoppingBag size={18} strokeWidth={1.5} />
-                {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
+                <Zap size={18} strokeWidth={1.5} />
+                {isOutOfStock ? 'Sold Out' : 'Buy Now'}
               </button>
-              <div className="flex items-center justify-center gap-8 py-4 border border-black/5 rounded-lg bg-[#fafafa]">
+              <button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+                className="w-full border-2 border-black text-black h-[54px] flex items-center justify-center gap-3 text-[12px] font-bold tracking-widest uppercase hover:bg-black/5 transition-colors rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <ShoppingBag size={18} strokeWidth={1.5} />
+                Add to Cart
+              </button>
+              <div className="flex items-center justify-center gap-6 py-4 border border-black/5 rounded-lg bg-[#fafafa]">
                 <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-black/70">
                   <Truck size={16} strokeWidth={1.5} /> Free Shipping
                 </div>
                 <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-black/70">
                   <ShieldCheck size={16} strokeWidth={1.5} /> Easy Returns
                 </div>
+                <button onClick={handleShare} className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-black/70 hover:text-black transition-colors">
+                  <Share2 size={16} strokeWidth={1.5} /> Share
+                </button>
               </div>
             </div>
 
@@ -816,13 +849,20 @@ export default function ProductClient({ product, relatedProducts }) {
             </button>
           ))}
         </div>
-        {/* Add to cart */}
+        {/* Buy Now + Add to cart */}
         <button
-          onClick={handleAddToCart}
+          onClick={handleBuyNow}
           disabled={isOutOfStock}
           className="flex-shrink-0 bg-black text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-widest uppercase disabled:opacity-40"
         >
-          {isOutOfStock ? 'Sold Out' : 'Add to Cart'}
+          {isOutOfStock ? 'Sold Out' : 'Buy Now'}
+        </button>
+        <button
+          onClick={handleAddToCart}
+          disabled={isOutOfStock}
+          className="flex-shrink-0 border-2 border-black text-black px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase disabled:opacity-40"
+        >
+          <ShoppingBag size={16} strokeWidth={1.5} />
         </button>
       </div>
       {/* Spacer so content isn't hidden behind sticky bar on mobile */}

@@ -66,6 +66,8 @@ export default function Footer() {
           <div className="w-full md:w-auto flex flex-col gap-4">
             <h3 className="text-[12px] font-bold tracking-widest uppercase text-black mb-2">Legal</h3>
             {[
+              { label: "Track My Order", href: "/track-order" },
+              { label: "My Wishlist", href: "/wishlist" },
               { label: "Terms & Conditions", href: "/terms" },
               { label: "Privacy Policy", href: "/privacy" },
               { label: "Shipping Policy", href: "/shipping-policy" },

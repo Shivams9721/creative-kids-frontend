@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, Menu, User, X, Plus, Minus, ChevronDown, Play } from "lucide-react";
+import { Search, ShoppingBag, Menu, User, X, Plus, Minus, ChevronDown, Play, Heart } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
@@ -312,8 +312,12 @@ export default function Navbar() {
               Call Us
             </a>
 
-            <Link href={isLoggedIn ? "/profile" : "/login"} className="hidden md:block hover:opacity-40 transition-opacity duration-300 ease-in-out">
-              <User strokeWidth={1.5} size={22} className={isLoggedIn ? "text-green-600 hidden sm:block" : "hidden sm:block"} />
+            <Link href={isLoggedIn ? "/profile" : "/login"} className="hover:opacity-40 transition-opacity duration-300 ease-in-out">
+              <User strokeWidth={1.5} size={22} className={isLoggedIn ? "text-green-600" : ""} />
+            </Link>
+
+            <Link href="/wishlist" className="hover:opacity-40 transition-opacity duration-300 ease-in-out hidden sm:block">
+              <Heart strokeWidth={1.5} size={20} />
             </Link>
 
             <button
