@@ -2,16 +2,35 @@
 
 import { useState } from "react";
 import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { safeFetch } from "@/lib/safeFetch";
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Opens default mail client with pre-filled content
-    window.location.href = `mailto:support@creativekids.co.in?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`)}`;
-    setSubmitted(true);
+    setLoading(true);
+    setError("");
+    try {
+      const res = await safeFetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setError(data.error || "Failed to send message. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,8 +95,8 @@ export default function ContactPage() {
           <div>
             {submitted ? (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-10 text-center">
-                <h3 className="text-xl font-light text-green-800 mb-2">Message Sent!</h3>
-                <p className="text-[13px] text-green-700">Your email client should have opened. We'll get back to you within 24 hours.</p>
+                <h3 className="text-xl font-light text-green-800 mb-2">Message Received!</h3>
+                <p className="text-[13px] text-green-700">Thank you for reaching out. We'll get back to you within 24 hours.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -103,9 +122,10 @@ export default function ContactPage() {
                   <textarea required rows={5} value={form.message} onChange={e => setForm({...form, message: e.target.value})}
                     className="border border-black/20 p-3.5 rounded-xl text-[14px] outline-none focus:border-black transition-colors resize-none" placeholder="Describe your issue or question..." />
                 </div>
-                <button type="submit" className="w-full bg-black text-white py-4 rounded-full text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors">
-                  Send Message
+                <button type="submit" disabled={loading} className="w-full bg-black text-white py-4 rounded-full text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors disabled:opacity-50">
+                  {loading ? 'Sending...' : 'Send Message'}
                 </button>
+                {error && <p className="text-[12px] text-red-500 text-center">{error}</p>}
               </form>
             )}
           </div>
