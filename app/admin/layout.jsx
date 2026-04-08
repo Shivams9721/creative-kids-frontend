@@ -8,6 +8,7 @@ const NAV = [
   { group: "Overview", items: [
     { id: "dashboard", label: "Dashboard", href: "/admin", badge: null },
     { id: "analytics", label: "Analytics", href: "/admin/analytics", badge: null },
+    { id: "homepage", label: "Homepage Editor", href: "/admin/homepage", badge: "LIVE" },
   ]},
   { group: "Catalogue", items: [
     { id: "list-product", label: "List product", href: "/admin/list-product", badge: "NEW" },

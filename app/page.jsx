@@ -8,7 +8,13 @@ import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
 
-const HERO_SLIDE = { image: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", href: "/shop" };
+const DEFAULT_HERO = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
+const DEFAULT_CATEGORIES = [
+  { label: "Dress", targetUrl: "/shop/kids-girl/dresses", imageUrl: "/images/Dress.png" },
+  { label: "Shorts", targetUrl: "/shop/kids-girl/shorts-skirts-skorts", imageUrl: "/images/shorts.jpg" },
+  { label: "Infants", targetUrl: "/shop/baby-boy/onesies-rompers", imageUrl: "/images/infant.png" },
+  { label: "Clothing Sets", targetUrl: "/shop/baby-girl/clothing-sets", imageUrl: "/images/clothing set.png" },
+];
 
 // Defined outside Home so React never remounts cards on wishlist state changes
 function GridCard({ product, wishlist, toggleWishlist }) {
@@ -52,6 +58,9 @@ export default function Home() {
   const [girlsProducts, setGirlsProducts] = useState([null, null, null, null]);
   const [bestsellerProducts, setBestsellerProducts] = useState([null, null, null, null]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [heroSlide, setHeroSlide] = useState(DEFAULT_HERO);
+  const [categoryItems, setCategoryItems] = useState(DEFAULT_CATEGORIES);
+  const [sectionMeta, setSectionMeta] = useState({});
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(new Set());
 
@@ -86,16 +95,34 @@ export default function Home() {
   };
 
   useEffect(() => {
-    safeFetch(`/api/homepage`)
+    safeFetch(`/api/homepage-v2`)
       .then(r => r.json())
       .then(data => {
         const parse = (arr) => (arr || []).map(p => ({
           ...p,
           image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })()
         }));
-        setGirlsProducts(parse(data.newArrivals) || [null, null, null, null]);
-        setBestsellerProducts(parse(data.bestsellers) || [null, null, null, null]);
-        setFeaturedProducts(parse(data.featured) || []);
+        const productMap = data.products || {};
+        setGirlsProducts(parse(productMap.girls_new_arrivals || data.newArrivals) || [null, null, null, null]);
+        setBestsellerProducts(parse(productMap.season_bestsellers || data.bestsellers) || [null, null, null, null]);
+        setFeaturedProducts(parse(productMap.featured_collection || data.featured) || []);
+        if (data.hero) {
+          setHeroSlide({
+            imageUrl: data.hero.imageUrl || DEFAULT_HERO.imageUrl,
+            tag: data.hero.tag || DEFAULT_HERO.tag,
+            title: data.hero.title || DEFAULT_HERO.title,
+            ctaHref: data.hero.ctaHref || DEFAULT_HERO.ctaHref,
+            ctaLabel: data.hero.ctaLabel || DEFAULT_HERO.ctaLabel,
+          });
+        }
+        if (Array.isArray(data.categoryItems) && data.categoryItems.length > 0) {
+          setCategoryItems(data.categoryItems);
+        }
+        if (Array.isArray(data.sections)) {
+          const map = {};
+          data.sections.forEach((s) => { map[s.key] = s; });
+          setSectionMeta(map);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -113,52 +140,45 @@ export default function Home() {
     }
   };
 
+  const isEnabled = (key) => sectionMeta[key]?.enabled !== false;
+
   return (
     <main className="min-h-screen bg-white">
       {/* 1. HERO BANNER — single static */}
+      {isEnabled("hero_banner") && (
       <section className="relative w-full h-[85vh] md:h-screen flex items-end justify-center overflow-hidden pb-16 md:pb-24">
-        <Image src={HERO_SLIDE.image} alt={HERO_SLIDE.title} fill priority className="object-cover object-center" sizes="100vw" />
+        <Image src={heroSlide.imageUrl} alt={heroSlide.title} fill priority className="object-cover object-center" sizes="100vw" />
         <div className="absolute inset-0 bg-black/30" />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="relative z-10 flex flex-col items-center text-center px-4 text-white">
-          <span className="text-[10px] tracking-[0.2em] font-medium uppercase text-white/80 mb-2">{HERO_SLIDE.tag}</span>
+          <span className="text-[10px] tracking-[0.2em] font-medium uppercase text-white/80 mb-2">{heroSlide.tag}</span>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-medium tracking-wide uppercase mb-4 max-w-4xl leading-tight" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>
-            {HERO_SLIDE.title}
+            {heroSlide.title}
           </h1>
-          <Link href={HERO_SLIDE.href} className="text-[11px] font-bold tracking-[0.15em] uppercase hover:text-white/70 transition-colors">Explore Collection</Link>
+          <Link href={heroSlide.ctaHref} className="text-[11px] font-bold tracking-[0.15em] uppercase hover:text-white/70 transition-colors">{heroSlide.ctaLabel}</Link>
         </motion.div>
       </section>
+      )}
 
       {/* 2. SHOP BY CATEGORY */}
+      {isEnabled("shop_by_category") && (
       <section className="py-10 md:py-12 bg-white border-b border-black/5">
         <div className="max-w-[1600px] mx-auto">
           <div className="flex flex-col items-center mb-6 px-4 md:px-8">
-            <span className="text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">Discover</span>
-            <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>Shop by Category</h2>
+            <span className="text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.shop_by_category?.subtitle || "Discover"}</span>
+            <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.shop_by_category?.title || "Shop by Category"}</h2>
           </div>
           <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
-            <Link href="/shop/kids-girl/dresses" className="flex-none w-[70vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <Image src="/images/Dress.png" alt="Girls Dresses" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 70vw, 25vw" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-6 inset-x-0 text-center"><h3 className="text-white text-[13px] tracking-wide uppercase font-medium">Dress</h3></div>
-            </Link>
-            <Link href="/shop/kids-girl/shorts-skirts-skorts" className="flex-none w-[70vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <Image src="/images/shorts.jpg" alt="Shorts" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 70vw, 25vw" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-6 inset-x-0 text-center"><h3 className="text-white text-[13px] tracking-wide uppercase font-medium">Shorts</h3></div>
-            </Link>
-            <Link href="/shop/baby-boy/onesies-rompers" className="flex-none w-[70vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <Image src="/images/infant.png" alt="Infants" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 70vw, 25vw" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-6 inset-x-0 text-center"><h3 className="text-white text-[13px] tracking-wide uppercase font-medium">Infants</h3></div>
-            </Link>
-            <Link href="/shop/baby-girl/clothing-sets" className="flex-none w-[70vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-              <Image src="/images/clothing set.png" alt="Clothing Sets" fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 70vw, 25vw" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-6 inset-x-0 text-center"><h3 className="text-white text-[13px] tracking-wide uppercase font-medium">Clothing Sets</h3></div>
-            </Link>
+            {categoryItems.map((item, index) => (
+              <Link key={`${item.targetUrl}-${index}`} href={item.targetUrl || "/shop"} className="flex-none w-[70vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
+                <Image src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 70vw, 25vw" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 inset-x-0 text-center"><h3 className="text-white text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
+      )}
 
       {loading ? (
         <div className="w-full h-40 flex justify-center items-center">
@@ -167,11 +187,12 @@ export default function Home() {
       ) : (
         <>
           {/* 3. GIRLS NEW ARRIVALS */}
+          {isEnabled("girls_new_arrivals") && (
           <section className="py-10 md:py-12 bg-white border-b border-black/5">
             <div className="max-w-[1600px] mx-auto">
               <div className="flex flex-col items-center mb-6 px-4 md:px-8">
-                <span className="text-[9px] tracking-[0.15em] uppercase text-[#E2889D] mb-1">Girls</span>
-                <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>New Arrivals</h2>
+                <span className="text-[9px] tracking-[0.15em] uppercase text-[#E2889D] mb-1">{sectionMeta.girls_new_arrivals?.subtitle || "Girls"}</span>
+                <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.girls_new_arrivals?.title || "New Arrivals"}</h2>
               </div>
               <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
                 {girlsProducts.map((product, index) => (<GridCard key={`girl-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
@@ -181,13 +202,15 @@ export default function Home() {
               </div>
             </div>
           </section>
+          )}
 
           {/* 4. SEASON BESTSELLERS */}
+          {isEnabled("season_bestsellers") && (
           <section className="py-10 md:py-12 bg-white border-b border-black/5">
             <div className="max-w-[1600px] mx-auto">
               <div className="flex flex-col items-center mb-6 px-4 md:px-8">
-                <span className="text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">Favorites</span>
-                <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>Season Bestsellers</h2>
+                <span className="text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.season_bestsellers?.subtitle || "Favorites"}</span>
+                <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.season_bestsellers?.title || "Season Bestsellers"}</h2>
               </div>
               <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
                 {bestsellerProducts.map((product, index) => (<GridCard key={`best-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
@@ -197,13 +220,15 @@ export default function Home() {
               </div>
             </div>
           </section>
+          )}
 
           {/* 5. FEATURED COLLECTION */}
+          {isEnabled("featured_collection") && (
           <section className="py-10 md:py-12 bg-white border-b border-black/5">
             <div className="w-full relative">
               <div className="flex flex-col items-center mb-6 px-4 md:px-8">
-                <span className="text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">Trending Now</span>
-                <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>Featured Collection</h2>
+                <span className="text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.featured_collection?.subtitle || "Trending Now"}</span>
+                <h2 className="text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.featured_collection?.title || "Featured Collection"}</h2>
               </div>
               {featuredProducts.length === 0 ? (
                 <div className="w-full p-8 flex justify-center items-center">
@@ -247,6 +272,7 @@ export default function Home() {
               </div>
             </div>
           </section>
+          )}
         </>
       )}
     </main>
