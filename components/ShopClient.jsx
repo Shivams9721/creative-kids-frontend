@@ -45,7 +45,7 @@ import { cleanTitle } from "@/lib/cleanTitle";
 // Normalise string for robust slug matching
 const normalise = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-export default function ShopClient({ initialProducts }) {
+export default function ShopClient({ initialProducts, seoIntro = "" }) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -189,6 +189,11 @@ export default function ShopClient({ initialProducts }) {
                 {slug0 !== "offers" && slug0 !== "new" && <ChevronDown size={20} strokeWidth={1} />}
               </h1>
               <p className="text-[10px] tracking-widest uppercase text-black/50 mt-2">{products.length} Results</p>
+              {seoIntro ? (
+                <p className="text-[12px] text-black/65 mt-4 max-w-3xl normal-case tracking-normal leading-relaxed">
+                  {seoIntro}
+                </p>
+              ) : null}
             </div>
 
             <div className="relative group hidden md:block">

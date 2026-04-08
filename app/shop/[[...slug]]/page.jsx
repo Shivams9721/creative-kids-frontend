@@ -57,6 +57,21 @@ const SLUG_LABELS = {
   'offers':    'Special Offers',
 };
 
+const SEO_INTRO_COPY = {
+  "shop": "Discover premium kids clothing online in India at Creative Kids. Explore curated baby, toddler, and kids collections with soft fabrics, modern fits, and everyday comfort.",
+  "new": "Shop new arrivals in kids wear with fresh seasonal styles for baby boys, baby girls, boys, and girls. Find premium quality outfits designed for comfort and movement.",
+  "offers": "Browse special offers on premium children clothing and shop stylish essentials at better prices. Limited-time deals across dresses, co-ords, tops, and everyday wear.",
+  "baby": "Explore baby clothing online including rompers, onesies, and comfortable sets made with gentle fabrics suitable for everyday wear and special moments.",
+  "baby-boy": "Shop baby boy clothing online with soft rompers, onesies, tees, and coordinated sets crafted for comfort, easy movement, and all-day wear.",
+  "baby-girl": "Shop baby girl clothing online with stylish dresses, coordinated sets, and soft essentials made for comfort, easy care, and playful everyday looks.",
+  "kids-boy": "Shop boys clothing online in India including shirts, t-shirts, joggers, shorts, and co-ord styles designed for active days and smart casual looks.",
+  "kids-girl": "Shop girls clothing online in India including dresses, tops, skirts, shorts, and co-ords tailored for comfort, playful style, and easy everyday wear.",
+  "kids-girl/dresses": "Discover girls dresses online in premium fabrics with comfortable fits and modern silhouettes, ideal for daily wear, parties, and festive occasions.",
+  "kids-girl/shorts-skirts-skorts": "Shop girls shorts, skirts, and skorts online with breathable fabrics and practical fits for active play, outings, and everyday styling.",
+  "baby-boy/onesies-rompers": "Explore baby boy onesies and rompers online made with soft fabrics and easy closures for quick changes, comfort, and all-day movement.",
+  "baby-girl/clothing-sets": "Shop baby girl clothing sets online with coordinated tops and bottoms, crafted in premium fabrics for comfort and effortless everyday styling.",
+};
+
 async function getProducts(params, searchParams) {
   const slug = params.slug;
   const slugArray = Array.isArray(slug) ? slug : (slug ? [slug] : []);
@@ -113,21 +128,31 @@ export async function generateMetadata({ params }) {
 
   const catLabel = SLUG_LABELS[slug0] || 'Shop';
   const itemLabel = slug1 ? (SLUG_TO_ITEM_TYPE[slug1] || slug1.replace(/-/g, ' ')) : null;
+  const pathKey = slug1 ? `${slug0}/${slug1}` : (slug0 || "shop");
 
   const title = itemLabel
-    ? `Buy ${itemLabel} for ${catLabel} Online India — Creative Kids`
-    : `${catLabel} Clothing Online India — Creative Kids`;
+    ? `Buy ${itemLabel} for ${catLabel} Online India | Premium Kids Wear`
+    : `${catLabel} Clothing Online India | Premium Kids Wear`;
 
-  const description = itemLabel
+  const fallbackDescription = itemLabel
     ? `Shop premium ${itemLabel} for ${catLabel} at Creative Kids. Free shipping above ₹599. Easy returns.`
     : `Explore Creative Kids' ${catLabel} collection. Premium children's clothing in India. Free shipping above ₹599.`;
+  const description = SEO_INTRO_COPY[pathKey] || fallbackDescription;
 
   const url = `${SITE_URL}/shop${slugArray.length ? '/' + slugArray.join('/') : ''}`;
+  const keywords = [
+    "kids clothing online india",
+    "children clothing online",
+    "baby clothing india",
+    `${catLabel.toLowerCase()} clothing`,
+    itemLabel ? `${itemLabel.toLowerCase()} for kids` : "kids fashion",
+  ];
 
   return {
     title,
     description,
-    openGraph: { title, description, url, type: "website" },
+    keywords,
+    openGraph: { title, description, url, type: "website", siteName: "Creative Kids" },
     twitter: { card: "summary", title, description },
     alternates: { canonical: url },
   };
@@ -137,14 +162,37 @@ export default async function Shop({ params, searchParams }) {
   const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
   const initialProducts = await getProducts(resolvedParams, resolvedSearchParams);
+  const slugArray = Array.isArray(resolvedParams.slug) ? resolvedParams.slug : (resolvedParams.slug ? [resolvedParams.slug] : []);
+  const slug0 = slugArray[0] || "";
+  const slug1 = slugArray[1] || "";
+  const catLabel = SLUG_LABELS[slug0] || "Shop";
+  const itemLabel = slug1 ? (SLUG_TO_ITEM_TYPE[slug1] || slug1.replace(/-/g, " ")) : null;
+  const pathKey = slug1 ? `${slug0}/${slug1}` : (slug0 || "shop");
+  const seoIntro = SEO_INTRO_COPY[pathKey] || SEO_INTRO_COPY.shop;
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_URL}/shop` },
+      ...(slug0 ? [{ "@type": "ListItem", position: 3, name: catLabel, item: `${SITE_URL}/shop/${slug0}` }] : []),
+      ...(slug1 ? [{ "@type": "ListItem", position: 4, name: itemLabel || "Collection", item: `${SITE_URL}/shop/${slug0}/${slug1}` }] : []),
+    ],
+  };
 
   return (
-    <Suspense fallback={
-      <main className="min-h-screen bg-white flex justify-center items-center">
-        <span className="text-xs tracking-widest uppercase text-black animate-pulse">Curating Collection...</span>
-      </main>
-    }>
-      <ShopClient initialProducts={initialProducts} />
-    </Suspense>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <Suspense fallback={
+        <main className="min-h-screen bg-white flex justify-center items-center">
+          <span className="text-xs tracking-widest uppercase text-black animate-pulse">Curating Collection...</span>
+        </main>
+      }>
+        <ShopClient initialProducts={initialProducts} seoIntro={seoIntro} />
+      </Suspense>
+    </>
   );
 }

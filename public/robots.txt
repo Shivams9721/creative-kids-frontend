@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /admin/
-Disallow: /checkout
-Disallow: /profile
-
-Sitemap: https://www.creativekids.co.in/sitemap.xml
