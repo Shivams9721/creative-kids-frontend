@@ -120,6 +120,44 @@ export default function HomepageAdminPage() {
     ]);
   };
 
+  const addCategoryItem = (sectionId) => {
+    if (!sectionId) return;
+    const sectionItems = getItems(sectionId);
+    setItems((prev) => [
+      ...prev,
+      {
+        section_id: sectionId,
+        item_type: "category",
+        display_order: sectionItems.length + 1,
+        label: "New Category",
+        target_url: "/shop",
+        image_url: "",
+        settings_json: {},
+      },
+    ]);
+  };
+
+  const populateDefaultCategories = (sectionId) => {
+    if (!sectionId) return;
+    const defaultCats = [
+      { label: "Dress", targetUrl: "/shop/kids-girl/dresses", imageUrl: "/images/Dress.png" },
+      { label: "Shorts", targetUrl: "/shop/kids-girl/shorts-skirts-skorts", imageUrl: "/images/shorts.jpg" },
+      { label: "Infants", targetUrl: "/shop/baby-boy/onesies-rompers", imageUrl: "/images/infant.png" },
+      { label: "Clothing Sets", targetUrl: "/shop/baby-girl/clothing-sets", imageUrl: "/images/clothing set.png" }
+    ];
+    let offset = getItems(sectionId).length;
+    const newItems = defaultCats.map((c, i) => ({
+      section_id: sectionId,
+      item_type: "category",
+      display_order: offset + i + 1,
+      label: c.label,
+      target_url: c.targetUrl,
+      image_url: c.imageUrl,
+      settings_json: {},
+    }));
+    setItems((prev) => [...prev, ...newItems]);
+  };
+
   const removeItem = (target) => {
     const sectionItems = getItems(target.section_id);
     const filtered = items.filter((it) => !(it.id && target.id ? it.id === target.id : it.section_id === target.section_id && it.display_order === target.display_order));
@@ -330,15 +368,29 @@ export default function HomepageAdminPage() {
       </div>
 
       <div className="card card-pad" style={{ marginBottom: 16 }}>
-        <div className="card-title">Shop by Category</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div className="card-title" style={{ margin: 0 }}>Shop by Category</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <label style={{ fontSize: 12, marginRight: 8 }}>
+              <input type="checkbox" checked={categorySection?.is_enabled !== false} onChange={(e) => setSectionField(categorySection?.id, "is_enabled", e.target.checked)} /> Enabled
+            </label>
+            <button className="btn btn-sm" onClick={() => populateDefaultCategories(categorySection?.id)}>+ Load Default Categories</button>
+            <button className="btn btn-sm btn-accent" onClick={() => addCategoryItem(categorySection?.id)}>+ Add Category Slot</button>
+          </div>
+        </div>
+        {categoryItems.length === 0 && (
+          <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8, padding: 8, background: "var(--bg)", borderRadius: 6 }}>
+            No categories defined. The storefront will display the hardcoded default categories. Click "Load Default Categories" above to edit their images.
+          </div>
+        )}
         {categoryItems.map((item, idx) => (
-          <div key={`${item.id || "new"}-${idx}`} style={{ display: "grid", gridTemplateColumns: "2fr 2fr 2fr auto auto", gap: 8, marginBottom: 8 }}>
-            <input className="field-input" value={item.label || ""} onChange={(e) => updateItemField(item, "label", e.target.value)} placeholder="Label" />
-            <input className="field-input" value={item.target_url || ""} onChange={(e) => updateItemField(item, "target_url", e.target.value)} placeholder="Target URL" />
-            <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Image URL" />
-            <button className="btn btn-sm" onClick={() => uploadImage((url) => updateItemField(item, "image_url", url))}>Upload</button>
+          <div key={`${item.id || "new"}-${idx}`} style={{ display: "grid", gridTemplateColumns: "1.5fr 2fr 2fr auto auto auto", gap: 8, marginBottom: 8, alignItems: "center" }}>
+            <input className="field-input" value={item.label || ""} onChange={(e) => updateItemField(item, "label", e.target.value)} placeholder="Category Name (e.g. Shirts)" />
+            <input className="field-input" value={item.target_url || ""} onChange={(e) => updateItemField(item, "target_url", e.target.value)} placeholder="Target URL (/shop/kids-girl/shirts)" />
+            <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Image URL (Upload ->)" />
+            <button className="btn btn-sm" onClick={() => uploadImage((url) => updateItemField(item, "image_url", url))}>Upload Photo</button>
             <button className="btn btn-sm" onClick={() => removeItem(item)}>Remove</button>
-            <span style={{ fontSize: 11, color: "var(--text3)", alignSelf: "center" }}>#{item.display_order}</span>
+            <span style={{ fontSize: 11, color: "var(--text3)", alignSelf: "center", width: 24, textAlign: "center" }}>#{item.display_order}</span>
           </div>
         ))}
       </div>
