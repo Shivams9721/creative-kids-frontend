@@ -306,7 +306,7 @@ export default function Navbar() {
               className="flex items-center gap-2 hover:opacity-70 transition-opacity"
             >
               <Search size={18} />
-              <span className="text-[11px] font-bold tracking-widest uppercase">Search</span>
+              <span className="hidden md:inline text-[11px] font-bold tracking-widest uppercase">Search</span>
             </button>
             <a href="tel:+911244130381" className="hidden xl:block text-[12px] font-medium tracking-widest uppercase hover:opacity-40 transition-opacity duration-300 ease-in-out">
               Call Us

@@ -191,7 +191,8 @@ export default async function Shop({ params, searchParams }) {
           <span className="text-xs tracking-widest uppercase text-black animate-pulse">Curating Collection...</span>
         </main>
       }>
-        <ShopClient initialProducts={initialProducts} seoIntro={seoIntro} />
+        <div style={{ display: 'none' }}>{seoIntro}</div>
+        <ShopClient initialProducts={initialProducts} />
       </Suspense>
     </>
   );
