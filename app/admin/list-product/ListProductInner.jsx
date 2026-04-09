@@ -28,6 +28,7 @@ export default function ListProductInner() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [skuErrors, setSkuErrors] = useState({});
   const fileRef = useRef();
 
   const [form, setForm] = useState({
@@ -56,9 +57,29 @@ export default function ListProductInner() {
           sku_by_size_group: parse(p.sku_by_size_group, {}),          sku_by_color: parse(p.sku_by_color, {}),          show_on_homepage: p.show_on_homepage || false,
           homepage_section: p.homepage_section || "none",
           homepage_card_slot: p.homepage_card_slot || null,
+          variant_group_id: p.variant_group_id || null,
         }));
       }).catch(() => {});
   }, [editId]);
+
+  const checkSku = async (skuVal, key) => {
+    if (!skuVal) {
+      setSkuErrors(prev => ({ ...prev, [key]: null }));
+      return;
+    }
+    try {
+      let query = `?sku=${encodeURIComponent(skuVal)}`;
+      if (editId && form.variant_group_id) {
+        query += `&ignoreGroupId=${form.variant_group_id}`;
+      }
+      const res = await safeFetch(`/api/admin/products/check-sku${query}`);
+      if (res.exists) {
+        setSkuErrors(prev => ({ ...prev, [key]: 'This SKU is already used by another product!' }));
+      } else {
+        setSkuErrors(prev => ({ ...prev, [key]: null }));
+      }
+    } catch (err) { console.error("SKU check error", err) }
+  };
 
   const toggleSize = (s) => set("sizes", form.sizes.includes(s) ? form.sizes.filter(x => x !== s) : [...form.sizes, s]);
   const toggleColor = (c) => set("colors", form.colors.includes(c) ? form.colors.filter(x => x !== c) : [...form.colors, c]);
@@ -159,7 +180,14 @@ export default function ListProductInner() {
                   <div style={{ fontSize: 11, color: "var(--green)" }}>✓ {Math.round(((form.mrp - form.price) / form.mrp) * 100)}% discount</div>
                 )}
                 <div className="g2" style={{ gap: 12 }}>
-                  <div><div className="field-label">Base SKU</div><input className="field-input" value={form.sku} onChange={e => set("sku", e.target.value.toUpperCase())} placeholder="CK-ROM-FLR" /></div>
+                  <div>
+                    <div className="field-label">Base SKU</div>
+                    <input className="field-input" value={form.sku} 
+                      onChange={e => { setSkuErrors(f => ({...f, base: null})); set("sku", e.target.value.toUpperCase()); }} 
+                      onBlur={() => checkSku(form.sku, 'base')}
+                      placeholder="CK-ROM-FLR" />
+                    {skuErrors.base && <div style={{color: 'var(--red)', fontSize: 11, marginTop: 4}}>⚠️ {skuErrors.base}</div>}
+                  </div>
                   <div><div className="field-label">HSN code</div><input className="field-input" value={form.hsn_code} onChange={e => set("hsn_code", e.target.value)} placeholder="6111" /></div>
                 </div>
                 <div><div className="field-label">Description</div><textarea className="field-input" value={form.description} onChange={e => set("description", e.target.value)} placeholder="Product description…" /></div>
@@ -262,9 +290,13 @@ export default function ListProductInner() {
                     {form.colors.map(color => (
                       <div key={color} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span style={{ minWidth: 110, fontSize: 12, color: "var(--text2)" }}>{color}</span>
-                        <input className="field-input" value={form.sku_by_color?.[color] || ""}
-                          onChange={e => set("sku_by_color", { ...form.sku_by_color, [color]: e.target.value.toUpperCase() })}
-                          placeholder={`e.g. CKGD-0256 for ${color}`} />
+                        <div style={{ flex: 1 }}>
+                          <input className="field-input" value={form.sku_by_color?.[color] || ""}
+                            onChange={e => { setSkuErrors(f => ({...f, [color]: null})); set("sku_by_color", { ...form.sku_by_color, [color]: e.target.value.toUpperCase() }) }}
+                            onBlur={() => checkSku(form.sku_by_color?.[color], color)}
+                            placeholder={`e.g. CKGD-0256 for ${color}`} />
+                          {skuErrors[color] && <div style={{color: 'var(--red)', fontSize: 11, marginTop: 4}}>⚠️ {skuErrors[color]}</div>}
+                        </div>
                       </div>
                     ))}
                     <div style={{ fontSize: 11, color: "var(--text3)" }}>Use a colour-specific base SKU, then size groups will append to it (for example CKGD-0256-0-3M).</div>
@@ -386,8 +418,15 @@ export default function ListProductInner() {
               </div>
 
               <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn btn-sm" style={{ flex: 1 }} disabled={saving} onClick={() => handleSubmit(true)}>{saving ? "Saving…" : "Save as draft"}</button>
-                <button className="btn btn-accent btn-sm" style={{ flex: 1 }} disabled={saving} onClick={() => handleSubmit(false)}>{saving ? "Publishing…" : editId ? "Update product" : "Publish product"}</button>
+                {Object.values(skuErrors).some(v => v) && (
+                  <div style={{ width: "100%", padding: 10, background: "var(--red)", color: "white", borderRadius: 8, fontSize: 12, textAlign: "center", marginBottom: 10 }}>
+                    Please fix the duplicate SKU errors before publishing.
+                  </div>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button className="btn btn-sm" style={{ flex: 1 }} disabled={saving || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(true)}>{saving ? "Saving…" : "Save as draft"}</button>
+                <button className="btn btn-accent btn-sm" style={{ flex: 1 }} disabled={saving || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(false)}>{saving ? "Publishing…" : editId ? "Update product" : "Publish product"}</button>
               </div>
             </div>
           )}
