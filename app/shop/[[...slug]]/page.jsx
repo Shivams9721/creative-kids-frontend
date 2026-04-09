@@ -94,9 +94,14 @@ async function getProducts(params, searchParams) {
     fabrics: searchParams.fabrics,
     patterns: searchParams.patterns,
     necks: searchParams.necks,
-    price_min: searchParams.price ? searchParams.price.split('-')[0] : null,
-    price_max: searchParams.price ? searchParams.price.split('-')[1] : null,
+    price_min: null,
+    price_max: null,
   };
+
+  if (searchParams.price === 'Under ₹299') { queryParams.price_min = 0; queryParams.price_max = 299; }
+  else if (searchParams.price === '₹299 - ₹599') { queryParams.price_min = 299; queryParams.price_max = 599; }
+  else if (searchParams.price === '₹599 - ₹999') { queryParams.price_min = 599; queryParams.price_max = 999; }
+  else if (searchParams.price === 'Over ₹999') { queryParams.price_min = 999; }
 
   if (slug0 === 'offers') queryParams.offers = 'true';
   if (slug0 === 'new') queryParams.new_arrival = 'true';
