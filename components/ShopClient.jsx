@@ -18,13 +18,8 @@ const SIZE_GROUPS = {
 
 export const ALL_SIZES = Object.values(SIZE_GROUPS).flat();
 
-export const COLORS = [
-  { name: 'Black', hex: '#000000' }, { name: 'White', hex: '#FFFFFF' }, { name: 'Beige', hex: '#F5F5DC' },
-  { name: 'Blue', hex: '#4A90E2' }, { name: 'Pink', hex: '#E2889D' }, { name: 'Red', hex: '#D32F2F' },
-  { name: 'Green', hex: '#2E7D32' }, { name: 'Yellow', hex: '#FBC02D' }, { name: 'Grey', hex: '#9E9E9E' },
-  { name: 'Orange', hex: '#FF6B35' }, { name: 'Purple', hex: '#7B2D8B' }, { name: 'Brown', hex: '#795548' },
-  { name: 'Navy', hex: '#1A237E' }, { name: 'Maroon', hex: '#880E4F' }
-];
+// Use standardized colors from constants (27 colors with proper hex codes)
+const COLORS = PRODUCT_ATTRIBUTES.COLORS;
 
 const PRICE_RANGES = [
   { label: 'Under ₹299', min: 0, max: 299 },

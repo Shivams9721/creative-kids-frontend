@@ -2,17 +2,9 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { safeFetch } from "../../api";
+import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
 
-const ALL_COLORS = [
-  { name: "Black", hex: "#000000" }, { name: "White", hex: "#FFFFFF" }, { name: "Beige", hex: "#F5F5DC" },
-  { name: "Blue", hex: "#4A90E2" }, { name: "Pink", hex: "#E2889D" }, { name: "Red", hex: "#D32F2F" },
-  { name: "Green", hex: "#2E7D32" }, { name: "Yellow", hex: "#FBC02D" }, { name: "Grey", hex: "#9E9E9E" },
-  { name: "Orange", hex: "#FF6B35" }, { name: "Purple", hex: "#7B2D8B" }, { name: "Brown", hex: "#795548" },
-  { name: "Navy", hex: "#1a237e" }, { name: "Teal", hex: "#00695c" }, { name: "Maroon", hex: "#880e4f" },
-  { name: "Lavender", hex: "#9575cd" }, { name: "Mint", hex: "#80cbc4" }, { name: "Peach", hex: "#ffb74d" },
-  { name: "Mustard", hex: "#f9a825" }, { name: "Olive", hex: "#827717" }, { name: "Coral", hex: "#ff7043" },
-  { name: "Cream", hex: "#fff8e1" }, { name: "Charcoal", hex: "#37474f" },
-];
+const ALL_COLORS = PRODUCT_ATTRIBUTES.COLORS;
 const getColorHex = (n) => ALL_COLORS.find((c) => c.name === n)?.hex || "#94a3b8";
 
 function parseJ(raw, fallback = []) {

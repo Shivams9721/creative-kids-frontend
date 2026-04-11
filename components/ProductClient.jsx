@@ -14,6 +14,7 @@ import { safeFetch } from "@/lib/safeFetch";
 import { recordView } from "@/components/RecentlyViewed";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { useSettings } from "@/context/SettingsContext";
+import SizeGuide from "@/components/SizeGuide";
 
 
 
@@ -250,29 +251,6 @@ export default function ProductClient({ product, relatedProducts }) {
         )}
       </AnimatePresence>
 
-      {/* SIZE GUIDE MODAL */}
-      <AnimatePresence>
-        {showSizeGuide && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowSizeGuide(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-            />
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-[12px] font-bold tracking-widest uppercase">Size Guide</h3>
-                  <button onClick={() => setShowSizeGuide(false)} className="p-1 hover:bg-gray-100 rounded-full"><X size={20} /></button>
-                </div>
-                <Image src="https://i.postimg.cc/nrj3wLGL/image.png" alt="Size Guide" width={800} height={600} className="w-full rounded-lg" />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* GUEST WISHLIST MODAL */}
       <AnimatePresence>
         {showGuestWishlistModal && (
@@ -302,6 +280,13 @@ export default function ProductClient({ product, relatedProducts }) {
           </>
         )}
       </AnimatePresence>
+
+      {/* SIZE GUIDE MODAL */}
+      <SizeGuide 
+        isOpen={showSizeGuide} 
+        onClose={() => setShowSizeGuide(false)}
+        category={product?.subcategory?.toLowerCase() || "default"}
+      />
       
       {/* BREADCRUMBS */}
       <div className="w-full px-4 md:px-8 py-4 border-b border-black/5 bg-[#fafafa]">
@@ -447,34 +432,6 @@ export default function ProductClient({ product, relatedProducts }) {
                 <div className="flex justify-between items-end mb-3">
                   <span className="text-[11px] font-bold tracking-widest uppercase text-black">Size</span>
                   <button onClick={() => setShowSizeGuide(true)} className="text-[10px] tracking-widest uppercase text-black/50 hover:text-black border-b border-black/20 pb-0.5">Size Guide</button>
-                </div>
-                {/* Age → Size Recommender */}
-                <div className="mb-4 p-3 bg-[#fafafa] border border-black/10 rounded-xl">
-                  <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-2">What's my size? — Select age</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: '0–3M',  size: '0M–3M'   },
-                      { label: '3–6M',  size: '3M–6M'   },
-                      { label: '6–9M',  size: '6M–9M'   },
-                      { label: '9–12M', size: '9M–12M'  },
-                      { label: '12–18M',size: '12M–18M' },
-                      { label: '18–24M',size: '18M–24M' },
-                      { label: '2–3Y',  size: '2Y–3Y'   },
-                      { label: '3–4Y',  size: '3Y–4Y'   },
-                      { label: '4–5Y',  size: '4Y–5Y'   },
-                      { label: '5–6Y',  size: '5Y–6Y'   },
-                      { label: '7–8Y',  size: '7Y–8Y'   },
-                      { label: '9–10Y', size: '9Y–10Y'  },
-                      { label: '11–12Y',size: '11Y–12Y' },
-                    ].filter(a => availableSizes.some(s => s === a.size)).map(a => (
-                      <button key={a.label} onClick={() => setSelectedSize(a.size)}
-                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider border transition-colors ${
-                          selectedSize === a.size ? 'bg-black text-white border-black' : 'border-black/20 text-black/60 hover:border-black'
-                        }`}>
-                        {a.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {availableSizes.map(size => {
