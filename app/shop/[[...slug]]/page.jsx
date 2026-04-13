@@ -45,8 +45,8 @@ const SLUG_TO_MAIN_CAT = {
   'kids':      null,
 };
 
-// Human-readable labels for SEO titles
 const SLUG_LABELS = {
+  'all':       'All Collections',
   'baby-boy':  'Baby Boys',
   'baby-girl': 'Baby Girls',
   'baby':      'Baby',
@@ -135,9 +135,16 @@ export async function generateMetadata({ params }) {
   const itemLabel = slug1 ? (SLUG_TO_ITEM_TYPE[slug1] || slug1.replace(/-/g, ' ')) : null;
   const pathKey = slug1 ? `${slug0}/${slug1}` : (slug0 || "shop");
 
-  const title = itemLabel
-    ? `Buy ${itemLabel} for ${catLabel} Online India | Premium Kids Wear`
-    : `${catLabel} Clothing Online India | Premium Kids Wear`;
+  let title;
+  if (slug0 === 'all') {
+    title = itemLabel
+      ? `Buy ${itemLabel} Online India | Premium Kids Wear`
+      : `Buy Premium Kids Wear Online India`;
+  } else {
+    title = itemLabel
+      ? `Buy ${itemLabel} for ${catLabel} Online India | Premium Kids Wear`
+      : `${catLabel} Clothing Online India | Premium Kids Wear`;
+  }
 
   const fallbackDescription = itemLabel
     ? `Shop premium ${itemLabel} for ${catLabel} at Creative Kids. Free shipping above ₹599. Easy returns.`
@@ -180,8 +187,9 @@ export default async function Shop({ params, searchParams }) {
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
       { "@type": "ListItem", position: 2, name: "Shop", item: `${SITE_URL}/shop` },
-      ...(slug0 ? [{ "@type": "ListItem", position: 3, name: catLabel, item: `${SITE_URL}/shop/${slug0}` }] : []),
-      ...(slug1 ? [{ "@type": "ListItem", position: 4, name: itemLabel || "Collection", item: `${SITE_URL}/shop/${slug0}/${slug1}` }] : []),
+      ...(slug0 && slug0 !== 'all' ? [{ "@type": "ListItem", position: 3, name: catLabel, item: `${SITE_URL}/shop/${slug0}` }] : []),
+      ...(slug0 === 'all' && itemLabel ? [{ "@type": "ListItem", position: 3, name: itemLabel, item: `${SITE_URL}/shop/all/${slug1}` }] : []),
+      ...((slug1 && slug0 !== 'all') ? [{ "@type": "ListItem", position: 4, name: itemLabel || "Collection", item: `${SITE_URL}/shop/${slug0}/${slug1}` }] : []),
     ],
   };
 

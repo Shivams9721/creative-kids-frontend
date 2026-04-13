@@ -168,13 +168,23 @@ export default function Home() {
             <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.shop_by_category?.title || "Shop by Category"}</h2>
           </div>
           <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 px-3 sm:px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 sm:pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
-            {categoryItems.map((item, index) => (
-              <Link key={`${item.targetUrl}-${index}`} href={item.targetUrl || "/shop"} className="flex-none w-[60vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-                <Image src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 60vw, 25vw" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
-              </Link>
-            ))}
+            {categoryItems.map((item, index) => {
+              let finalUrl = item.targetUrl || "/shop";
+              if (finalUrl.startsWith("/shop/")) {
+                const parts = finalUrl.split("/");
+                // Convert /shop/[category]/[item_type] to /shop/all/[item_type]
+                if (parts.length === 4) {
+                  finalUrl = `/shop/all/${parts[3]}`;
+                }
+              }
+              return (
+                <Link key={`${item.targetUrl}-${index}`} href={finalUrl} className="flex-none w-[60vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
+                  <Image src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 60vw, 25vw" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
