@@ -86,15 +86,15 @@ export function AgeNavigatorBanner() {
   const nextSize = getNextSize(size);
 
   return (
-    <div className="w-full bg-black text-white py-2 px-4 flex items-center justify-center gap-3 text-[11px]">
-      <Baby size={13} className="text-white/60 flex-shrink-0" />
-      <span>
-        {name ? `Showing sizes for ${name}` : "Personalised for your child"} —{" "}
+    <div className="w-full bg-black text-white py-2 px-3 sm:px-4 flex items-center justify-center gap-2 sm:gap-3 text-[9px] sm:text-[11px]">
+      <Baby size={13} className="text-white/60 flex-shrink-0 hidden sm:block" />
+      <span className="text-center leading-relaxed">
+        {name ? `Personalised for ${name}` : "Personalised for your child"} —{" "}
         <span className="font-bold">{size}</span> fits now
         {nextSize && <span className="text-white/50"> · {nextSize} coming up</span>}
       </span>
-      <button onClick={() => setShowSetup(true)} className="text-white/50 hover:text-white underline text-[10px] ml-1">Edit</button>
-      <button onClick={() => setDismissed(true)} className="text-white/30 hover:text-white ml-1"><X size={14} /></button>
+      <button onClick={() => setShowSetup(true)} className="text-white/50 hover:text-white underline text-[9px] sm:text-[10px] ml-1 flex-shrink-0">Edit</button>
+      <button onClick={() => setDismissed(true)} className="text-white/30 hover:text-white ml-0.5 sm:ml-1 flex-shrink-0"><X size={14} /></button>
       {showSetup && <AgeSetupModal onClose={() => setShowSetup(false)} onSave={() => { setShowSetup(false); window.location.reload(); }} />}
     </div>
   );

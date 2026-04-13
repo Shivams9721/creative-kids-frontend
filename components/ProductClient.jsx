@@ -289,18 +289,18 @@ export default function ProductClient({ product, relatedProducts }) {
       />
       
       {/* BREADCRUMBS */}
-      <div className="w-full px-4 md:px-8 py-4 border-b border-black/5 bg-[#fafafa]">
-        <div className="max-w-[1600px] mx-auto text-[10px] tracking-widest uppercase text-black/50 flex items-center gap-2">
-          <Link href="/" className="hover:text-black transition-colors">Home</Link>
-          <span>/</span>
-          <Link href={`/shop/${product.main_category?.toLowerCase()}`} className="hover:text-black transition-colors">{product.main_category || "Shop"}</Link>
-          <span>/</span>
-          <span className="text-black">{product.title}</span>
+      <div className="w-full px-3 sm:px-4 md:px-8 py-3 sm:py-4 border-b border-black/5 bg-[#fafafa]">
+        <div className="max-w-[1600px] mx-auto text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest uppercase text-black/50 flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <Link href="/" className="hover:text-black transition-colors flex-shrink-0">Home</Link>
+          <span className="flex-shrink-0">/</span>
+          <Link href={`/shop/${product.main_category?.toLowerCase()}`} className="hover:text-black transition-colors flex-shrink-0">{product.main_category || "Shop"}</Link>
+          <span className="flex-shrink-0">/</span>
+          <span className="text-black truncate min-w-0">{product.title}</span>
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-8 md:py-12">
-        <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
+      <div className="max-w-[1600px] mx-auto px-3 sm:px-4 md:px-8 py-6 sm:py-8 md:py-12">
+        <div className="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-20">
           
           {/* LEFT: IMAGE GALLERY */}
           <div className="w-full lg:w-1/2 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-[100px] lg:self-start">
@@ -338,27 +338,27 @@ export default function ProductClient({ product, relatedProducts }) {
           {/* RIGHT: PRODUCT DETAILS */}
           <div className="w-full lg:w-1/2 flex flex-col max-w-2xl">
             
-            <div className="mb-8">
-              <p className="text-[10px] tracking-widest uppercase text-black/50 mb-3">{product.sub_category || product.category}</p>
-              <h1 className="text-3xl md:text-4xl font-light text-black mb-4">{cleanTitle(product.title)}</h1>
+            <div className="mb-6 sm:mb-8">
+              <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/50 mb-2 sm:mb-3">{product.sub_category || product.category}</p>
+              <h1 className="text-xl sm:text-2xl md:text-4xl font-light text-black mb-3 sm:mb-4">{cleanTitle(product.title)}</h1>
               
               {/* PRICE & DISCOUNT LOGIC */}
-              <div className="flex items-center gap-4">
-                <p className="text-xl text-black font-medium">
+              <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                <p className="text-lg sm:text-xl text-black font-medium">
                   ₹{parseFloat(product.price).toFixed(2)}
                 </p>
                 {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
                   <>
-                    <p className="text-[14px] text-black/40 line-through">
+                    <p className="text-[12px] sm:text-[14px] text-black/40 line-through">
                       ₹{parseFloat(product.mrp).toFixed(2)}
                     </p>
-                    <span className="bg-red-50 text-[#D32F2F] border border-red-100 px-2 py-1 text-[10px] font-bold tracking-widest uppercase rounded-sm">
+                    <span className="bg-red-50 text-[#D32F2F] border border-red-100 px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-bold tracking-wider sm:tracking-widest uppercase rounded-sm">
                       {Math.round(((parseFloat(product.mrp) - parseFloat(product.price)) / parseFloat(product.mrp)) * 100)}% OFF
                     </span>
                   </>
                 )}
               </div>
-              <p className="text-[10px] text-black/40 tracking-wider mt-1 uppercase">Inclusive of all taxes</p>
+              <p className="text-[9px] sm:text-[10px] text-black/40 tracking-wider mt-1 uppercase">Inclusive of all taxes</p>
             </div>
 
             {/* COLOR SELECTION */}
@@ -532,15 +532,15 @@ export default function ProductClient({ product, relatedProducts }) {
                 <ShoppingBag size={18} strokeWidth={1.5} />
                 Add to Cart
               </button>
-              <div className="flex items-center justify-center gap-6 py-4 border border-black/5 rounded-lg bg-[#fafafa]">
-                <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-black/70">
-                  <Truck size={16} strokeWidth={1.5} /> Free Shipping
+              <div className="flex items-center justify-center gap-3 sm:gap-6 py-3 sm:py-4 border border-black/5 rounded-lg bg-[#fafafa] flex-wrap">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold tracking-wider sm:tracking-widest uppercase text-black/70">
+                  <Truck size={14} className="sm:w-4 sm:h-4" strokeWidth={1.5} /> Free Shipping
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-black/70">
-                  <ShieldCheck size={16} strokeWidth={1.5} /> Easy Returns
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold tracking-wider sm:tracking-widest uppercase text-black/70">
+                  <ShieldCheck size={14} className="sm:w-4 sm:h-4" strokeWidth={1.5} /> Easy Returns
                 </div>
-                <button onClick={handleShare} className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-black/70 hover:text-black transition-colors">
-                  <Share2 size={16} strokeWidth={1.5} /> Share
+                <button onClick={handleShare} className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold tracking-wider sm:tracking-widest uppercase text-black/70 hover:text-black transition-colors">
+                  <Share2 size={14} className="sm:w-4 sm:h-4" strokeWidth={1.5} /> Share
                 </button>
               </div>
             </div>
@@ -754,17 +754,17 @@ export default function ProductClient({ product, relatedProducts }) {
       </div>
       {/* YOU MAY ALSO LIKE */}
       {relatedProducts.length > 0 && (
-        <section className="border-t border-black/10 py-12 px-4 md:px-8">
+        <section className="border-t border-black/10 py-8 sm:py-12 px-3 sm:px-4 md:px-8">
           <div className="max-w-[1600px] mx-auto">
-            <h2 className="text-[12px] font-bold tracking-widest uppercase text-black mb-8">You May Also Like</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <h2 className="text-[11px] sm:text-[12px] font-bold tracking-widest uppercase text-black mb-5 sm:mb-8">You May Also Like</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
               {relatedProducts.map(p => (
                 <Link key={p.id} href={`/product/${p.id}`} className="group flex flex-col">
-                  <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-3">
+                  <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-2 sm:mb-3">
                     <Image src={p.image_urls?.[0] || '/images/logo.png'} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 50vw, 16vw" />
                   </div>
-                  <p className="text-[12px] text-black truncate">{p.title}</p>
-                  <p className="text-[12px] font-bold text-black mt-0.5">₹{parseFloat(p.price).toFixed(2)}</p>
+                  <p className="text-[11px] sm:text-[12px] text-black truncate px-0.5">{p.title}</p>
+                  <p className="text-[11px] sm:text-[12px] font-bold text-black mt-0.5 px-0.5">₹{parseFloat(p.price).toFixed(2)}</p>
                 </Link>
               ))}
             </div>
@@ -775,10 +775,10 @@ export default function ProductClient({ product, relatedProducts }) {
 
       {/* ── STICKY MOBILE CTA BAR ── */}
       {/* Only visible on mobile, hidden on md+ where the full CTA is already visible */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-black/10 px-4 py-3 flex items-center gap-3 shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white border-t border-black/10 px-2 sm:px-4 py-2.5 sm:py-3 flex items-center gap-1.5 sm:gap-3 shadow-2xl">
         {/* Colour dot */}
         {selectedColor && selectedColor !== 'Default' && (
-          <div className="w-8 h-8 rounded-full border border-black/20 flex-shrink-0 overflow-hidden relative">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-black/20 flex-shrink-0 overflow-hidden relative">
             {product.color_images?.[selectedColor]?.[0] ? (
               <Image src={product.color_images[selectedColor][0]} alt={selectedColor} fill className="object-cover" sizes="32px" />
             ) : (
@@ -789,13 +789,13 @@ export default function ProductClient({ product, relatedProducts }) {
           </div>
         )}
         {/* Size selector */}
-        <div className="flex-1 overflow-x-auto flex gap-1.5 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex-1 overflow-x-auto flex gap-1 sm:gap-1.5 [&::-webkit-scrollbar]:hidden min-w-0" style={{ scrollbarWidth: 'none' }}>
           {availableSizes.map(size => (
             <button
               key={size}
               onClick={() => isSizeAvailableForColor(size) && setSelectedSize(size)}
               disabled={!isSizeAvailableForColor(size)}
-              className={`flex-shrink-0 px-3 py-1.5 border rounded-full text-[10px] font-bold tracking-wider transition-all ${
+              className={`flex-shrink-0 px-2 sm:px-3 py-1 sm:py-1.5 border rounded-full text-[9px] sm:text-[10px] font-bold tracking-wider transition-all ${
                 selectedSize === size
                   ? 'border-black bg-black text-white'
                   : isSizeAvailableForColor(size)
@@ -811,16 +811,16 @@ export default function ProductClient({ product, relatedProducts }) {
         <button
           onClick={handleBuyNow}
           disabled={isOutOfStock}
-          className="flex-shrink-0 bg-black text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-widest uppercase disabled:opacity-40"
+          className="flex-shrink-0 bg-black text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wider sm:tracking-widest uppercase disabled:opacity-40"
         >
           {isOutOfStock ? 'Sold Out' : 'Buy Now'}
         </button>
         <button
           onClick={handleAddToCart}
           disabled={isOutOfStock}
-          className="flex-shrink-0 border-2 border-black text-black px-4 py-2 rounded-full text-[10px] font-bold tracking-widest uppercase disabled:opacity-40"
+          className="flex-shrink-0 border-2 border-black text-black px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[10px] font-bold tracking-widest uppercase disabled:opacity-40"
         >
-          <ShoppingBag size={16} strokeWidth={1.5} />
+          <ShoppingBag size={14} className="sm:w-4 sm:h-4" strokeWidth={1.5} />
         </button>
       </div>
       {/* Spacer so content isn't hidden behind sticky bar on mobile */}

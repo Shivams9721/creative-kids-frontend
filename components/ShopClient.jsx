@@ -163,12 +163,12 @@ export default function ShopClient({ initialProducts }) {
       {/* ========================================== */}
       {/* TOP HEADER SECTION (BREADCRUMBS & SORT)    */}
       {/* ========================================== */}
-      <div className="w-full px-4 md:px-12 py-4 md:py-6 border-b border-black/10">
-        <div className="max-w-[1600px] mx-auto flex flex-col gap-6">
+      <div className="w-full px-3 sm:px-4 md:px-12 py-3 md:py-6 border-b border-black/10">
+        <div className="max-w-[1600px] mx-auto flex flex-col gap-3 md:gap-6">
           
-          <div className="flex items-center flex-wrap gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-black/40">
+          <div className="flex items-center flex-wrap gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase text-black/40">
             {generateBreadcrumbs().map((crumb, index, arr) => (
-              <div key={crumb.name} className="flex items-center gap-2">
+              <div key={crumb.name} className="flex items-center gap-1.5 sm:gap-2">
                 <Link href={crumb.href} className={`transition-colors ${index === arr.length - 1 ? 'text-black' : 'hover:text-black'}`}>
                   {crumb.name}
                 </Link>
@@ -177,16 +177,31 @@ export default function ShopClient({ initialProducts }) {
             ))}
           </div>
 
-          <div className="flex justify-between items-end">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-light tracking-[0.1em] uppercase text-black flex items-center gap-3">
-                {getPageTitle()} 
-                {slug0 !== "offers" && slug0 !== "new" && <ChevronDown size={20} strokeWidth={1} />}
-              </h1>
-              <p className="text-[10px] tracking-widest uppercase text-black/50 mt-2">{products.length} Results</p>
+          {/* Title + Results */}
+          <div>
+            <h1 className="text-lg sm:text-xl md:text-3xl font-light tracking-[0.05em] sm:tracking-[0.1em] uppercase text-black flex items-center gap-2 sm:gap-3">
+              {getPageTitle()} 
+              {slug0 !== "offers" && slug0 !== "new" && <ChevronDown size={16} className="sm:w-5 sm:h-5" strokeWidth={1} />}
+            </h1>
+            <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/50 mt-1 sm:mt-2">{products.length} Results</p>
+          </div>
+
+          {/* Filter & Sort Row */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Mobile: Filter + Sort side by side */}
+            <button onClick={() => setIsMobileFilterOpen(true)} className="md:hidden flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-bold tracking-wider sm:tracking-widest uppercase border border-black/20 px-3 sm:px-4 py-2 flex-1 max-w-[160px]">
+              <SlidersHorizontal size={13} /> Filters {hasActiveFilters && <span className="w-1.5 h-1.5 bg-black rounded-full"></span>}
+            </button>
+            <div className="md:hidden flex-1 max-w-[160px]">
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full text-[10px] sm:text-[11px] font-bold tracking-wider sm:tracking-widest uppercase border border-black/20 px-2 sm:px-3 py-2 outline-none bg-white">
+                <option value="newest">Newest</option>
+                <option value="price-low">Price: Low → High</option>
+                <option value="price-high">Price: High → Low</option>
+              </select>
             </div>
 
-            <div className="relative group hidden md:block">
+            {/* Desktop: Sort By hover dropdown */}
+            <div className="relative group hidden md:block ml-auto">
               <button className="flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase text-black/70 group-hover:text-black transition-colors pb-1">
                 Sort By <ChevronDown size={14} className="text-black/70 group-hover:text-black transition-colors" />
               </button>
@@ -197,18 +212,6 @@ export default function ShopClient({ initialProducts }) {
                   <button onClick={() => setSortBy("price-high")} className="text-left px-6 py-4 text-[11px] tracking-widest uppercase text-black hover:bg-gray-50">Price: High to Low</button>
                 </div>
               </div>
-            </div>
-
-            <button onClick={() => setIsMobileFilterOpen(true)} className="md:hidden flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase border border-black/20 px-4 py-2">
-              <SlidersHorizontal size={14} /> Filters {hasActiveFilters && <span className="w-2 h-2 bg-black rounded-full"></span>}
-            </button>
-            {/* Mobile Sort */}
-            <div className="md:hidden">
-              <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="text-[11px] font-bold tracking-widest uppercase border border-black/20 px-3 py-2 outline-none bg-white">
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-              </select>
             </div>
           </div>
         </div>
@@ -450,7 +453,7 @@ export default function ShopClient({ initialProducts }) {
                     key={product.id}
                     className="group flex flex-col relative border-r border-b border-black/10 hover:bg-[#fcfcfc] transition-colors pb-8"
                   >
-                    <div className="w-full aspect-[3/4] bg-[#f6f5f3] relative overflow-hidden mb-5">
+                    <div className="w-full aspect-[3/4] bg-[#f6f5f3] relative overflow-hidden mb-3 sm:mb-5">
                       <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 hover:scale-110 transition-transform">
                         <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
                       </button>
@@ -467,14 +470,14 @@ export default function ShopClient({ initialProducts }) {
                         </div>
                       )}
                     </div>
-                    <div className="px-5 flex flex-col">
-                      <h4 className="text-[12px] font-medium text-black mb-1.5 capitalize truncate">{cleanTitle(product.title)}</h4>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[12px] font-bold ${product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? 'text-[#D32F2F]' : 'text-black'}`}>
+                    <div className="px-2 sm:px-3 md:px-5 flex flex-col">
+                      <h4 className="text-[11px] sm:text-[12px] font-medium text-black mb-1 sm:mb-1.5 capitalize truncate">{cleanTitle(product.title)}</h4>
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span className={`text-[11px] sm:text-[12px] font-bold ${product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? 'text-[#D32F2F]' : 'text-black'}`}>
                           ₹{parseFloat(product.price).toFixed(2)}
                         </span>
                         {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
-                          <span className="text-[10px] text-black/30 line-through">₹{parseFloat(product.mrp).toFixed(2)}</span>
+                          <span className="text-[9px] sm:text-[10px] text-black/30 line-through">₹{parseFloat(product.mrp).toFixed(2)}</span>
                         )}
                       </div>
                     </div>

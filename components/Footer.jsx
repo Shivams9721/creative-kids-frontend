@@ -36,10 +36,10 @@ export default function Footer() {
     }
   };
   return (
-    <footer className="w-full bg-white border-t border-black/10 py-16 md:py-24 mt-auto">
-      <div className="max-w-[1600px] mx-auto px-6 md:px-12">
+    <footer className="w-full bg-white border-t border-black/10 py-10 md:py-24 mt-auto">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-12">
         
-        <div className="flex flex-col md:flex-row justify-between items-start gap-16 md:gap-8">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-10 md:gap-8">
           
           {/* LEFT: Newsletter Sign Up */}
           <div className="w-full md:w-1/2 lg:w-1/3">
@@ -103,9 +103,9 @@ export default function Footer() {
 
         </div>
 
-        <div className="mt-16 pt-8 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[10px] tracking-widest uppercase text-black/30">© {new Date().getFullYear()} Creative Kids. All rights reserved.</p>
-          <p className="text-[10px] tracking-widest uppercase text-black/30">Made in India 🇮🇳</p>
+        <div className="mt-10 md:mt-16 pt-6 md:pt-8 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4">
+          <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/30">© {new Date().getFullYear()} Creative Kids. All rights reserved.</p>
+          <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/30">Made in India 🇮🇳</p>
         </div>
       </div>
     </footer>

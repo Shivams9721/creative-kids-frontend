@@ -336,13 +336,10 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* DYNAMIC HEIGHT SPACER */}
+      {/* DYNAMIC HEIGHT SPACER — matches fixed header height */}
       <div 
-        className="w-full bg-white relative z-30 transition-all duration-300"
-        style={{ height: isAnnouncementVisible ? '112px' : '72px' }} 
-      >
-        <div className={`w-full h-full ${isAnnouncementVisible ? 'h-[104px] md:h-[112px]' : 'h-[64px] md:h-[72px]'}`}></div>
-      </div>
+        className={`w-full bg-white relative z-30 transition-all duration-300 ${isAnnouncementVisible ? 'h-[104px] md:h-[112px]' : 'h-[64px] md:h-[72px]'}`}
+      />
 
       {/* MOBILE SEARCH BAR */}
       <div className="block lg:hidden w-full px-4 py-3 bg-white border-b border-black/10">
