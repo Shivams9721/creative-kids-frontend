@@ -20,7 +20,7 @@ const DEFAULT_CATEGORIES = [
 function GridCard({ product, wishlist, toggleWishlist }) {
   if (!product) {
     return (
-      <div className="flex-none w-[65vw] sm:w-[45vw] md:w-auto snap-start flex flex-col group">
+      <div className="flex-none w-[55vw] sm:w-[40vw] md:w-auto snap-start flex flex-col group">
         <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] border border-dashed border-black/10 flex flex-col items-center justify-center text-center p-4 mb-3 sm:mb-4">
           <span className="text-[10px] font-bold tracking-widest uppercase text-black/30">Empty Slot</span>
           <span className="text-[9px] tracking-widest uppercase text-black/20 mt-1">Assign in Admin</span>
@@ -29,7 +29,7 @@ function GridCard({ product, wishlist, toggleWishlist }) {
     );
   }
   return (
-    <div className="flex-none w-[65vw] sm:w-[45vw] md:w-auto snap-start flex flex-col group">
+    <div className="flex-none w-[55vw] sm:w-[40vw] md:w-auto snap-start flex flex-col group">
       <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-3 sm:mb-4">
         <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 p-1 hover:scale-110 transition-transform">
           <Heart strokeWidth={1} size={18} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
@@ -167,7 +167,7 @@ export default function Home() {
 
       {/* 2. SHOP BY CATEGORY */}
       {isEnabled("shop_by_category") && (
-      <section className="py-8 sm:py-10 md:py-12 bg-white border-b border-black/5">
+      <section className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
         <div className="max-w-[1600px] mx-auto">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.shop_by_category?.subtitle || "Discover"}</span>
@@ -184,8 +184,8 @@ export default function Home() {
                 }
               }
               return (
-                <Link key={`${item.targetUrl}-${index}`} href={finalUrl} className="flex-none w-[60vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
-                  <Image src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 60vw, 25vw" />
+                <Link key={`${item.targetUrl}-${index}`} href={finalUrl} className="flex-none w-[55vw] sm:w-[40vw] md:w-auto snap-start block group relative aspect-[3/4] overflow-hidden bg-gray-100">
+                  <Image src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 55vw, 25vw" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
                 </Link>
@@ -204,7 +204,7 @@ export default function Home() {
         <>
           {/* 3. GIRLS NEW ARRIVALS */}
           {isEnabled("girls_new_arrivals") && (
-          <section className="py-8 sm:py-10 md:py-12 bg-white border-b border-black/5">
+          <section className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
             <div className="max-w-[1600px] mx-auto">
               <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
                 <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-[#E2889D] mb-1">{sectionMeta.girls_new_arrivals?.subtitle || "Girls"}</span>
@@ -222,7 +222,7 @@ export default function Home() {
 
           {/* 4. SEASON BESTSELLERS */}
           {isEnabled("season_bestsellers") && (
-          <section className="py-8 sm:py-10 md:py-12 bg-white border-b border-black/5">
+          <section className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
             <div className="max-w-[1600px] mx-auto">
               <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
                 <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.season_bestsellers?.subtitle || "Favorites"}</span>
@@ -240,7 +240,7 @@ export default function Home() {
 
           {/* 5. FEATURED COLLECTION */}
           {isEnabled("featured_collection") && (
-          <section className="py-8 sm:py-10 md:py-12 bg-white border-b border-black/5">
+          <section className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
             <div className="w-full relative">
               <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
                 <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.featured_collection?.subtitle || "Trending Now"}</span>
@@ -260,7 +260,7 @@ export default function Home() {
                   </button>
                   <div ref={carouselRef} className="flex gap-0 overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
                     {featuredProducts.map((product, index) => (
-                      <div key={`feat-${product.id}-${index}`} className="flex-none w-[60vw] sm:w-[40vw] md:w-[28vw] lg:w-[20vw] snap-start flex flex-col group/card">
+                      <div key={`feat-${product.id}-${index}`} className="flex-none w-[55vw] sm:w-[40vw] md:w-[25vw] lg:w-[20vw] snap-start flex flex-col group/card">
                         <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-2 sm:mb-3">
                           <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-3 right-3 z-10 p-1 hover:scale-110 transition-transform">
                             <Heart strokeWidth={1} size={16} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />

@@ -100,13 +100,41 @@ export default function Navbar() {
     }
   }, [isNavOpen]);
 
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const updateScrollDir = () => {
+      const scrollY = window.scrollY;
+      if (Math.abs(scrollY - lastScrollY) < 10) {
+        ticking = false;
+        return;
+      }
+      setIsScrolledDown(scrollY > lastScrollY && scrollY > 50);
+      lastScrollY = scrollY > 0 ? scrollY : 0;
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateScrollDir);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const toggleSection = (section) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-40 bg-white/95 backdrop-blur-md border-b border-black/10 transition-colors duration-300 flex flex-col">
+      <header className={`fixed top-0 left-0 w-full z-40 transition-colors duration-500 flex flex-col ${isScrolledDown && !isNavOpen && !isSearchOpen ? 'bg-white/0 border-transparent' : 'bg-white/95 backdrop-blur-md border-b border-black/10'}`}>
         
         {/* ========================================== */}
         {/* DYNAMIC ANNOUNCEMENT BAR                   */}
