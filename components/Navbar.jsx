@@ -100,26 +100,13 @@ export default function Navbar() {
     }
   }, [isNavOpen]);
 
-  const [navHidden, setNavHidden] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY;
     let ticking = false;
 
     const updateScroll = () => {
-      const scrollY = window.scrollY;
-      if (Math.abs(scrollY - lastScrollY) < 5) {
-        ticking = false;
-        return;
-      }
-      setHasScrolled(scrollY > 10);
-      if (scrollY > 80 && scrollY > lastScrollY) {
-        setNavHidden(true);
-      } else {
-        setNavHidden(false);
-      }
-      lastScrollY = scrollY > 0 ? scrollY : 0;
+      setHasScrolled(window.scrollY > 10);
       ticking = false;
     };
 
@@ -138,7 +125,6 @@ export default function Navbar() {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  const shouldHide = navHidden && !isNavOpen && !isSearchOpen;
   // LV-style: transparent navbar at the top of homepage only
   const isHomepage = pathname === "/";
   const isTransparent = isHomepage && !hasScrolled && !isNavOpen && !isSearchOpen;
@@ -146,14 +132,14 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 w-full z-40 flex flex-col transition-all duration-300 ease-in-out ${shouldHide ? '-translate-y-full' : 'translate-y-0'} ${isTransparent ? 'bg-transparent' : 'bg-white shadow-sm'}`}
+        className={`fixed top-0 left-0 w-full z-40 flex flex-col transition-all duration-300 ease-in-out ${isTransparent ? 'bg-transparent' : 'bg-white shadow-sm'}`}
       >
         
         {/* ========================================== */}
         {/* DYNAMIC ANNOUNCEMENT BAR                   */}
         {/* ========================================== */}
         <AnimatePresence>
-          {isAnnouncementVisible && (
+          {isAnnouncementVisible && !isTransparent && (
             <motion.div 
               initial={{ height: 40, opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -377,9 +363,9 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* DYNAMIC HEIGHT SPACER — matches fixed header height */}
+      {/* DYNAMIC HEIGHT SPACER — on homepage it's 0 so hero goes behind transparent navbar */}
       <div 
-        className={`w-full bg-white relative z-30 transition-all duration-300 ${isAnnouncementVisible ? 'h-[104px] md:h-[112px]' : 'h-[64px] md:h-[72px]'}`}
+        className={`w-full bg-white relative z-30 transition-all duration-300 ${isHomepage ? 'h-0' : isAnnouncementVisible ? 'h-[104px] md:h-[112px]' : 'h-[64px] md:h-[72px]'}`}
       />
 
       {/* MOBILE SEARCH BAR */}
