@@ -139,7 +139,7 @@ export default function Navbar() {
         {/* DYNAMIC ANNOUNCEMENT BAR                   */}
         {/* ========================================== */}
         <AnimatePresence>
-          {isAnnouncementVisible && !isTransparent && (
+          {isAnnouncementVisible && !isHomepage && (
             <motion.div 
               initial={{ height: 40, opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -368,7 +368,8 @@ export default function Navbar() {
         className={`w-full bg-white relative z-30 transition-all duration-300 ${isHomepage ? 'h-0' : isAnnouncementVisible ? 'h-[104px] md:h-[112px]' : 'h-[64px] md:h-[72px]'}`}
       />
 
-      {/* MOBILE SEARCH BAR */}
+      {/* MOBILE SEARCH BAR — hidden on homepage for clean LV hero look */}
+      {!isHomepage && (
       <div className="block lg:hidden w-full px-4 py-3 bg-white border-b border-black/10">
         <div 
           onClick={() => setIsSearchOpen(true)}
@@ -380,6 +381,7 @@ export default function Navbar() {
           </span>
         </div>
       </div>
+      )}
 
       {/* MOBILE MEGA MENU */}
       <AnimatePresence>

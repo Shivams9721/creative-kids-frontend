@@ -9,7 +9,7 @@ import MaintenanceBanner from "@/components/MaintenanceBanner";
 export default function ConditionalShell({ children }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
-  const showAgeBanner = !isAdmin && (pathname === "/" || pathname?.startsWith("/shop"));
+  const showAgeBanner = !isAdmin && pathname !== "/" && pathname?.startsWith("/shop");
 
   return (
     <>
