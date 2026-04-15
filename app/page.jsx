@@ -147,7 +147,7 @@ export default function Home() {
       {/* 1. HERO BANNER — single static */}
       {isEnabled("hero_banner") && (
       <section className="relative w-full h-[70vh] sm:h-[85vh] md:h-screen flex items-end justify-center overflow-hidden pb-12 sm:pb-16 md:pb-24">
-        <Image src={heroSlide.imageUrl} alt={heroSlide.title} fill priority className="object-cover object-center" sizes="100vw" />
+        <Image src={heroSlide.imageUrl} alt={heroSlide.title} fill priority quality={95} className="object-cover object-center" sizes="100vw" />
         <div className="absolute inset-0 bg-black/30" />
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2 }} className="relative z-10 flex flex-col items-center text-center px-4 text-white">
           <span className="text-[9px] sm:text-[10px] tracking-[0.15em] sm:tracking-[0.2em] font-medium uppercase text-white/80 mb-1.5 sm:mb-2">{heroSlide.tag}</span>
