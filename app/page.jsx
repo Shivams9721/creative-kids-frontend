@@ -173,7 +173,7 @@ export default function Home() {
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.shop_by_category?.subtitle || "Discover"}</span>
             <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.shop_by_category?.title || "Shop by Category"}</h2>
           </div>
-          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-0 px-3 sm:px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 sm:pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-0 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 sm:pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
             {categoryItems.map((item, index) => {
               let finalUrl = item.targetUrl || "/shop";
               if (finalUrl.startsWith("/shop/")) {
@@ -210,7 +210,7 @@ export default function Home() {
                 <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-[#E2889D] mb-1">{sectionMeta.girls_new_arrivals?.subtitle || "Girls"}</span>
                 <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.girls_new_arrivals?.title || "New Arrivals"}</h2>
               </div>
-              <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-0 px-3 sm:px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 sm:pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+              <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-0 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 sm:pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
                 {girlsProducts.map((product, index) => (<GridCard key={`girl-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
               </div>
               <div className="flex justify-center mt-5 sm:mt-6 px-4">
@@ -228,7 +228,7 @@ export default function Home() {
                 <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.season_bestsellers?.subtitle || "Favorites"}</span>
                 <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.season_bestsellers?.title || "Season Bestsellers"}</h2>
               </div>
-              <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-0 px-3 sm:px-4 md:px-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 sm:pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+              <div className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-0 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory pb-3 sm:pb-4 md:pb-0 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
                 {bestsellerProducts.map((product, index) => (<GridCard key={`best-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
               </div>
               <div className="flex justify-center mt-5 sm:mt-6 px-4">
@@ -258,7 +258,7 @@ export default function Home() {
                   <button onClick={scrollRight} className="hidden md:flex absolute right-8 lg:right-12 top-[40%] -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur-sm border border-black/10 rounded-full items-center justify-center text-black hover:bg-black hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-xl">
                     <ChevronRight size={20} strokeWidth={1} />
                   </button>
-                  <div ref={carouselRef} className="flex gap-0 px-3 sm:px-4 md:px-8 overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+                  <div ref={carouselRef} className="flex gap-0 overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
                     {featuredProducts.map((product, index) => (
                       <div key={`feat-${product.id}-${index}`} className="flex-none w-[60vw] sm:w-[40vw] md:w-[28vw] lg:w-[20vw] snap-start flex flex-col group/card">
                         <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-2 sm:mb-3">
