@@ -362,9 +362,12 @@ export default function HomepageAdminPage() {
           <input className="field-input" value={hero?.subtitle || ""} onChange={(e) => setSectionField(hero.id, "subtitle", e.target.value)} placeholder="Hero tag" />
           <input className="field-input" value={heroSettings.ctaLabel || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, ctaLabel: e.target.value })} placeholder="CTA label" />
           <input className="field-input" value={heroSettings.ctaHref || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, ctaHref: e.target.value })} placeholder="CTA link" />
-          <input className="field-input" value={heroSettings.imageUrl || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, imageUrl: e.target.value })} placeholder="Hero image URL" />
-          <button className="btn btn-sm" onClick={() => uploadImage((url) => setSectionField(hero.id, "settings_json", { ...heroSettings, imageUrl: url }))}>Upload Hero Image</button>
+          <input className="field-input" value={heroSettings.imageUrl || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, imageUrl: e.target.value })} placeholder="Hero image URL (Desktop)" />
+          <button className="btn btn-sm" onClick={() => uploadImage((url) => setSectionField(hero.id, "settings_json", { ...heroSettings, imageUrl: url }))}>Upload Desktop Image</button>
+          <input className="field-input" value={heroSettings.mobileImageUrl || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, mobileImageUrl: e.target.value })} placeholder="Mobile hero image URL (optional, portrait)" />
+          <button className="btn btn-sm" onClick={() => uploadImage((url) => setSectionField(hero.id, "settings_json", { ...heroSettings, mobileImageUrl: url }))}>Upload Mobile Image</button>
         </div>
+        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 8 }}>💡 Tip: Upload a portrait (9:16) image for mobile for best quality on phones. If empty, the desktop image is used.</div>
       </div>
 
       <div className="card card-pad" style={{ marginBottom: 16 }}>
