@@ -100,31 +100,39 @@ export default function Navbar() {
     }
   }, [isNavOpen]);
 
-  const [isScrolledDown, setIsScrolledDown] = useState(false);
+  const [navHidden, setNavHidden] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
     let ticking = false;
 
-    const updateScrollDir = () => {
+    const updateScroll = () => {
       const scrollY = window.scrollY;
-      if (Math.abs(scrollY - lastScrollY) < 10) {
+      // Only act on meaningful scroll deltas (prevents jitter)
+      if (Math.abs(scrollY - lastScrollY) < 5) {
         ticking = false;
         return;
       }
-      setIsScrolledDown(scrollY > lastScrollY && scrollY > 50);
+      setHasScrolled(scrollY > 10);
+      // Hide navbar when scrolling DOWN past 80px, show when scrolling UP
+      if (scrollY > 80 && scrollY > lastScrollY) {
+        setNavHidden(true);
+      } else {
+        setNavHidden(false);
+      }
       lastScrollY = scrollY > 0 ? scrollY : 0;
       ticking = false;
     };
 
     const onScroll = () => {
       if (!ticking) {
-        window.requestAnimationFrame(updateScrollDir);
+        window.requestAnimationFrame(updateScroll);
         ticking = true;
       }
     };
 
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -132,9 +140,14 @@ export default function Navbar() {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
+  // When mobile menu or search is open, always force-show the navbar
+  const shouldHide = navHidden && !isNavOpen && !isSearchOpen;
+
   return (
     <>
-      <header className={`fixed top-0 left-0 w-full z-40 transition-colors duration-500 flex flex-col ${isScrolledDown && !isNavOpen && !isSearchOpen ? 'bg-white/0 border-transparent' : 'bg-white/95 backdrop-blur-md border-b border-black/10'}`}>
+      <header
+        className={`fixed top-0 left-0 w-full z-40 flex flex-col transition-transform duration-300 ease-in-out ${shouldHide ? '-translate-y-full' : 'translate-y-0'} ${hasScrolled ? 'bg-white shadow-sm' : 'bg-white/95 backdrop-blur-md border-b border-black/10'}`}
+      >
         
         {/* ========================================== */}
         {/* DYNAMIC ANNOUNCEMENT BAR                   */}
