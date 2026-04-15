@@ -109,13 +109,11 @@ export default function Navbar() {
 
     const updateScroll = () => {
       const scrollY = window.scrollY;
-      // Only act on meaningful scroll deltas (prevents jitter)
       if (Math.abs(scrollY - lastScrollY) < 5) {
         ticking = false;
         return;
       }
       setHasScrolled(scrollY > 10);
-      // Hide navbar when scrolling DOWN past 80px, show when scrolling UP
       if (scrollY > 80 && scrollY > lastScrollY) {
         setNavHidden(true);
       } else {
@@ -140,13 +138,15 @@ export default function Navbar() {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // When mobile menu or search is open, always force-show the navbar
   const shouldHide = navHidden && !isNavOpen && !isSearchOpen;
+  // LV-style: transparent navbar at the top of homepage only
+  const isHomepage = pathname === "/";
+  const isTransparent = isHomepage && !hasScrolled && !isNavOpen && !isSearchOpen;
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 w-full z-40 flex flex-col transition-transform duration-300 ease-in-out ${shouldHide ? '-translate-y-full' : 'translate-y-0'} ${hasScrolled ? 'bg-white shadow-sm' : 'bg-white/95 backdrop-blur-md border-b border-black/10'}`}
+        className={`fixed top-0 left-0 w-full z-40 flex flex-col transition-all duration-300 ease-in-out ${shouldHide ? '-translate-y-full' : 'translate-y-0'} ${isTransparent ? 'bg-transparent' : 'bg-white shadow-sm'}`}
       >
         
         {/* ========================================== */}
@@ -158,7 +158,7 @@ export default function Navbar() {
               initial={{ height: 40, opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="w-full bg-[#fcfcfc] border-b border-black/5 overflow-hidden flex items-center"
+              className={`w-full overflow-hidden flex items-center ${isTransparent ? 'bg-transparent border-transparent' : 'bg-[#fcfcfc] border-b border-black/5'}`}
             >
               <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 h-[40px] flex items-center justify-between">
                 
@@ -213,30 +213,30 @@ export default function Navbar() {
           <div className="flex items-center gap-4 lg:gap-12 h-full">
             <button
               onClick={() => setIsNavOpen(true)}
-              className="lg:hidden flex items-center gap-2 text-black hover:opacity-40 transition-opacity duration-300 ease-in-out"
+              className={`lg:hidden flex items-center gap-2 hover:opacity-40 transition-opacity duration-300 ease-in-out ${isTransparent ? 'text-white' : 'text-black'}`}
             >
               <Menu strokeWidth={1} size={28} />
             </button>
 
             <Link
               href="/"
-              className="text-[16px] sm:text-lg md:text-2xl font-bold tracking-[0.05em] sm:tracking-[0.1em] md:tracking-[0.15em] uppercase text-black whitespace-nowrap hover:opacity-50 transition-opacity duration-300"
+              className={`text-[16px] sm:text-lg md:text-2xl font-bold tracking-[0.05em] sm:tracking-[0.1em] md:tracking-[0.15em] uppercase whitespace-nowrap hover:opacity-50 transition-all duration-300 ${isTransparent ? 'text-white' : 'text-black'}`}
               style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}
             >
               Creative Kids
             </Link>
 
             <div className="hidden lg:flex items-center gap-8 h-full">
-              <Link href="/shop/offers" className="text-[12px] font-medium tracking-widest uppercase text-[#E2889D] hover:opacity-50 transition-opacity h-full flex items-center">
+              <Link href="/shop/offers" className={`text-[12px] font-medium tracking-widest uppercase hover:opacity-50 transition-opacity h-full flex items-center ${isTransparent ? 'text-white' : 'text-[#E2889D]'}`}>
                 Offers
               </Link>
-              <Link href="/shop/new" className="text-[12px] font-medium tracking-widest uppercase text-black hover:opacity-40 transition-opacity h-full flex items-center">
+              <Link href="/shop/new" className={`text-[12px] font-medium tracking-widest uppercase hover:opacity-40 transition-opacity h-full flex items-center ${isTransparent ? 'text-white' : 'text-black'}`}>
                 New Arrivals
               </Link>
 
               {/* BABY DROPDOWN */}
               <div className="group h-full flex items-center relative cursor-pointer">
-                <Link href="/shop/baby" className="text-[12px] font-medium tracking-widest uppercase text-black group-hover:opacity-60 transition-opacity flex items-center gap-1.5 h-full">
+                <Link href="/shop/baby" className={`text-[12px] font-medium tracking-widest uppercase group-hover:opacity-60 transition-opacity flex items-center gap-1.5 h-full ${isTransparent ? 'text-white' : 'text-black'}`}>
                   BABY <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" strokeWidth={1.5} />
                 </Link>
 
@@ -288,7 +288,7 @@ export default function Navbar() {
 
               {/* KIDS DROPDOWN */}
               <div className="group h-full flex items-center relative cursor-pointer">
-                <Link href="/shop/kids" className="text-[12px] font-medium tracking-widest uppercase text-black group-hover:opacity-60 transition-opacity flex items-center gap-1.5 h-full">
+                <Link href="/shop/kids" className={`text-[12px] font-medium tracking-widest uppercase group-hover:opacity-60 transition-opacity flex items-center gap-1.5 h-full ${isTransparent ? 'text-white' : 'text-black'}`}>
                   KIDS <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-300" strokeWidth={1.5} />
                 </Link>
 
@@ -341,7 +341,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-5 md:gap-7 text-black">
+          <div className={`flex items-center justify-end gap-5 md:gap-7 ${isTransparent ? 'text-white' : 'text-black'}`}>
             <button
               onClick={() => setIsSearchOpen(true)}
               className="flex items-center gap-2 hover:opacity-70 transition-opacity"
@@ -368,7 +368,7 @@ export default function Navbar() {
               <ShoppingBag strokeWidth={1.2} size={22} className="hidden sm:block" />
               <ShoppingBag strokeWidth={1.2} size={24} className="block sm:hidden" />
               {cartCount > 0 && (
-                <span className="absolute -bottom-1 -right-2 bg-black text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                <span className={`absolute -bottom-1 -right-2 text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold ${isTransparent ? 'bg-white text-black' : 'bg-black text-white'}`}>
                   {cartCount}
                 </span>
               )}
