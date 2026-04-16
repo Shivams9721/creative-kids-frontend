@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
+import MediaRenderer from "@/components/MediaRenderer";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
@@ -35,7 +36,7 @@ function GridCard({ product, wishlist, toggleWishlist }) {
           <Heart strokeWidth={1} size={18} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
         </button>
         <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-          <Image src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 65vw, 25vw" />
+          <MediaRenderer src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 65vw, 25vw" hideVolume />
         </Link>
       </div>
       <Link href={`/product/${product.id}`} className="flex flex-col px-0.5 sm:px-1">
@@ -276,7 +277,7 @@ export default function Home() {
               }
               return (
                 <Link key={`${item.targetUrl}-${index}`} href={finalUrl} className="block w-full group relative aspect-[3/4] overflow-hidden bg-gray-100">
-                  <Image src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 50vw, 25vw" />
+                  <MediaRenderer src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 50vw, 25vw" hideVolume />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
                 </Link>
@@ -357,7 +358,7 @@ export default function Home() {
                             <Heart strokeWidth={1} size={16} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
                           </button>
                           <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-                            <Image src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 60vw, 25vw" />
+                            <MediaRenderer src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 60vw, 25vw" hideVolume />
                           </Link>
                         </div>
                         <Link href={`/product/${product.id}`} className="flex flex-col px-0.5 sm:px-1">

@@ -442,6 +442,11 @@ export default function HomepageAdminPage() {
             <button className="btn btn-sm btn-accent" onClick={() => addCategoryItem(categorySection?.id)}>+ Add Category Slot</button>
           </div>
         </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+          <input className="field-input" value={categorySection?.title || ""} onChange={(e) => setSectionField(categorySection?.id, "title", e.target.value)} placeholder="Main Title (e.g. Shop by Category)" />
+          <input className="field-input" value={categorySection?.subtitle || ""} onChange={(e) => setSectionField(categorySection?.id, "subtitle", e.target.value)} placeholder="Subtitle (e.g. Discover)" />
+        </div>
         {categoryItems.length === 0 && (
           <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8, padding: 8, background: "var(--bg)", borderRadius: 6 }}>
             No categories defined. The storefront will display the hardcoded default categories. Click "Load Default Categories" above to edit their images.
@@ -471,7 +476,13 @@ export default function HomepageAdminPage() {
                 <input type="checkbox" checked={section.is_enabled !== false} onChange={(e) => setSectionField(section.id, "is_enabled", e.target.checked)} /> Enabled
               </label>
             </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: -4, paddingBottom: 12, borderBottom: "1px dashed var(--border)" }}>
+              <input className="field-input" value={section.title || ""} onChange={(e) => setSectionField(section.id, "title", e.target.value)} placeholder="Title (e.g. New Arrivals)" />
+              <input className="field-input" value={section.subtitle || ""} onChange={(e) => setSectionField(section.id, "subtitle", e.target.value)} placeholder="Subtitle (e.g. Girls)" />
+            </div>
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 8, marginTop: 12 }}>
               <select className="field-input" defaultValue="">
                 <option value="" disabled>Select product</option>
                 {groupedProducts.map((p) => <option key={p.id} value={p.id}>{p.title} ({p.id})</option>)}

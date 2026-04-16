@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import MediaRenderer from "@/components/MediaRenderer";
 import { Heart, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { safeFetch } from "@/lib/safeFetch";
@@ -93,12 +94,13 @@ export default function WishlistPage() {
             {items.map(item => (
               <div key={item.id} className="group relative flex flex-col">
                 <Link href={`/product/${item.id}`} className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-3 rounded-lg">
-                  <Image
+                  <MediaRenderer
                     src={item.image_urls?.[0] || "/images/logo.png"}
                     alt={item.title}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"
                     sizes="(max-width: 768px) 50vw, 25vw"
+                    hideVolume
                   />
                 </Link>
 

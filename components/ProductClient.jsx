@@ -15,6 +15,7 @@ import { recordView } from "@/components/RecentlyViewed";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { useSettings } from "@/context/SettingsContext";
 import SizeGuide from "@/components/SizeGuide";
+import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
 
 
 
@@ -245,7 +246,11 @@ export default function ProductClient({ product, relatedProducts }) {
               <button onClick={() => setZoomOpen(false)} className="absolute top-4 right-4 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors z-10">
                 <X size={24} className="text-white" />
               </button>
-              <img src={mainImage} alt={product.title} className="max-h-[90vh] max-w-[90vw] object-contain" onClick={e => e.stopPropagation()} />
+              {isVideo(mainImage) ? (
+                <video src={mainImage} autoPlay loop playsInline controls onClick={e => e.stopPropagation()} className="max-h-[90vh] max-w-[90vw] object-contain" />
+              ) : (
+                <img src={mainImage} alt={product.title} className="max-h-[90vh] max-w-[90vw] object-contain" onClick={e => e.stopPropagation()} />
+              )}
             </motion.div>
           </>
         )}
@@ -312,14 +317,14 @@ export default function ProductClient({ product, relatedProducts }) {
                     onClick={() => setMainImage(url)}
                     className={`w-16 h-20 md:w-full md:h-24 flex-shrink-0 bg-gray-100 overflow-hidden border transition-all relative ${mainImage === url ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'}`}
                   >
-                    <Image src={url} alt={`Thumbnail ${idx}`} fill className="object-cover" sizes="80px" />
+                    <MediaRenderer src={url} alt={`Thumbnail ${idx}`} fill className="object-cover" sizes="80px" hideVolume />
                   </button>
                 ))}
               </div>
             )}
             
-            <div className="w-full flex-1 relative">
-              <Image src={mainImage} alt={product.title} width={800} height={1000} priority className="w-full h-auto block cursor-zoom-in" sizes="(max-width: 1024px) 100vw, 50vw" onClick={() => setZoomOpen(true)} />
+            <div className="w-full flex-1 relative min-h-[500px]">
+              <MediaRenderer src={mainImage} alt={product.title} fill priority className="object-cover cursor-zoom-in" sizes="(max-width: 1024px) 100vw, 50vw" onClick={() => setZoomOpen(true)} />
               
               {/* WISHLIST BUTTON */}
               <button 
@@ -394,14 +399,15 @@ export default function ProductClient({ product, relatedProducts }) {
                             : 'border-transparent'
                         }`}>
                           {colorImg ? (
-                            <Image
+                            <MediaRenderer
                               src={colorImg}
                               alt={color}
                               fill
-                              className={`object-contain transition-transform duration-500 ${
+                              className={`object-cover transition-transform duration-500 ${
                                 available ? 'group-hover:scale-105' : ''
                               } ${!available ? 'grayscale' : ''}`}
                               sizes="64px"
+                              hideVolume
                             />
                           ) : (
                             <div className="w-full h-full bg-slate-100 flex items-center justify-center">
@@ -761,7 +767,7 @@ export default function ProductClient({ product, relatedProducts }) {
               {relatedProducts.map(p => (
                 <Link key={p.id} href={`/product/${p.id}`} className="group flex flex-col">
                   <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-2 sm:mb-3">
-                    <Image src={p.image_urls?.[0] || '/images/logo.png'} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 50vw, 16vw" />
+                    <MediaRenderer src={p.image_urls?.[0] || '/images/logo.png'} alt={p.title} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 50vw, 16vw" hideVolume />
                   </div>
                   <p className="text-[11px] sm:text-[12px] text-black truncate px-0.5">{p.title}</p>
                   <p className="text-[11px] sm:text-[12px] font-bold text-black mt-0.5 px-0.5">₹{parseFloat(p.price).toFixed(2)}</p>
@@ -780,7 +786,7 @@ export default function ProductClient({ product, relatedProducts }) {
         {selectedColor && selectedColor !== 'Default' && (
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-black/20 flex-shrink-0 overflow-hidden relative">
             {product.color_images?.[selectedColor]?.[0] ? (
-              <Image src={product.color_images[selectedColor][0]} alt={selectedColor} fill className="object-cover" sizes="32px" />
+              <MediaRenderer src={product.color_images[selectedColor][0]} alt={selectedColor} fill className="object-cover" sizes="32px" hideVolume />
             ) : (
               <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                 <span className="text-[7px] text-black/40 uppercase">{selectedColor.slice(0,3)}</span>

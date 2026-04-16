@@ -309,7 +309,11 @@ export default function ListProductInner() {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {(form.color_images[color] || []).map((url, i) => (
                       <div key={i} style={{ position: "relative", width: 60, height: 72 }}>
-                        <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                        {/\.(mp4|webm|ogg)$/i.test(url) ? (
+                           <video src={url} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                        ) : (
+                           <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                        )}
                         <button onClick={() => removeImage(color, url)} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer" }}>✕</button>
                       </div>
                     ))}
@@ -320,7 +324,7 @@ export default function ListProductInner() {
                   </div>
                 </div>
               ))}
-              <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }}
+              <input ref={fileRef} type="file" accept="image/*,video/mp4,video/webm" multiple style={{ display: "none" }}
                 onChange={e => { if (e.target.files && e.target.files.length > 0) uploadImage(Array.from(e.target.files), fileRef.current._color); e.target.value = ""; }} />
             </div>
           )}
@@ -384,7 +388,9 @@ export default function ListProductInner() {
                         <div key={color} style={{ textAlign: "center" }}>
                           <div style={{ width: 64, height: 80, borderRadius: 8, overflow: "hidden", border: "1px solid var(--border)", background: "var(--bg3)", marginBottom: 5 }}>
                             {imgs[0]
-                              ? <img src={imgs[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              ? (/\.(mp4|webm|ogg)$/i.test(imgs[0]) 
+                                  ? <video src={imgs[0]} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  : <img src={imgs[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📷</div>
                             }
                           </div>
