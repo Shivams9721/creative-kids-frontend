@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 export function isVideo(url) {
@@ -40,13 +40,16 @@ export default function MediaRenderer({
     }
   };
 
-  if (typeof window !== "undefined" && hoverPlay && videoRef.current) {
+  // Properly control play/pause via useEffect instead of during render
+  useEffect(() => {
+    if (!hoverPlay || !videoRef.current) return;
     if (isPlaying) {
       videoRef.current.play().catch(() => {});
     } else {
       videoRef.current.pause();
+      videoRef.current.currentTime = 0;
     }
-  }
+  }, [isPlaying, hoverPlay]);
 
   const isVid = isVideo(src);
 
@@ -59,7 +62,7 @@ export default function MediaRenderer({
       <div 
         className={`relative ${fill ? 'absolute inset-0 w-full h-full' : 'w-full h-full'}`}
         onMouseEnter={() => { if (hoverPlay) setIsPlaying(true); }}
-        onMouseLeave={() => { if (hoverPlay) { setIsPlaying(false); if (videoRef.current) videoRef.current.currentTime = 0; } }}
+        onMouseLeave={() => { if (hoverPlay) setIsPlaying(false); }}
       >
         <video
           ref={videoRef}
@@ -68,6 +71,7 @@ export default function MediaRenderer({
           loop
           muted={isMuted}
           playsInline
+          preload={hoverPlay ? "none" : "auto"}
           poster={poster || undefined}
           className={combinedClassName}
           {...props}
