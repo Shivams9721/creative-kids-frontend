@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import MediaRenderer from "@/components/MediaRenderer";
+import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, SlidersHorizontal, Heart, X } from "lucide-react";
@@ -459,12 +459,14 @@ export default function ShopClient({ initialProducts }) {
                         <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
                       </button>
                       <MediaRenderer
-                        src={product.image_urls?.[0] || '/images/logo.png'}
+                        src={product.image_urls?.find(isVideo) || product.image_urls?.[0] || '/images/logo.png'}
+                        poster={product.image_urls?.find(u => !isVideo(u))}
                         alt={product.title}
                         fill
                         className={`object-cover transition-transform duration-1000 group-hover:scale-105 ${soldOut ? 'opacity-50' : ''}`}
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         hideVolume
+                        hoverPlay
                       />
                       {soldOut && (
                         <div className="absolute inset-0 flex items-center justify-center">

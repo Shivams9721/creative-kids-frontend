@@ -17,11 +17,14 @@ export default function MediaRenderer({
   sizes = "", 
   className = "", 
   hideVolume = false,
+  hoverPlay = false,
+  poster = "",
   width,
   height,
   ...props 
 }) {
   const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(!hoverPlay);
   const videoRef = useRef(null);
 
   if (!src) {
@@ -37,6 +40,14 @@ export default function MediaRenderer({
     }
   };
 
+  if (typeof window !== "undefined" && hoverPlay && videoRef.current) {
+    if (isPlaying) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }
+
   const isVid = isVideo(src);
 
   if (isVid) {
@@ -45,14 +56,19 @@ export default function MediaRenderer({
       : className;
 
     return (
-      <div className={`relative ${fill ? 'absolute inset-0 w-full h-full' : 'w-full h-full'}`}>
+      <div 
+        className={`relative ${fill ? 'absolute inset-0 w-full h-full' : 'w-full h-full'}`}
+        onMouseEnter={() => { if (hoverPlay) setIsPlaying(true); }}
+        onMouseLeave={() => { if (hoverPlay) { setIsPlaying(false); if (videoRef.current) videoRef.current.currentTime = 0; } }}
+      >
         <video
           ref={videoRef}
           src={src}
-          autoPlay
+          autoPlay={!hoverPlay}
           loop
           muted={isMuted}
           playsInline
+          poster={poster || undefined}
           className={combinedClassName}
           {...props}
         />

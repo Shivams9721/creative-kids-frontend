@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
-import MediaRenderer from "@/components/MediaRenderer";
+import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
@@ -36,7 +36,16 @@ function GridCard({ product, wishlist, toggleWishlist }) {
           <Heart strokeWidth={1} size={18} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
         </button>
         <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-          <MediaRenderer src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 65vw, 25vw" hideVolume />
+          <MediaRenderer 
+            src={product.image_urls?.find(isVideo) || product.image_urls?.[0] || "/images/logo.png"} 
+            poster={product.image_urls?.find(u => !isVideo(u))}
+            alt={product.title} 
+            fill 
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" 
+            sizes="(max-width: 768px) 65vw, 25vw" 
+            hideVolume 
+            hoverPlay
+          />
         </Link>
       </div>
       <Link href={`/product/${product.id}`} className="flex flex-col px-0.5 sm:px-1">
@@ -358,7 +367,16 @@ export default function Home() {
                             <Heart strokeWidth={1} size={16} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
                           </button>
                           <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
-                            <MediaRenderer src={product.image_urls?.[0] || "/images/logo.png"} alt={product.title} fill className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" sizes="(max-width: 768px) 60vw, 25vw" hideVolume />
+                            <MediaRenderer 
+                              src={product.image_urls?.find(isVideo) || product.image_urls?.[0] || "/images/logo.png"} 
+                              poster={product.image_urls?.find(u => !isVideo(u))}
+                              alt={product.title} 
+                              fill 
+                              className="object-cover object-center group-hover/card:scale-105 transition-transform duration-700 ease-out" 
+                              sizes="(max-width: 768px) 60vw, 25vw" 
+                              hideVolume 
+                              hoverPlay
+                            />
                           </Link>
                         </div>
                         <Link href={`/product/${product.id}`} className="flex flex-col px-0.5 sm:px-1">
