@@ -28,10 +28,12 @@ export default function ListProductInner() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
-  const [uploadingVid, setUploadingVid] = useState(false);
+  const [imgProgress, setImgProgress] = useState({}); // { [color]: 0-100 }
+  const [vidProgress, setVidProgress] = useState({}); // { [color]: 0-100 }
   const [skuErrors, setSkuErrors] = useState({});
   const fileRef = useRef();
   const vidRef = useRef();
+  const isUploading = uploadingImg || Object.values(vidProgress).some(v => v !== undefined && v < 100);
 
   const [form, setForm] = useState({
     title: "", price: "", mrp: "", sku: "", hsn_code: "",
@@ -87,46 +89,60 @@ export default function ListProductInner() {
   const toggleSize = (s) => set("sizes", form.sizes.includes(s) ? form.sizes.filter(x => x !== s) : [...form.sizes, s]);
   const toggleColor = (c) => set("colors", form.colors.includes(c) ? form.colors.filter(x => x !== c) : [...form.colors, c]);
 
+  // XHR upload helper with progress tracking
+  const xhrUpload = (file, onProgress) => {
+    return new Promise((resolve, reject) => {
+      const fd = new FormData();
+      fd.append("image", file);
+      const token = localStorage.getItem("adminToken");
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${apiBase}/api/upload`);
+      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded * 100) / e.total)); };
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) resolve(data.imageUrl);
+          else reject(new Error(data.error || "Upload failed"));
+        } catch { reject(new Error("Invalid response")); }
+      };
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.onabort = () => reject(new Error("Upload cancelled"));
+      xhr.send(fd);
+    });
+  };
+
   const uploadImage = async (files, color) => {
     if (!files || files.length === 0) return;
     setUploadingImg(true);
+    setImgProgress(p => ({ ...p, [color]: 0 }));
     try {
       const uploadedUrls = [];
-      for (const file of files) {
-        const fd = new FormData();
-        fd.append("image", file);
-        const token = localStorage.getItem("adminToken");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com"}/api/upload`, {
-          method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
+      for (let i = 0; i < files.length; i++) {
+        const url = await xhrUpload(files[i], (pct) => {
+          const filePct = Math.round((i / files.length) * 100 + pct / files.length);
+          setImgProgress(p => ({ ...p, [color]: filePct }));
         });
-        const data = await res.json();
-        if (data.imageUrl) uploadedUrls.push(data.imageUrl);
+        uploadedUrls.push(url);
       }
       if (uploadedUrls.length > 0) {
         set("color_images", { ...form.color_images, [color]: [...(form.color_images[color] || []), ...uploadedUrls] });
       }
-    } catch { alert("Image upload failed"); }
-    finally { setUploadingImg(false); }
+    } catch (err) { alert(err.message || "Image upload failed"); }
+    finally { setUploadingImg(false); setImgProgress(p => { const n = { ...p }; delete n[color]; return n; }); }
   };
 
   const removeImage = (color, url) => set("color_images", { ...form.color_images, [color]: (form.color_images[color] || []).filter(u => u !== url) });
 
   const uploadVideo = async (files, color) => {
     if (!files || files.length === 0) return;
-    setUploadingVid(true);
+    setVidProgress(p => ({ ...p, [color]: 0 }));
     try {
-      const fd = new FormData();
-      fd.append("image", files[0]); // Backend handles media interchangeably on the upload route
-      const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com"}/api/upload`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
-      });
-      const data = await res.json();
-      if (data.imageUrl) {
-        set("hover_videos", { ...form.hover_videos, [color]: data.imageUrl });
-      }
-    } catch { alert("Video upload failed"); }
-    finally { setUploadingVid(false); }
+      const url = await xhrUpload(files[0], (pct) => setVidProgress(p => ({ ...p, [color]: pct })));
+      set("hover_videos", { ...form.hover_videos, [color]: url });
+    } catch (err) { alert(err.message || "Video upload failed"); }
+    finally { setVidProgress(p => { const n = { ...p }; delete n[color]; return n; }); }
   };
 
   const buildVariants = () => {
@@ -339,8 +355,9 @@ export default function ListProductInner() {
                       </div>
                     ))}
                     <button onClick={() => { fileRef.current._color = color; fileRef.current.click(); }}
-                      style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, background: "var(--bg4)", color: "var(--text3)", fontSize: 20, cursor: "pointer" }}>
-                      {uploadingImg ? "…" : "+"}
+                      disabled={imgProgress[color] !== undefined}
+                      style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, color: imgProgress[color] !== undefined ? "#fff" : "var(--text3)", fontSize: imgProgress[color] !== undefined ? 11 : 20, fontWeight: imgProgress[color] !== undefined ? 700 : 400, cursor: imgProgress[color] !== undefined ? "wait" : "pointer", position: "relative", overflow: "hidden", background: imgProgress[color] !== undefined ? `linear-gradient(to top, #4f8cff ${imgProgress[color]}%, var(--bg4) ${imgProgress[color]}%)` : "var(--bg4)", transition: "background 0.3s ease" }}>
+                      {imgProgress[color] !== undefined ? `${imgProgress[color]}%` : "+"}
                     </button>
                   </div>
 
@@ -353,8 +370,9 @@ export default function ListProductInner() {
                       </div>
                     ) : (
                       <button onClick={() => { vidRef.current._color = color; vidRef.current.click(); }}
-                        style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, background: "var(--bg4)", color: "var(--text3)", fontSize: 20, cursor: "pointer" }}>
-                        {uploadingVid ? "…" : "+"}
+                        disabled={vidProgress[color] !== undefined}
+                        style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, color: vidProgress[color] !== undefined ? "#fff" : "var(--text3)", fontSize: vidProgress[color] !== undefined ? 11 : 20, fontWeight: vidProgress[color] !== undefined ? 700 : 400, cursor: vidProgress[color] !== undefined ? "wait" : "pointer", position: "relative", overflow: "hidden", background: vidProgress[color] !== undefined ? `linear-gradient(to top, #22c55e ${vidProgress[color]}%, var(--bg4) ${vidProgress[color]}%)` : "var(--bg4)", transition: "background 0.3s ease" }}>
+                        {vidProgress[color] !== undefined ? `${vidProgress[color]}%` : "🎬+"}
                       </button>
                     )}
                   </div>
@@ -469,8 +487,8 @@ export default function ListProductInner() {
                 )}
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn btn-sm" style={{ flex: 1 }} disabled={saving || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(true)}>{saving ? "Saving…" : "Save as draft"}</button>
-                <button className="btn btn-accent btn-sm" style={{ flex: 1 }} disabled={saving || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(false)}>{saving ? "Publishing…" : editId ? "Update product" : "Publish product"}</button>
+                <button className="btn btn-sm" style={{ flex: 1 }} disabled={saving || isUploading || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(true)}>{saving ? "Saving…" : isUploading ? "⏳ Uploading media…" : "Save as draft"}</button>
+                <button className="btn btn-accent btn-sm" style={{ flex: 1 }} disabled={saving || isUploading || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(false)}>{saving ? "Publishing…" : isUploading ? "⏳ Uploading media…" : editId ? "Update product" : "Publish product"}</button>
               </div>
             </div>
           )}

@@ -17,6 +17,7 @@ export default function HomepageAdminPage() {
   const [history, setHistory] = useState([]);
   const [publishAt, setPublishAt] = useState("");
   const [validationErrors, setValidationErrors] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(null); // 0-100 or null
 
   const groupedProducts = useMemo(() => {
     return (Array.isArray(products) ? products : []).map((p) => ({
@@ -222,22 +223,26 @@ export default function HomepageAdminPage() {
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
+      setUploadProgress(0);
       const fd = new FormData();
       fd.append("image", file);
       const token = localStorage.getItem("adminToken");
-      try {
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
-        const res = await fetch(`${apiBase}/api/upload`, {
-          method: "POST",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: fd,
-        });
-        if (!res.ok) throw new Error(await res.text());
-        const data = await res.json();
-        onDone(data.imageUrl);
-      } catch (e) {
-        alert(e.message || "Upload failed");
-      }
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${apiBase}/api/upload`);
+      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadProgress(Math.round((e.loaded * 100) / e.total)); };
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) { onDone(data.imageUrl); }
+          else { alert(data.error || "Upload failed"); }
+        } catch { alert("Invalid upload response"); }
+        setUploadProgress(null);
+      };
+      xhr.onerror = () => { alert("Network error during upload"); setUploadProgress(null); };
+      xhr.onabort = () => { alert("Upload cancelled"); setUploadProgress(null); };
+      xhr.send(fd);
     };
     input.click();
   };
@@ -362,8 +367,8 @@ export default function HomepageAdminPage() {
           <div style={{ fontSize: 12, color: "var(--text3)" }}>Draft v{config.version} ({config.status})</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-sm" onClick={saveDraft} disabled={saving}>{saving ? "Saving..." : "Save Draft"}</button>
-          <button className="btn btn-accent btn-sm" onClick={publish} disabled={publishing}>{publishing ? "Publishing..." : "Publish"}</button>
+          <button className="btn btn-sm" onClick={saveDraft} disabled={saving || uploadProgress !== null}>{saving ? "Saving..." : uploadProgress !== null ? `⏳ ${uploadProgress}%` : "Save Draft"}</button>
+          <button className="btn btn-accent btn-sm" onClick={publish} disabled={publishing || uploadProgress !== null}>{publishing ? "Publishing..." : uploadProgress !== null ? `⏳ ${uploadProgress}%` : "Publish"}</button>
         </div>
       </div>
       <div className="card card-pad" style={{ marginBottom: 16 }}>
@@ -417,10 +422,10 @@ export default function HomepageAdminPage() {
               <input className="field-input" value={slide.ctaHref || ""} onChange={(e) => updateHeroSlide(sIdx, "ctaHref", e.target.value)} placeholder="CTA link (/shop)" />
               
               <input className="field-input" value={slide.imageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "imageUrl", e.target.value)} placeholder="Desktop Image/Video URL" />
-              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "imageUrl", url))}>Upload Desktop Media</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "imageUrl", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Desktop Media"}</button>
               
               <input className="field-input" value={slide.mobileImageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "mobileImageUrl", e.target.value)} placeholder="Mobile Image/Video URL (optional)" />
-              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "mobileImageUrl", url))}>Upload Mobile Media</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "mobileImageUrl", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Mobile Media"}</button>
               
               <input className="field-input" value={slide.title || ""} onChange={(e) => updateHeroSlide(sIdx, "title", e.target.value)} placeholder="Slide Title (optional custom title)" />
               <input className="field-input" value={slide.tag || ""} onChange={(e) => updateHeroSlide(sIdx, "tag", e.target.value)} placeholder="Slide Tag (optional custom tag)" />
@@ -460,10 +465,10 @@ export default function HomepageAdminPage() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto", gap: 8, alignItems: "center" }}>
               <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Poster Image URL" />
-              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateItemField(item, "image_url", url))}>Upload Photo</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "image_url", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Photo"}</button>
               
               <input className="field-input" value={item.video_url || ""} onChange={(e) => updateItemField(item, "video_url", e.target.value)} placeholder="Hover Video URL" />
-              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateItemField(item, "video_url", url))}>Upload Video</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #22c55e ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "video_url", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Video"}</button>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
               <button className="btn btn-sm" onClick={() => removeItem(item)}>Remove Category</button>
