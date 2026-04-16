@@ -101,6 +101,14 @@ export default function Navbar() {
   }, [isNavOpen]);
 
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true); // Default true for SSR, updated in effect
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -125,9 +133,9 @@ export default function Navbar() {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // LV-style: transparent navbar at the top of homepage only
+  // LV-style: transparent navbar at the top of homepage only (desktop only)
   const isHomepage = pathname === "/";
-  const isTransparent = isHomepage && !hasScrolled && !isNavOpen && !isSearchOpen;
+  const isTransparent = isHomepage && isDesktop && !hasScrolled && !isNavOpen && !isSearchOpen;
 
   return (
     <>
@@ -139,7 +147,7 @@ export default function Navbar() {
         {/* DYNAMIC ANNOUNCEMENT BAR                   */}
         {/* ========================================== */}
         <AnimatePresence>
-          {isAnnouncementVisible && !isHomepage && (
+          {isAnnouncementVisible && (!isHomepage || !isDesktop) && (
             <motion.div 
               initial={{ height: 40, opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -363,13 +371,12 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* DYNAMIC HEIGHT SPACER — on homepage it's 0 so hero goes behind transparent navbar */}
+      {/* DYNAMIC HEIGHT SPACER — on homepage desktop it's 0 so hero goes behind transparent navbar */}
       <div 
-        className={`w-full bg-white relative z-30 transition-all duration-300 ${isHomepage ? 'h-0' : isAnnouncementVisible ? 'h-[104px] md:h-[112px]' : 'h-[64px] md:h-[72px]'}`}
+        className={`w-full bg-white relative z-30 transition-all duration-300 ${(isHomepage && isDesktop) ? 'h-0' : isAnnouncementVisible ? 'h-[104px] md:h-[112px]' : 'h-[64px] md:h-[72px]'}`}
       />
 
-      {/* MOBILE SEARCH BAR — hidden on homepage for clean LV hero look */}
-      {!isHomepage && (
+      {/* MOBILE SEARCH BAR — always shown on mobile */}
       <div className="block lg:hidden w-full px-4 py-3 bg-white border-b border-black/10">
         <div 
           onClick={() => setIsSearchOpen(true)}
@@ -381,7 +388,6 @@ export default function Navbar() {
           </span>
         </div>
       </div>
-      )}
 
       {/* MOBILE MEGA MENU */}
       <AnimatePresence>
