@@ -16,7 +16,11 @@ export default function ConditionalShell({ children }) {
       <MaintenanceBanner />
       {!isAdmin && <Navbar />}
       {!isAdmin && <CartDrawer />}
-      {showAgeBanner && <AgeNavigatorBanner />}
+      {showAgeBanner && (
+        <div className={pathname === "/" ? "block lg:hidden" : ""}>
+          <AgeNavigatorBanner />
+        </div>
+      )}
       {children}
       {!isAdmin && <Footer />}
     </>
