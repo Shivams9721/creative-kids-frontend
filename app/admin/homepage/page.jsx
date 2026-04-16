@@ -218,7 +218,7 @@ export default function HomepageAdminPage() {
   const uploadImage = async (onDone) => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "image/*";
+    input.accept = "image/*,video/mp4,video/webm";
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
@@ -313,7 +313,44 @@ export default function HomepageAdminPage() {
   }
 
   const hero = bySectionKey.hero_banner;
-  const heroSettings = typeof hero?.settings_json === "string" ? JSON.parse(hero.settings_json || "{}") : (hero?.settings_json || {});
+  const rawHeroSettings = typeof hero?.settings_json === "string" ? JSON.parse(hero.settings_json || "{}") : (hero?.settings_json || {});
+  
+  // Migrate old flat structure to slides array
+  let heroSlidesData = rawHeroSettings.slides || [];
+  if (heroSlidesData.length === 0 && (rawHeroSettings.imageUrl || rawHeroSettings.ctaLabel)) {
+    heroSlidesData = [{
+      imageUrl: rawHeroSettings.imageUrl || "",
+      mobileImageUrl: rawHeroSettings.mobileImageUrl || "",
+      ctaLabel: rawHeroSettings.ctaLabel || "",
+      ctaHref: rawHeroSettings.ctaHref || "",
+    }];
+  }
+
+  const updateHeroSlide = (index, key, value) => {
+    const newSlides = [...heroSlidesData];
+    newSlides[index] = { ...newSlides[index], [key]: value };
+    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
+  };
+
+  const addHeroSlide = () => {
+    const newSlides = [...heroSlidesData, { imageUrl: "", mobileImageUrl: "", ctaLabel: "", ctaHref: "" }];
+    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
+  };
+
+  const removeHeroSlide = (index) => {
+    const newSlides = heroSlidesData.filter((_, i) => i !== index);
+    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
+  };
+  
+  const moveHeroSlide = (index, direction) => {
+    const newSlides = [...heroSlidesData];
+    const to = index + direction;
+    if (to < 0 || to >= newSlides.length) return;
+    const temp = newSlides[index];
+    newSlides[index] = newSlides[to];
+    newSlides[to] = temp;
+    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
+  };
   const categorySection = bySectionKey.shop_by_category;
   const categoryItems = getItems(categorySection?.id || -1);
 
@@ -356,18 +393,42 @@ export default function HomepageAdminPage() {
       </div>
 
       <div className="card card-pad" style={{ marginBottom: 16 }}>
-        <div className="card-title">Hero Banner</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <input className="field-input" value={hero?.title || ""} onChange={(e) => setSectionField(hero.id, "title", e.target.value)} placeholder="Hero title" />
-          <input className="field-input" value={hero?.subtitle || ""} onChange={(e) => setSectionField(hero.id, "subtitle", e.target.value)} placeholder="Hero tag" />
-          <input className="field-input" value={heroSettings.ctaLabel || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, ctaLabel: e.target.value })} placeholder="CTA label" />
-          <input className="field-input" value={heroSettings.ctaHref || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, ctaHref: e.target.value })} placeholder="CTA link" />
-          <input className="field-input" value={heroSettings.imageUrl || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, imageUrl: e.target.value })} placeholder="Hero image URL (Desktop)" />
-          <button className="btn btn-sm" onClick={() => uploadImage((url) => setSectionField(hero.id, "settings_json", { ...heroSettings, imageUrl: url }))}>Upload Desktop Image</button>
-          <input className="field-input" value={heroSettings.mobileImageUrl || ""} onChange={(e) => setSectionField(hero.id, "settings_json", { ...heroSettings, mobileImageUrl: e.target.value })} placeholder="Mobile hero image URL (optional, portrait)" />
-          <button className="btn btn-sm" onClick={() => uploadImage((url) => setSectionField(hero.id, "settings_json", { ...heroSettings, mobileImageUrl: url }))}>Upload Mobile Image</button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div className="card-title" style={{ margin: 0 }}>Hero Banner</div>
+          <button className="btn btn-sm btn-accent" onClick={addHeroSlide}>+ Add Slide</button>
         </div>
-        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 8 }}>💡 Tip: Upload a portrait (9:16) image for mobile for best quality on phones. If empty, the desktop image is used.</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, paddingBottom: 16, borderBottom: "1px dashed var(--border)", marginBottom: 12 }}>
+          <input className="field-input" value={hero?.title || ""} onChange={(e) => setSectionField(hero.id, "title", e.target.value)} placeholder="Main Title (Legacy fallback)" />
+          <input className="field-input" value={hero?.subtitle || ""} onChange={(e) => setSectionField(hero.id, "subtitle", e.target.value)} placeholder="Main Tag (Legacy fallback)" />
+        </div>
+        
+        {heroSlidesData.map((slide, sIdx) => (
+          <div key={sIdx} style={{ marginBottom: 16, padding: 12, border: "1px solid var(--border)", borderRadius: 6 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: 12, fontWeight: 600 }}>
+              Slide #{sIdx + 1}
+              <div style={{ display: "flex", gap: 6 }}>
+                <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, -1)}>↑</button>
+                <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, 1)}>↓</button>
+                <button className="btn btn-sm" onClick={() => removeHeroSlide(sIdx)}>Remove</button>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <input className="field-input" value={slide.ctaLabel || ""} onChange={(e) => updateHeroSlide(sIdx, "ctaLabel", e.target.value)} placeholder="CTA label" />
+              <input className="field-input" value={slide.ctaHref || ""} onChange={(e) => updateHeroSlide(sIdx, "ctaHref", e.target.value)} placeholder="CTA link (/shop)" />
+              
+              <input className="field-input" value={slide.imageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "imageUrl", e.target.value)} placeholder="Desktop Image/Video URL" />
+              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "imageUrl", url))}>Upload Desktop Media</button>
+              
+              <input className="field-input" value={slide.mobileImageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "mobileImageUrl", e.target.value)} placeholder="Mobile Image/Video URL (optional)" />
+              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "mobileImageUrl", url))}>Upload Mobile Media</button>
+              
+              <input className="field-input" value={slide.title || ""} onChange={(e) => updateHeroSlide(sIdx, "title", e.target.value)} placeholder="Slide Title (optional custom title)" />
+              <input className="field-input" value={slide.tag || ""} onChange={(e) => updateHeroSlide(sIdx, "tag", e.target.value)} placeholder="Slide Tag (optional custom tag)" />
+            </div>
+          </div>
+        ))}
+
+        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 8 }}>💡 Tip: You can upload images OR videos (.mp4/.webm). Videos play instantly without controls and will loop.</div>
       </div>
 
       <div className="card card-pad" style={{ marginBottom: 16 }}>

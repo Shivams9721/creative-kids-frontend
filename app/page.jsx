@@ -60,6 +60,11 @@ export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [heroSlides, setHeroSlides] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [swipeStart, setSwipeStart] = useState(null);
+  const [swipeEnd, setSwipeEnd] = useState(null);
+  
+  const isVideo = (url) => url && /\.(mp4|webm|ogg)$/i.test(url);
   const [categoryItems, setCategoryItems] = useState(DEFAULT_CATEGORIES);
   const [sectionMeta, setSectionMeta] = useState({});
   const [loading, setLoading] = useState(true);
@@ -107,20 +112,17 @@ export default function Home() {
         setGirlsProducts(parse(productMap.girls_new_arrivals || data.newArrivals) || [null, null, null, null]);
         setBestsellerProducts(parse(productMap.season_bestsellers || data.bestsellers) || [null, null, null, null]);
         setFeaturedProducts(parse(productMap.featured_collection || data.featured) || []);
-        if (data.hero) {
-          const fetchedBanner = {
+        if (data.hero && Array.isArray(data.hero.slides) && data.hero.slides.length > 0) {
+          setHeroSlides(data.hero.slides);
+        } else if (data.hero && data.hero.imageUrl) {
+          setHeroSlides([{
             imageUrl: data.hero.imageUrl || null,
             mobileImageUrl: data.hero.mobileImageUrl || null,
             tag: data.hero.tag || "",
             title: data.hero.title || "",
             ctaHref: data.hero.ctaHref || "",
             ctaLabel: data.hero.ctaLabel || "",
-          };
-          if (fetchedBanner.imageUrl) {
-            setHeroSlides([fetchedBanner, OLD_BANNER]);
-          } else {
-            setHeroSlides([OLD_BANNER]);
-          }
+          }, OLD_BANNER]);
         } else {
           setHeroSlides([OLD_BANNER]);
         }
@@ -138,13 +140,28 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (heroSlides.length > 1) {
+    if (heroSlides.length > 1 && !isVideoPlaying) {
       const interval = setInterval(() => {
         setActiveSlide(prev => (prev + 1) % heroSlides.length);
       }, 5000);
       return () => clearInterval(interval);
     }
-  }, [heroSlides.length]);
+  }, [heroSlides.length, isVideoPlaying]);
+
+  const handleTouchStart = (e) => {
+    setSwipeEnd(null);
+    setSwipeStart(e.targetTouches[0].clientX);
+  };
+  const handleTouchMove = (e) => setSwipeEnd(e.targetTouches[0].clientX);
+  const handleTouchEnd = () => {
+    if (!swipeStart || !swipeEnd) return;
+    const distance = swipeStart - swipeEnd;
+    if (distance > 50) {
+      setActiveSlide(prev => (prev + 1) % heroSlides.length);
+    } else if (distance < -50) {
+      setActiveSlide(prev => (prev === 0 ? heroSlides.length - 1 : prev - 1));
+    }
+  };
 
   const scrollLeft = () => {
     if (carouselRef.current) {
@@ -164,39 +181,73 @@ export default function Home() {
     <main className="min-h-screen bg-white">
       {/* 1. HERO BANNER — slider */}
       {isEnabled("hero_banner") && (
-      <section className="relative w-full h-[70vh] sm:h-[85vh] md:h-screen flex items-end justify-center overflow-hidden bg-[#f6f5f3]">
+      <section 
+        className="relative w-full h-[70vh] sm:h-[85vh] md:h-screen flex items-end justify-center overflow-hidden bg-[#f6f5f3]"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
              <span className="text-[11px] tracking-widest uppercase text-black/40 animate-pulse">Loading Banner...</span>
           </div>
         ) : (
           <>
-            {heroSlides.map((slide, index) => (
-              <div key={index} className={`absolute inset-0 transition-opacity duration-1000 ${index === activeSlide ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
-                {slide.mobileImageUrl && (
-                  <Image src={slide.mobileImageUrl} alt={slide.title || "Banner"} fill priority={index === 0} unoptimized className="object-cover object-center block md:hidden" sizes="100vw" />
-                )}
-                {slide.imageUrl && (
-                  <Image src={slide.imageUrl} alt={slide.title || "Banner"} fill priority={index === 0} unoptimized className={`object-cover object-center ${slide.mobileImageUrl ? 'hidden md:block' : ''}`} sizes="100vw" />
-                )}
-                <div className="absolute inset-0 bg-black/30" />
-                <div className="absolute inset-0 flex flex-col items-center justify-end pb-12 sm:pb-16 md:pb-24 px-4 text-white text-center">
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={index === activeSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={{ duration: 0.8, delay: 0.2 }} className="flex flex-col items-center">
-                    <span className="text-[9px] sm:text-[10px] tracking-[0.15em] sm:tracking-[0.2em] font-medium uppercase text-white/80 mb-1.5 sm:mb-2">{slide.tag}</span>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-wide uppercase mb-3 sm:mb-4 max-w-4xl leading-tight" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>
-                      {slide.title}
-                    </h1>
-                    {slide.ctaHref && slide.ctaLabel && (
-                      <Link href={slide.ctaHref} className="text-[10px] sm:text-[11px] font-bold tracking-[0.1em] sm:tracking-[0.15em] uppercase hover:text-white/70 transition-colors">{slide.ctaLabel}</Link>
-                    )}
-                  </motion.div>
+            {heroSlides.map((slide, index) => {
+              const isActive = index === activeSlide;
+              const hasVideo = isVideo(slide.imageUrl) || isVideo(slide.mobileImageUrl);
+              
+              // Handle video playing states so auto-rotate pauses
+              const handleVideoPlay = () => isActive && setIsVideoPlaying(true);
+              const handleVideoEnded = () => {
+                if (isActive) {
+                  setIsVideoPlaying(false);
+                  setActiveSlide(prev => (prev + 1) % heroSlides.length);
+                }
+              };
+              
+              return (
+                <div key={index} className={`absolute inset-0 transition-opacity duration-1000 ${isActive ? "opacity-100 z-10" : "opacity-0 z-0"}`}>
+                  {/* Mobile Media */}
+                  {slide.mobileImageUrl && (
+                    <div className="absolute inset-0 block md:hidden">
+                      {isVideo(slide.mobileImageUrl) ? (
+                        <video src={slide.mobileImageUrl} autoPlay={isActive} muted playsInline onPlay={handleVideoPlay} onEnded={handleVideoEnded} className="object-cover object-center w-full h-full" />
+                      ) : (
+                        <Image src={slide.mobileImageUrl} alt={slide.title || "Banner"} fill priority={index === 0} unoptimized className="object-cover object-center" sizes="100vw" />
+                      )}
+                    </div>
+                  )}
+                  {/* Desktop Media */}
+                  {slide.imageUrl && (
+                    <div className={`absolute inset-0 ${slide.mobileImageUrl ? 'hidden md:block' : 'block'}`}>
+                      {isVideo(slide.imageUrl) ? (
+                        <video src={slide.imageUrl} autoPlay={isActive} muted playsInline onPlay={handleVideoPlay} onEnded={handleVideoEnded} className="object-cover object-center w-full h-full" />
+                      ) : (
+                        <Image src={slide.imageUrl} alt={slide.title || "Banner"} fill priority={index === 0} unoptimized className="object-cover object-center" sizes="100vw" />
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="absolute inset-0 bg-black/30" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-12 sm:pb-16 md:pb-24 px-4 text-white text-center">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={{ duration: 0.8, delay: 0.2 }} className="flex flex-col items-center pointer-events-none">
+                      <span className="text-[9px] sm:text-[10px] tracking-[0.15em] sm:tracking-[0.2em] font-medium uppercase text-white/80 mb-1.5 sm:mb-2">{slide.tag}</span>
+                      <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-wide uppercase mb-3 sm:mb-4 max-w-4xl leading-tight" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>
+                        {slide.title}
+                      </h1>
+                      {slide.ctaHref && slide.ctaLabel && (
+                        <Link href={slide.ctaHref} className="text-[10px] sm:text-[11px] font-bold tracking-[0.1em] sm:tracking-[0.15em] uppercase hover:text-white/70 transition-colors pointer-events-auto">{slide.ctaLabel}</Link>
+                      )}
+                    </motion.div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {heroSlides.length > 1 && (
               <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center gap-2">
                 {heroSlides.map((_, dotIdx) => (
-                  <button key={dotIdx} onClick={() => setActiveSlide(dotIdx)} className={`w-2 h-2 rounded-full transition-all duration-300 ${dotIdx === activeSlide ? "bg-white scale-110" : "bg-white/40 hover:bg-white/60"}`} aria-label={`Go to slide ${dotIdx + 1}`} />
+                  <button key={dotIdx} onClick={() => { setIsVideoPlaying(false); setActiveSlide(dotIdx); }} className={`w-2 h-2 rounded-full transition-all duration-300 ${dotIdx === activeSlide ? "bg-white scale-110" : "bg-white/40 hover:bg-white/60"}`} aria-label={`Go to slide ${dotIdx + 1}`} />
                 ))}
               </div>
             )}
