@@ -37,7 +37,7 @@ function GridCard({ product, wishlist, toggleWishlist }) {
         </button>
         <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
           <MediaRenderer 
-            src={product.image_urls?.find(isVideo) || product.image_urls?.[0] || "/images/logo.png"} 
+            src={(product.hover_videos && Object.values(product.hover_videos).find(v => v)) || product.image_urls?.find(isVideo) || product.image_urls?.[0] || "/images/logo.png"} 
             poster={product.image_urls?.find(u => !isVideo(u))}
             alt={product.title} 
             fill 
@@ -286,7 +286,7 @@ export default function Home() {
               }
               return (
                 <Link key={`${item.targetUrl}-${index}`} href={finalUrl} className="block w-full group relative aspect-[3/4] overflow-hidden bg-gray-100">
-                  <MediaRenderer src={item.imageUrl || "/images/logo.png"} alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 50vw, 25vw" hideVolume />
+                  <MediaRenderer src={item.videoUrl || item.imageUrl || "/images/logo.png"} poster={item.imageUrl} hoverPlay alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 50vw, 25vw" hideVolume />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
                 </Link>

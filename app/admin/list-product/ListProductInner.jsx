@@ -28,14 +28,16 @@ export default function ListProductInner() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [uploadingVid, setUploadingVid] = useState(false);
   const [skuErrors, setSkuErrors] = useState({});
   const fileRef = useRef();
+  const vidRef = useRef();
 
   const [form, setForm] = useState({
     title: "", price: "", mrp: "", sku: "", hsn_code: "",
     main_category: "Baby girls", sub_category: "", item_type: "",
     description: "", fabric: "", pattern: "", neck_type: "", care_instructions: [],
-    sizes: [], colors: [], color_images: {}, sku_by_size_group: {}, sku_by_color: {},
+    sizes: [], colors: [], color_images: {}, hover_videos: {}, sku_by_size_group: {}, sku_by_color: {},
     is_featured: false, is_new_arrival: false, show_on_homepage: false, homepage_section: "none", homepage_card_slot: null,
     is_draft: false, is_cod_eligible: true,
   });
@@ -53,6 +55,7 @@ export default function ListProductInner() {
           sizes: parse(p.sizes, []),
           colors: parse(p.colors, []),
           color_images: parse(p.color_images, {}),
+          hover_videos: parse(p.hover_videos, {}),
           care_instructions: parse(p.care_instructions, []),
           sku_by_size_group: parse(p.sku_by_size_group, {}),          sku_by_color: parse(p.sku_by_color, {}),          show_on_homepage: p.show_on_homepage || false,
           homepage_section: p.homepage_section || "none",
@@ -107,6 +110,24 @@ export default function ListProductInner() {
   };
 
   const removeImage = (color, url) => set("color_images", { ...form.color_images, [color]: (form.color_images[color] || []).filter(u => u !== url) });
+
+  const uploadVideo = async (files, color) => {
+    if (!files || files.length === 0) return;
+    setUploadingVid(true);
+    try {
+      const fd = new FormData();
+      fd.append("image", files[0]); // Backend handles media interchangeably on the upload route
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com"}/api/upload`, {
+        method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
+      });
+      const data = await res.json();
+      if (data.imageUrl) {
+        set("hover_videos", { ...form.hover_videos, [color]: data.imageUrl });
+      }
+    } catch { alert("Video upload failed"); }
+    finally { setUploadingVid(false); }
+  };
 
   const buildVariants = () => {
     const variants = [];
@@ -322,10 +343,27 @@ export default function ListProductInner() {
                       {uploadingImg ? "…" : "+"}
                     </button>
                   </div>
+
+                  <div style={{ fontSize: 12, fontWeight: 600, marginTop: 12, marginBottom: 8, paddingTop: 12, borderTop: "1px dashed var(--border)" }}>Hover Video (optional, exactly 1 per color)</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {form.hover_videos?.[color] ? (
+                      <div style={{ position: "relative", width: 60, height: 72 }}>
+                         <video src={form.hover_videos[color]} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                         <button onClick={() => set("hover_videos", { ...form.hover_videos, [color]: null })} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer" }}>✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { vidRef.current._color = color; vidRef.current.click(); }}
+                        style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, background: "var(--bg4)", color: "var(--text3)", fontSize: 20, cursor: "pointer" }}>
+                        {uploadingVid ? "…" : "+"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
               <input ref={fileRef} type="file" accept="image/*,video/mp4,video/webm" multiple style={{ display: "none" }}
                 onChange={e => { if (e.target.files && e.target.files.length > 0) uploadImage(Array.from(e.target.files), fileRef.current._color); e.target.value = ""; }} />
+              <input ref={vidRef} type="file" accept="video/mp4,video/webm,video/ogg" style={{ display: "none" }}
+                onChange={e => { if (e.target.files && e.target.files.length > 0) uploadVideo(e.target.files, vidRef.current._color); e.target.value = ""; }} />
             </div>
           )}
 

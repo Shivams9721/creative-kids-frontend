@@ -768,7 +768,7 @@ export default function ProductClient({ product, relatedProducts }) {
                 <Link key={p.id} href={`/product/${p.id}`} className="group flex flex-col">
                   <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-2 sm:mb-3">
                     <MediaRenderer 
-                      src={p.image_urls?.find(isVideo) || p.image_urls?.[0] || '/images/logo.png'} 
+                      src={(p.hover_videos && Object.values(p.hover_videos).find(v => v)) || p.image_urls?.find(isVideo) || p.image_urls?.[0] || '/images/logo.png'} 
                       poster={p.image_urls?.find(u => !isVideo(u))}
                       alt={p.title} 
                       fill 

@@ -453,13 +453,22 @@ export default function HomepageAdminPage() {
           </div>
         )}
         {categoryItems.map((item, idx) => (
-          <div key={`${item.id || "new"}-${idx}`} style={{ display: "grid", gridTemplateColumns: "1.5fr 2fr 2fr auto auto auto", gap: 8, marginBottom: 8, alignItems: "center" }}>
-            <input className="field-input" value={item.label || ""} onChange={(e) => updateItemField(item, "label", e.target.value)} placeholder="Category Name (e.g. Shirts)" />
-            <input className="field-input" value={item.target_url || ""} onChange={(e) => updateItemField(item, "target_url", e.target.value)} placeholder="Target URL (/shop/kids-girl/shirts)" />
-            <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Image URL (Upload ->)" />
-            <button className="btn btn-sm" onClick={() => uploadImage((url) => updateItemField(item, "image_url", url))}>Upload Photo</button>
-            <button className="btn btn-sm" onClick={() => removeItem(item)}>Remove</button>
-            <span style={{ fontSize: 11, color: "var(--text3)", alignSelf: "center", width: 24, textAlign: "center" }}>#{item.display_order}</span>
+          <div key={`${item.id || "new"}-${idx}`} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed var(--border)" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+              <input className="field-input" value={item.label || ""} onChange={(e) => updateItemField(item, "label", e.target.value)} placeholder="Category Name (e.g. Shirts)" />
+              <input className="field-input" value={item.target_url || ""} onChange={(e) => updateItemField(item, "target_url", e.target.value)} placeholder="Target URL (/shop/kids-girl/shirts)" />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto", gap: 8, alignItems: "center" }}>
+              <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Poster Image URL" />
+              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateItemField(item, "image_url", url))}>Upload Photo</button>
+              
+              <input className="field-input" value={item.video_url || ""} onChange={(e) => updateItemField(item, "video_url", e.target.value)} placeholder="Hover Video URL" />
+              <button className="btn btn-sm" onClick={() => uploadImage((url) => updateItemField(item, "video_url", url))}>Upload Video</button>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+              <button className="btn btn-sm" onClick={() => removeItem(item)}>Remove Category</button>
+              <span style={{ fontSize: 11, color: "var(--text3)", alignSelf: "center", width: 24, textAlign: "center" }}>#{item.display_order}</span>
+            </div>
           </div>
         ))}
       </div>

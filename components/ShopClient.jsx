@@ -459,7 +459,7 @@ export default function ShopClient({ initialProducts }) {
                         <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
                       </button>
                       <MediaRenderer
-                        src={product.image_urls?.find(isVideo) || product.image_urls?.[0] || '/images/logo.png'}
+                        src={(product.hover_videos && Object.values(product.hover_videos).find(v => v)) || product.image_urls?.find(isVideo) || product.image_urls?.[0] || '/images/logo.png'}
                         poster={product.image_urls?.find(u => !isVideo(u))}
                         alt={product.title}
                         fill

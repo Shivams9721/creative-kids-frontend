@@ -95,7 +95,7 @@ export default function WishlistPage() {
               <div key={item.id} className="group relative flex flex-col">
                 <Link href={`/product/${item.id}`} className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-3 rounded-lg">
                   <MediaRenderer
-                    src={item.image_urls?.find(isVideo) || item.image_urls?.[0] || "/images/logo.png"}
+                    src={(item.hover_videos && Object.values(item.hover_videos).find(v => v)) || item.image_urls?.find(isVideo) || item.image_urls?.[0] || "/images/logo.png"}
                     poster={item.image_urls?.find(u => !isVideo(u))}
                     alt={item.title}
                     fill
