@@ -64,6 +64,19 @@ export default function MediaRenderer({
         onMouseEnter={() => { if (hoverPlay) setIsPlaying(true); }}
         onMouseLeave={() => { if (hoverPlay) setIsPlaying(false); }}
       >
+        {/* Show poster image when hoverPlay is on and not playing */}
+        {hoverPlay && poster && !isPlaying && (
+          <Image
+            src={poster}
+            alt={alt}
+            fill={fill}
+            sizes={sizes || "(max-width: 768px) 100vw, 50vw"}
+            className={combinedClassName}
+            width={!fill ? width || 800 : undefined}
+            height={!fill ? height || 1000 : undefined}
+          />
+        )}
+        {/* Video element - always rendered but hidden behind poster when not playing in hoverPlay mode */}
         <video
           ref={videoRef}
           src={src}
@@ -71,9 +84,10 @@ export default function MediaRenderer({
           loop
           muted={isMuted}
           playsInline
-          preload={hoverPlay ? "none" : "auto"}
+          preload={hoverPlay ? "metadata" : "auto"}
           poster={poster || undefined}
           className={combinedClassName}
+          style={hoverPlay && poster && !isPlaying ? { opacity: 0, position: 'absolute', inset: 0 } : {}}
           {...props}
         />
         {!hideVolume && (
