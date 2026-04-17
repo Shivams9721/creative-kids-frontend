@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 export function isVideo(url) {
@@ -24,7 +24,7 @@ export default function MediaRenderer({
   ...props 
 }) {
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(!hoverPlay);
+  const [isHovering, setIsHovering] = useState(false);
   const videoRef = useRef(null);
 
   if (!src) {
@@ -40,19 +40,56 @@ export default function MediaRenderer({
     }
   };
 
-  // Properly control play/pause via useEffect instead of during render
+  // Control play/pause on hover
   useEffect(() => {
     if (!hoverPlay || !videoRef.current) return;
-    if (isPlaying) {
+    if (isHovering) {
       videoRef.current.play().catch(() => {});
     } else {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
     }
-  }, [isPlaying, hoverPlay]);
+  }, [isHovering, hoverPlay]);
+
+  const onEnter = useCallback(() => setIsHovering(true), []);
+  const onLeave = useCallback(() => setIsHovering(false), []);
 
   const isVid = isVideo(src);
 
+  // === HOVER-PLAY VIDEO MODE ===
+  // Show poster image by default, swap to video only on hover
+  if (isVid && hoverPlay && poster) {
+    const wrapperClass = fill ? 'absolute inset-0 w-full h-full' : 'w-full h-full';
+    const mediaClass = fill 
+      ? `absolute inset-0 w-full h-full object-cover ${className}`
+      : className;
+
+    return (
+      <div className={`relative ${wrapperClass}`} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+        {/* Poster image — always rendered, hidden when hovering */}
+        <img
+          src={poster}
+          alt={alt}
+          className={mediaClass}
+          style={{ display: isHovering ? 'none' : 'block' }}
+          draggable={false}
+        />
+        {/* Video — always in DOM (preloads metadata), shown only on hover */}
+        <video
+          ref={videoRef}
+          src={src}
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          className={mediaClass}
+          style={{ display: isHovering ? 'block' : 'none' }}
+        />
+      </div>
+    );
+  }
+
+  // === NORMAL (AUTO-PLAY) VIDEO MODE ===
   if (isVid) {
     const combinedClassName = fill 
       ? `absolute inset-0 w-full h-full object-cover ${className}`
@@ -61,33 +98,17 @@ export default function MediaRenderer({
     return (
       <div 
         className={`relative ${fill ? 'absolute inset-0 w-full h-full' : 'w-full h-full'}`}
-        onMouseEnter={() => { if (hoverPlay) setIsPlaying(true); }}
-        onMouseLeave={() => { if (hoverPlay) setIsPlaying(false); }}
       >
-        {/* Show poster image when hoverPlay is on and not playing */}
-        {hoverPlay && poster && !isPlaying && (
-          <Image
-            src={poster}
-            alt={alt}
-            fill={fill}
-            sizes={sizes || "(max-width: 768px) 100vw, 50vw"}
-            className={combinedClassName}
-            width={!fill ? width || 800 : undefined}
-            height={!fill ? height || 1000 : undefined}
-          />
-        )}
-        {/* Video element - always rendered but hidden behind poster when not playing in hoverPlay mode */}
         <video
           ref={videoRef}
           src={src}
-          autoPlay={!hoverPlay}
+          autoPlay
           loop
           muted={isMuted}
           playsInline
-          preload={hoverPlay ? "metadata" : "auto"}
+          preload="auto"
           poster={poster || undefined}
           className={combinedClassName}
-          style={hoverPlay && poster && !isPlaying ? { opacity: 0, position: 'absolute', inset: 0 } : {}}
           {...props}
         />
         {!hideVolume && (
@@ -107,7 +128,7 @@ export default function MediaRenderer({
     );
   }
 
-  // Fallback to Image
+  // === IMAGE MODE ===
   return (
     <Image
       src={src}
