@@ -288,8 +288,8 @@ export default function Home() {
               return (
                 <Link key={`${item.targetUrl}-${index}`} href={finalUrl} className="block w-full group relative aspect-[3/4] overflow-hidden bg-gray-100">
                   <MediaRenderer src={item.videoUrl || item.imageUrl || "/images/logo.png"} poster={item.imageUrl} hoverPlay alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 50vw, 25vw" hideVolume />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center pointer-events-none"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
                 </Link>
               );
             })}
