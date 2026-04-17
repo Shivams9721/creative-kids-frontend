@@ -227,17 +227,25 @@ export default function HomepageAdminPage() {
       const fd = new FormData();
       fd.append("image", file);
       const token = localStorage.getItem("adminToken");
+      if (!token) { alert("Not logged in. Please login again."); setUploadProgress(null); return; }
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${apiBase}/api/upload`);
-      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
       xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadProgress(Math.round((e.loaded * 100) / e.total)); };
       xhr.onload = () => {
+        if (xhr.status === 401 || xhr.status === 403) {
+          localStorage.removeItem("adminToken");
+          alert("Session expired. Redirecting to login...");
+          setUploadProgress(null);
+          setTimeout(() => { window.location.href = "/admin/login"; }, 1500);
+          return;
+        }
         try {
           const data = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) { onDone(data.imageUrl); }
-          else { alert(data.error || "Upload failed"); }
-        } catch { alert("Invalid upload response"); }
+          else { alert(data.error || data.message || `Upload failed (${xhr.status})`); }
+        } catch { alert(`Upload failed with status ${xhr.status}`); }
         setUploadProgress(null);
       };
       xhr.onerror = () => { alert("Network error during upload"); setUploadProgress(null); };

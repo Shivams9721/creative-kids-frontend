@@ -89,23 +89,29 @@ export default function ListProductInner() {
   const toggleSize = (s) => set("sizes", form.sizes.includes(s) ? form.sizes.filter(x => x !== s) : [...form.sizes, s]);
   const toggleColor = (c) => set("colors", form.colors.includes(c) ? form.colors.filter(x => x !== c) : [...form.colors, c]);
 
-  // XHR upload helper with progress tracking
   const xhrUpload = (file, onProgress) => {
     return new Promise((resolve, reject) => {
       const fd = new FormData();
       fd.append("image", file);
       const token = localStorage.getItem("adminToken");
+      if (!token) { reject(new Error("Not logged in. Please login again.")); return; }
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${apiBase}/api/upload`);
-      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
       xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded * 100) / e.total)); };
       xhr.onload = () => {
+        if (xhr.status === 401 || xhr.status === 403) {
+          localStorage.removeItem("adminToken");
+          reject(new Error("Session expired. Redirecting to login..."));
+          setTimeout(() => { window.location.href = "/admin/login"; }, 1500);
+          return;
+        }
         try {
           const data = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) resolve(data.imageUrl);
-          else reject(new Error(data.error || "Upload failed"));
-        } catch { reject(new Error("Invalid response")); }
+          else reject(new Error(data.error || data.message || `Upload failed (${xhr.status})`));
+        } catch { reject(new Error(`Upload failed with status ${xhr.status}`)); }
       };
       xhr.onerror = () => reject(new Error("Network error during upload"));
       xhr.onabort = () => reject(new Error("Upload cancelled"));
