@@ -216,7 +216,22 @@ export default function HomepageAdminPage() {
     );
   };
 
-  const uploadImage = async (onDone) => {
+  // Fire-and-forget S3 cleanup
+  const deleteFromS3 = (url) => {
+    if (!url || !url.includes('.amazonaws.com/')) return;
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+    fetch(`${apiBase}/api/upload`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ imageUrl: url }),
+    }).catch(() => {});
+  };
+
+  const uploadImage = async (onDone, oldUrl) => {
+    // Delete old media from S3 when replacing
+    if (oldUrl) deleteFromS3(oldUrl);
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*,video/mp4,video/webm";
@@ -430,10 +445,10 @@ export default function HomepageAdminPage() {
               <input className="field-input" value={slide.ctaHref || ""} onChange={(e) => updateHeroSlide(sIdx, "ctaHref", e.target.value)} placeholder="CTA link (/shop)" />
               
               <input className="field-input" value={slide.imageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "imageUrl", e.target.value)} placeholder="Desktop Image/Video URL" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "imageUrl", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Desktop Media"}</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Desktop Media"}</button>
               
               <input className="field-input" value={slide.mobileImageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "mobileImageUrl", e.target.value)} placeholder="Mobile Image/Video URL (optional)" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "mobileImageUrl", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Mobile Media"}</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Mobile Media"}</button>
               
               <input className="field-input" value={slide.title || ""} onChange={(e) => updateHeroSlide(sIdx, "title", e.target.value)} placeholder="Slide Title (optional custom title)" />
               <input className="field-input" value={slide.tag || ""} onChange={(e) => updateHeroSlide(sIdx, "tag", e.target.value)} placeholder="Slide Tag (optional custom tag)" />
@@ -473,10 +488,10 @@ export default function HomepageAdminPage() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto", gap: 8, alignItems: "center" }}>
               <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Poster Image URL" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "image_url", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Photo"}</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "image_url", url), item.image_url)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Photo"}</button>
               
               <input className="field-input" value={item.video_url || ""} onChange={(e) => updateItemField(item, "video_url", e.target.value)} placeholder="Hover Video URL" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #22c55e ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "video_url", url))}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Video"}</button>
+              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #22c55e ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "video_url", url), item.video_url)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Video"}</button>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
               <button className="btn btn-sm" onClick={() => removeItem(item)}>Remove Category</button>

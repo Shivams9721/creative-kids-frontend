@@ -138,11 +138,28 @@ export default function ListProductInner() {
     } catch (err) { alert(err.message || "Image upload failed"); }
     finally { setUploadingImg(false); setImgProgress(p => { const n = { ...p }; delete n[color]; return n; }); }
   };
+  // Fire-and-forget S3 cleanup — delete old media when removed/replaced
+  const deleteFromS3 = (url) => {
+    if (!url || !url.includes('.amazonaws.com/')) return;
+    const token = localStorage.getItem("adminToken");
+    if (!token) return;
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+    fetch(`${apiBase}/api/upload`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ imageUrl: url }),
+    }).catch(() => {}); // silent — don't block UI if cleanup fails
+  };
 
-  const removeImage = (color, url) => set("color_images", { ...form.color_images, [color]: (form.color_images[color] || []).filter(u => u !== url) });
+  const removeImage = (color, url) => {
+    deleteFromS3(url);
+    set("color_images", { ...form.color_images, [color]: (form.color_images[color] || []).filter(u => u !== url) });
+  };
 
   const uploadVideo = async (files, color) => {
     if (!files || files.length === 0) return;
+    // Delete old video from S3 if replacing
+    if (form.hover_videos?.[color]) deleteFromS3(form.hover_videos[color]);
     setVidProgress(p => ({ ...p, [color]: 0 }));
     try {
       const url = await xhrUpload(files[0], (pct) => setVidProgress(p => ({ ...p, [color]: pct })));
@@ -372,7 +389,7 @@ export default function ListProductInner() {
                     {form.hover_videos?.[color] ? (
                       <div style={{ position: "relative", width: 60, height: 72 }}>
                          <video src={form.hover_videos[color]} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
-                         <button onClick={() => set("hover_videos", { ...form.hover_videos, [color]: null })} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer" }}>✕</button>
+                         <button onClick={() => { deleteFromS3(form.hover_videos[color]); set("hover_videos", { ...form.hover_videos, [color]: null }); }} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer" }}>✕</button>
                       </div>
                     ) : (
                       <button onClick={() => { vidRef.current._color = color; vidRef.current.click(); }}
