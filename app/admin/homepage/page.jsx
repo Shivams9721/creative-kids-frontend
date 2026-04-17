@@ -411,8 +411,8 @@ export default function HomepageAdminPage() {
           <div style={{ fontSize: 12, color: "var(--text3)" }}>Draft v{config.version} ({config.status})</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-sm" onClick={saveDraft} disabled={saving || uploadProgress !== null}>{saving ? "Saving..." : uploadProgress !== null ? `⏳ ${uploadProgress}%` : "Save Draft"}</button>
-          <button className="btn btn-accent btn-sm" onClick={publish} disabled={publishing || uploadProgress !== null}>{publishing ? "Publishing..." : uploadProgress !== null ? `⏳ ${uploadProgress}%` : "Publish"}</button>
+          <button className="btn btn-sm" onClick={saveDraft} disabled={saving || Object.keys(uploadProgress).length > 0}>{saving ? "Saving..." : Object.keys(uploadProgress).length > 0 ? `Uploading...` : "Save Draft"}</button>
+          <button className="btn btn-accent btn-sm" onClick={publish} disabled={publishing || Object.keys(uploadProgress).length > 0}>{publishing ? "Publishing..." : Object.keys(uploadProgress).length > 0 ? `Uploading...` : "Publish"}</button>
         </div>
       </div>
       <div className="card card-pad" style={{ marginBottom: 16 }}>
