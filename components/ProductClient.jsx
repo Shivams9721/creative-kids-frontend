@@ -323,8 +323,8 @@ export default function ProductClient({ product, relatedProducts }) {
               </div>
             )}
             
-            <div className="w-full flex-1 relative min-h-[500px]">
-              <MediaRenderer src={mainImage} alt={product.title} fill priority className="object-cover cursor-zoom-in" sizes="(max-width: 1024px) 100vw, 50vw" onClick={() => setZoomOpen(true)} />
+            <div className="w-full flex-1 relative">
+              <MediaRenderer src={mainImage} alt={product.title} priority className="w-full h-auto block cursor-zoom-in" sizes="(max-width: 1024px) 100vw, 50vw" onClick={() => setZoomOpen(true)} />
               
               {/* WISHLIST BUTTON */}
               <button 
