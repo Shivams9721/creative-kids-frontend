@@ -1,48 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
 
 .admin-root {
-  --bg: #0d0d0d;
-  --bg2: #141414;
-  --bg3: #1a1a1a;
-  --bg4: #222222;
-  --bg5: #2a2a2a;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.12);
-  --text: #e8e8e8;
-  --text2: #909090;
-  --text3: #555555;
-  --accent: #c8f53e;
-  --accent2: rgba(200,245,62,0.12);
-  --accent3: rgba(200,245,62,0.06);
-  --red: #ff4d4d;
-  --red2: rgba(255,77,77,0.12);
-  --amber: #f5a623;
-  --amber2: rgba(245,166,35,0.12);
-  --blue: #4a9eff;
-  --blue2: rgba(74,158,255,0.12);
-  --purple: #a78bfa;
-  --purple2: rgba(167,139,250,0.12);
-  --green: #4ade80;
-  --green2: rgba(74,222,128,0.12);
-  --pink: #f472b6;
-  --pink2: rgba(244,114,182,0.12);
-  font-family: 'DM Sans', sans-serif;
+  /* Apple Pro Dark Theme */
+  --bg: #000000;
+  --bg2: #151516; /* Frosted layer 1 */
+  --bg3: #1c1c1e; /* Frosted layer 2 */
+  --bg4: #2c2c2e; /* Frosted layer 3 */
+  --bg5: #3a3a3c;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f5f5f7;
+  --text2: #ebebf599; /* secondary */
+  --text3: #ebebf560; /* tertiary */
+  
+  /* System Accents */
+  --accent: #ffffff; /* Contrast accent */
+  --accent2: rgba(255,255,255,0.1);
+  --accent3: rgba(255,255,255,0.05);
+  
+  --red: #ff453a;
+  --red2: rgba(255,69,58,0.15);
+  --amber: #ff9f0a;
+  --amber2: rgba(255,159,10,0.15);
+  --blue: #0a84ff;
+  --blue2: rgba(10,132,255,0.15);
+  --green: #32d74b;
+  --green2: rgba(50,215,75,0.15);
+  
+  /* iOS System Font Stack */
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   font-size: 13px;
   color: var(--text);
   background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .admin-root *, .admin-root *::before, .admin-root *::after { box-sizing: border-box; }
-.admin-root ::-webkit-scrollbar { width: 4px; height: 4px; }
+.admin-root ::-webkit-scrollbar { width: 6px; height: 6px; }
 .admin-root ::-webkit-scrollbar-track { background: transparent; }
-.admin-root ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-.admin-root input, .admin-root select, .admin-root textarea, .admin-root button { font-family: 'DM Sans', sans-serif; font-size: 13px; }
+.admin-root ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 6px; }
+.admin-root input, .admin-root select, .admin-root textarea, .admin-root button { font-family: inherit; font-size: 13px; }
 .admin-root input:focus, .admin-root select:focus, .admin-root textarea:focus { outline: none; }
 
 /* CARDS */
-.admin-root .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.admin-root .card-pad { padding: 18px 20px; }
-.admin-root .card-title { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+.admin-root .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
+.admin-root .card-pad { padding: 20px 24px; }
+.admin-root .card-title { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
 
 /* KPI */
 .admin-root .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
@@ -74,13 +78,15 @@
 .admin-root .tag-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
 /* BUTTONS */
-.admin-root .btn { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: var(--bg3); color: var(--text); transition: all 0.15s; }
-.admin-root .btn:hover { background: var(--bg4); }
+.admin-root .btn { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text); transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: inline-flex; justify-content: center; align-items: center; }
+.admin-root .btn:hover { background: var(--bg4); border-color: var(--border2); }
+.admin-root .btn:active:not(:disabled) { transform: scale(0.97); }
 .admin-root .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.admin-root .btn-accent { background: var(--accent); color: #0d0d0d; border-color: var(--accent); }
-.admin-root .btn-accent:hover { background: #d6ff4a; }
+.admin-root .btn-accent { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+.admin-root .btn-accent:hover { background: #d1d1d6; }
 .admin-root .btn-danger { background: var(--red2); color: var(--red); border-color: transparent; }
-.admin-root .btn-sm { padding: 5px 10px; font-size: 11px; }
+.admin-root .btn-danger:hover { background: rgba(255,69,58,0.25); }
+.admin-root .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
 
 /* LAYOUT */
 .admin-root .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -161,9 +167,9 @@
 .admin-root .toggle input:checked ~ .toggle-thumb { left: 18px; background: #0d0d0d; }
 
 /* FIELD */
-.admin-root .field-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
-.admin-root .field-input { width: 100%; padding: 8px 11px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; transition: border 0.15s; }
-.admin-root .field-input:focus { border-color: var(--border2); }
+.admin-root .field-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+.admin-root .field-input { width: 100%; padding: 10px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; transition: border 0.2s, box-shadow 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); }
+.admin-root .field-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue2), inset 0 1px 2px rgba(0,0,0,0.1); }
 .admin-root .field-input::placeholder { color: var(--text3); }
 .admin-root select.field-input { cursor: pointer; }
 .admin-root textarea.field-input { resize: vertical; min-height: 80px; line-height: 1.5; }
@@ -270,3 +276,16 @@
 .admin-root .page-anim { animation: fadeSlideIn 0.2s ease; }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* SIDEBAR MOBILE */
+.admin-root .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 40; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.admin-root .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+.admin-root .sidebar-drawer { transform: translateX(0); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); z-index: 50; position: relative; }
+
+@media (max-width: 768px) {
+  .admin-root .sidebar-drawer { position: fixed; top: 0; bottom: 0; left: 0; transform: translateX(-100%); width: 260px !important; }
+  .admin-root .sidebar-drawer.open { transform: translateX(0); }
+  .admin-root .sidebar-overlay { display: block; }
+  .admin-root .topbar-content { padding-left: 12px; }
+  .admin-root { font-size: 14px; }
+}

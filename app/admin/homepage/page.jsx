@@ -17,7 +17,7 @@ export default function HomepageAdminPage() {
   const [history, setHistory] = useState([]);
   const [publishAt, setPublishAt] = useState("");
   const [validationErrors, setValidationErrors] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState(null); // 0-100 or null
+  const [uploadProgress, setUploadProgress] = useState({}); // { [key]: number }
 
   const groupedProducts = useMemo(() => {
     return (Array.isArray(products) ? products : []).map((p) => ({
@@ -229,7 +229,7 @@ export default function HomepageAdminPage() {
     }).catch(() => {});
   };
 
-  const uploadImage = async (onDone, oldUrl) => {
+  const uploadImage = async (onDone, oldUrl, progressKey) => {
     // Delete old media from S3 when replacing
     if (oldUrl) deleteFromS3(oldUrl);
     const input = document.createElement("input");
@@ -238,21 +238,29 @@ export default function HomepageAdminPage() {
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      setUploadProgress(0);
+      if (progressKey) setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
       const fd = new FormData();
       fd.append("image", file);
       const token = localStorage.getItem("adminToken");
-      if (!token) { alert("Not logged in. Please login again."); setUploadProgress(null); return; }
+      if (!token) { 
+        alert("Not logged in. Please login again."); 
+        if (progressKey) setUploadProgress(prev => { const n = {...prev}; delete n[progressKey]; return n; }); 
+        return; 
+      }
       const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${apiBase}/api/upload`);
       xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadProgress(Math.round((e.loaded * 100) / e.total)); };
+      xhr.upload.onprogress = (e) => { 
+        if (e.lengthComputable && progressKey) {
+          setUploadProgress(prev => ({ ...prev, [progressKey]: Math.round((e.loaded * 100) / e.total) }));
+        }
+      };
       xhr.onload = () => {
         if (xhr.status === 401 || xhr.status === 403) {
           localStorage.removeItem("adminToken");
           alert("Session expired. Redirecting to login...");
-          setUploadProgress(null);
+          if (progressKey) setUploadProgress(prev => { const n = {...prev}; delete n[progressKey]; return n; });
           setTimeout(() => { window.location.href = "/admin/login"; }, 1500);
           return;
         }
@@ -261,13 +269,26 @@ export default function HomepageAdminPage() {
           if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) { onDone(data.imageUrl); }
           else { alert(data.error || data.message || `Upload failed (${xhr.status})`); }
         } catch { alert(`Upload failed with status ${xhr.status}`); }
-        setUploadProgress(null);
+        if (progressKey) setUploadProgress(prev => { const n = {...prev}; delete n[progressKey]; return n; });
       };
-      xhr.onerror = () => { alert("Network error during upload"); setUploadProgress(null); };
-      xhr.onabort = () => { alert("Upload cancelled"); setUploadProgress(null); };
+      xhr.onerror = () => { alert("Network error during upload"); if (progressKey) setUploadProgress(prev => { const n = {...prev}; delete n[progressKey]; return n; }); };
+      xhr.onabort = () => { alert("Upload cancelled"); if (progressKey) setUploadProgress(prev => { const n = {...prev}; delete n[progressKey]; return n; }); };
       xhr.send(fd);
     };
     input.click();
+  };
+
+  const renderUploadBtn = (key, onClick, text) => {
+    const p = uploadProgress[key];
+    if (p !== undefined) {
+      return (
+        <button disabled className="btn btn-sm" style={{ position: 'relative', overflow: 'hidden', background: 'var(--bg3)', borderColor: 'var(--border2)' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${p}%`, background: 'var(--blue)', opacity: 0.2, transition: 'width 0.2s ease-out' }} />
+          <span style={{ position: 'relative', zIndex: 1, color: 'var(--blue)', fontWeight: 600 }}>{p}%</span>
+        </button>
+      );
+    }
+    return <button className="btn btn-sm" onClick={onClick}>{text}</button>;
   };
 
   const saveDraft = async () => {
@@ -445,10 +466,10 @@ export default function HomepageAdminPage() {
               <input className="field-input" value={slide.ctaHref || ""} onChange={(e) => updateHeroSlide(sIdx, "ctaHref", e.target.value)} placeholder="CTA link (/shop)" />
               
               <input className="field-input" value={slide.imageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "imageUrl", e.target.value)} placeholder="Desktop Image/Video URL" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Desktop Media"}</button>
+              {renderUploadBtn(`hero-${sIdx}-desktop`, () => uploadImage((url) => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl, `hero-${sIdx}-desktop`), "Upload Media")}
               
-              <input className="field-input" value={slide.mobileImageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "mobileImageUrl", e.target.value)} placeholder="Mobile Image/Video URL (optional)" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Mobile Media"}</button>
+              <input className="field-input" value={slide.mobileImageUrl || ""} onChange={(e) => updateHeroSlide(sIdx, "mobileImageUrl", e.target.value)} placeholder="Mobile Image/Video (optional)" />
+              {renderUploadBtn(`hero-${sIdx}-mobile`, () => uploadImage((url) => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl, `hero-${sIdx}-mobile`), "Upload Mobile")}
               
               <input className="field-input" value={slide.title || ""} onChange={(e) => updateHeroSlide(sIdx, "title", e.target.value)} placeholder="Slide Title (optional custom title)" />
               <input className="field-input" value={slide.tag || ""} onChange={(e) => updateHeroSlide(sIdx, "tag", e.target.value)} placeholder="Slide Tag (optional custom tag)" />
@@ -486,12 +507,25 @@ export default function HomepageAdminPage() {
               <input className="field-input" value={item.label || ""} onChange={(e) => updateItemField(item, "label", e.target.value)} placeholder="Category Name (e.g. Shirts)" />
               <input className="field-input" value={item.target_url || ""} onChange={(e) => updateItemField(item, "target_url", e.target.value)} placeholder="Target URL (/shop/kids-girl/shirts)" />
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr auto", gap: 8, alignItems: "center" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
               <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Poster Image URL" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #4f8cff ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "image_url", url), item.image_url)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Photo"}</button>
-              
+              {renderUploadBtn(`cat-${item.id}-img`, () => uploadImage((url) => updateItemField(item, "image_url", url), item.image_url, `cat-${item.id}-img`), "Upload Photo")}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 8, alignItems: "center" }}>
               <input className="field-input" value={item.video_url || ""} onChange={(e) => updateItemField(item, "video_url", e.target.value)} placeholder="Hover Video URL" />
-              <button className="btn btn-sm" disabled={uploadProgress !== null} style={uploadProgress !== null ? { background: `linear-gradient(to top, #22c55e ${uploadProgress}%, var(--bg4) ${uploadProgress}%)`, color: '#fff', fontWeight: 700, transition: 'background 0.3s ease' } : {}} onClick={() => uploadImage((url) => updateItemField(item, "video_url", url), item.video_url)}>{uploadProgress !== null ? `${uploadProgress}%` : "Upload Video"}</button>
+              {item.video_url && (
+                <button 
+                  className="btn btn-sm btn-danger" 
+                  onClick={() => { 
+                    deleteFromS3(item.video_url); 
+                    updateItemField(item, "video_url", ""); 
+                  }}
+                  title="Remove Video from S3"
+                >
+                  Remove Video
+                </button>
+              )}
+              {renderUploadBtn(`cat-${item.id}-vid`, () => uploadImage((url) => updateItemField(item, "video_url", url), item.video_url, `cat-${item.id}-vid`), "Upload Video")}
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
               <button className="btn btn-sm" onClick={() => removeItem(item)}>Remove Category</button>
