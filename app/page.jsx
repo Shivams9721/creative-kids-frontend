@@ -75,7 +75,7 @@ export default function Home() {
   const [swipeEnd, setSwipeEnd] = useState(null);
   
   const isVideo = (url) => url && /\.(mp4|webm|ogg)$/i.test(url);
-  const [categoryItems, setCategoryItems] = useState(DEFAULT_CATEGORIES);
+  const [categoryItems, setCategoryItems] = useState([]);
   const [sectionMeta, setSectionMeta] = useState({});
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(new Set());
@@ -138,6 +138,8 @@ export default function Home() {
         }
         if (Array.isArray(data.categoryItems) && data.categoryItems.length > 0) {
           setCategoryItems(data.categoryItems);
+        } else {
+          setCategoryItems(DEFAULT_CATEGORIES);
         }
         if (Array.isArray(data.sections)) {
           const map = {};
@@ -267,7 +269,7 @@ export default function Home() {
       )}
 
       {/* 2. SHOP BY CATEGORY */}
-      {isEnabled("shop_by_category") && (
+      {!loading && isEnabled("shop_by_category") && categoryItems.length > 0 && (
       <section className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
         <div className="max-w-[1600px] mx-auto">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
@@ -279,7 +281,6 @@ export default function Home() {
               let finalUrl = item.targetUrl || "/shop";
               if (finalUrl.startsWith("/shop/")) {
                 const parts = finalUrl.split("/");
-                // Convert /shop/[category]/[item_type] to /shop/all/[item_type]
                 if (parts.length === 4) {
                   finalUrl = `/shop/all/${parts[3]}`;
                 }
