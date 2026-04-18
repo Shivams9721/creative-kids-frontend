@@ -296,11 +296,23 @@ export default function Home() {
                   finalUrl = `/shop/all/${parts[3]}`;
                 }
               }
+              const hasCatVideo = isVideo(item.videoUrl);
               return (
                 <Link key={`${item.targetUrl}-${index}`} href={finalUrl} className="block w-full group relative aspect-[3/4] overflow-hidden bg-gray-100">
-                  <MediaRenderer src={item.videoUrl || item.imageUrl || "/images/logo.png"} poster={item.imageUrl} hoverPlay alt={item.label || "Category"} fill className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" sizes="(max-width: 768px) 50vw, 25vw" hideVolume />
+                  <MediaRenderer 
+                    src={item.videoUrl || item.imageUrl || "/images/logo.png"} 
+                    poster={item.imageUrl} 
+                    hoverPlay={!hasCatVideo} 
+                    alt={item.label || "Category"} 
+                    fill 
+                    className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" 
+                    sizes="(max-width: 768px) 50vw, 25vw" 
+                    hideVolume={!hasCatVideo} 
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center pointer-events-none"><h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium">{item.label || "Category"}</h3></div>
+                  <div className="absolute bottom-4 sm:bottom-6 inset-x-0 text-center pointer-events-none">
+                    <h3 className="text-white text-[11px] sm:text-[13px] tracking-wide uppercase font-medium shadow-black drop-shadow-md">{item.label || "Category"}</h3>
+                  </div>
                 </Link>
               );
             })}
