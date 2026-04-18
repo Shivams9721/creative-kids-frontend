@@ -75,7 +75,7 @@ export default function Home() {
   const [swipeStart, setSwipeStart] = useState(null);
   const [swipeEnd, setSwipeEnd] = useState(null);
   
-  const isVideo = (url) => url && /\.(mp4|webm|ogg)$/i.test(url);
+  const isVideo = (url) => url && /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
   const [categoryItems, setCategoryItems] = useState([]);
   const [sectionMeta, setSectionMeta] = useState({});
   const [loading, setLoading] = useState(true);

@@ -6,7 +6,7 @@ import { Volume2, VolumeX } from "lucide-react";
 
 export function isVideo(url) {
   if (!url) return false;
-  return /\.(mp4|webm|ogg)$/i.test(url);
+  return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
 }
 
 export default function MediaRenderer({ 
