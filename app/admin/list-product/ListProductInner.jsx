@@ -28,18 +28,14 @@ export default function ListProductInner() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
-  const [imgProgress, setImgProgress] = useState({}); // { [color]: 0-100 }
-  const [vidProgress, setVidProgress] = useState({}); // { [color]: 0-100 }
   const [skuErrors, setSkuErrors] = useState({});
   const fileRef = useRef();
-  const vidRef = useRef();
-  const isUploading = uploadingImg || Object.values(vidProgress).some(v => v !== undefined && v < 100);
 
   const [form, setForm] = useState({
     title: "", price: "", mrp: "", sku: "", hsn_code: "",
     main_category: "Baby girls", sub_category: "", item_type: "",
     description: "", fabric: "", pattern: "", neck_type: "", care_instructions: [],
-    sizes: [], colors: [], color_images: {}, hover_videos: {}, sku_by_size_group: {}, sku_by_color: {},
+    sizes: [], colors: [], color_images: {}, sku_by_size_group: {}, sku_by_color: {},
     is_featured: false, is_new_arrival: false, show_on_homepage: false, homepage_section: "none", homepage_card_slot: null,
     is_draft: false, is_cod_eligible: true,
   });
@@ -57,7 +53,6 @@ export default function ListProductInner() {
           sizes: parse(p.sizes, []),
           colors: parse(p.colors, []),
           color_images: parse(p.color_images, {}),
-          hover_videos: parse(p.hover_videos, {}),
           care_instructions: parse(p.care_instructions, []),
           sku_by_size_group: parse(p.sku_by_size_group, {}),          sku_by_color: parse(p.sku_by_color, {}),          show_on_homepage: p.show_on_homepage || false,
           homepage_section: p.homepage_section || "none",
@@ -89,84 +84,29 @@ export default function ListProductInner() {
   const toggleSize = (s) => set("sizes", form.sizes.includes(s) ? form.sizes.filter(x => x !== s) : [...form.sizes, s]);
   const toggleColor = (c) => set("colors", form.colors.includes(c) ? form.colors.filter(x => x !== c) : [...form.colors, c]);
 
-  const xhrUpload = (file, onProgress) => {
-    return new Promise((resolve, reject) => {
-      const fd = new FormData();
-      fd.append("image", file);
-      const token = localStorage.getItem("adminToken");
-      if (!token) { reject(new Error("Not logged in. Please login again.")); return; }
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${apiBase}/api/upload`);
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded * 100) / e.total)); };
-      xhr.onload = () => {
-        if (xhr.status === 401 || xhr.status === 403) {
-          localStorage.removeItem("adminToken");
-          reject(new Error("Session expired. Redirecting to login..."));
-          setTimeout(() => { window.location.href = "/admin/login"; }, 1500);
-          return;
-        }
-        try {
-          const data = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) resolve(data.imageUrl);
-          else reject(new Error(data.error || data.message || `Upload failed (${xhr.status})`));
-        } catch { reject(new Error(`Upload failed with status ${xhr.status}`)); }
-      };
-      xhr.onerror = () => reject(new Error("Network error during upload"));
-      xhr.onabort = () => reject(new Error("Upload cancelled"));
-      xhr.send(fd);
-    });
-  };
-
   const uploadImage = async (files, color) => {
     if (!files || files.length === 0) return;
     setUploadingImg(true);
-    setImgProgress(p => ({ ...p, [color]: 0 }));
     try {
       const uploadedUrls = [];
-      for (let i = 0; i < files.length; i++) {
-        const url = await xhrUpload(files[i], (pct) => {
-          const filePct = Math.round((i / files.length) * 100 + pct / files.length);
-          setImgProgress(p => ({ ...p, [color]: filePct }));
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append("image", file);
+        const token = localStorage.getItem("adminToken");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com"}/api/upload`, {
+          method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
         });
-        uploadedUrls.push(url);
+        const data = await res.json();
+        if (data.imageUrl) uploadedUrls.push(data.imageUrl);
       }
       if (uploadedUrls.length > 0) {
         set("color_images", { ...form.color_images, [color]: [...(form.color_images[color] || []), ...uploadedUrls] });
       }
-    } catch (err) { alert(err.message || "Image upload failed"); }
-    finally { setUploadingImg(false); setImgProgress(p => { const n = { ...p }; delete n[color]; return n; }); }
-  };
-  // Fire-and-forget S3 cleanup — delete old media when removed/replaced
-  const deleteFromS3 = (url) => {
-    if (!url || !url.includes('.amazonaws.com/')) return;
-    const token = localStorage.getItem("adminToken");
-    if (!token) return;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
-    fetch(`${apiBase}/api/upload`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ imageUrl: url }),
-    }).catch(() => {}); // silent — don't block UI if cleanup fails
+    } catch { alert("Image upload failed"); }
+    finally { setUploadingImg(false); }
   };
 
-  const removeImage = (color, url) => {
-    deleteFromS3(url);
-    set("color_images", { ...form.color_images, [color]: (form.color_images[color] || []).filter(u => u !== url) });
-  };
-
-  const uploadVideo = async (files, color) => {
-    if (!files || files.length === 0) return;
-    // Delete old video from S3 if replacing
-    if (form.hover_videos?.[color]) deleteFromS3(form.hover_videos[color]);
-    setVidProgress(p => ({ ...p, [color]: 0 }));
-    try {
-      const url = await xhrUpload(files[0], (pct) => setVidProgress(p => ({ ...p, [color]: pct })));
-      set("hover_videos", { ...form.hover_videos, [color]: url });
-    } catch (err) { alert(err.message || "Video upload failed"); }
-    finally { setVidProgress(p => { const n = { ...p }; delete n[color]; return n; }); }
-  };
+  const removeImage = (color, url) => set("color_images", { ...form.color_images, [color]: (form.color_images[color] || []).filter(u => u !== url) });
 
   const buildVariants = () => {
     const variants = [];
@@ -174,7 +114,10 @@ export default function ListProductInner() {
       form.sizes.forEach(size => {
         const colorSku = (form.sku_by_color || {})[color] || form.sku || "SKU";
         const sizeSku = (form.sku_by_size_group || {})[size] || colorSku;
-        const sizeCode = size.replace(/[^a-zA-Z0-9]/g, "");
+        
+        // Convert UI size "0M-3M" / "2Y-3Y" into exact EasyEcom SKU size format "0-3M" / "2-3Y"
+        const sizeCode = size.replace(/M[–-]/, '-').replace(/Y[–-]/, '-');
+        
         variants.push({
           color,
           size,
@@ -189,7 +132,17 @@ export default function ListProductInner() {
   const handleSubmit = async (isDraft = false) => {
     setSaving(true);
     try {
-      const payload = { ...form, is_draft: isDraft, variants: buildVariants(), image_urls: Object.values(form.color_images).flat(), primary_category: form.main_category, cross_listed_categories: [] };
+      // Smart Auto-cross-listing for size intersection
+      const crossListed = [];
+      const hasBabySize = form.sizes.some(s => BABY_SIZES.includes(s));
+      const hasKidsSize = form.sizes.some(s => KIDS_SIZES.includes(s));
+      
+      if (form.main_category === "Baby girls" && hasKidsSize) crossListed.push("Girls clothing");
+      if (form.main_category === "Girls clothing" && hasBabySize) crossListed.push("Baby girls");
+      if (form.main_category === "Baby boys" && hasKidsSize) crossListed.push("Boys clothing");
+      if (form.main_category === "Boys clothing" && hasBabySize) crossListed.push("Baby boys");
+
+      const payload = { ...form, is_draft: isDraft, variants: buildVariants(), image_urls: Object.values(form.color_images).flat(), primary_category: form.main_category, cross_listed_categories: crossListed };
       let result;
       if (editId) {
         result = await safeFetch(`/api/products/${editId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -369,42 +322,19 @@ export default function ListProductInner() {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                     {(form.color_images[color] || []).map((url, i) => (
                       <div key={i} style={{ position: "relative", width: 60, height: 72 }}>
-                        {/\.(mp4|webm|ogg)$/i.test(url) ? (
-                           <video src={url} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
-                        ) : (
-                           <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
-                        )}
+                        <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
                         <button onClick={() => removeImage(color, url)} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer" }}>✕</button>
                       </div>
                     ))}
                     <button onClick={() => { fileRef.current._color = color; fileRef.current.click(); }}
-                      disabled={imgProgress[color] !== undefined}
-                      style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, color: imgProgress[color] !== undefined ? "#fff" : "var(--text3)", fontSize: imgProgress[color] !== undefined ? 11 : 20, fontWeight: imgProgress[color] !== undefined ? 700 : 400, cursor: imgProgress[color] !== undefined ? "wait" : "pointer", position: "relative", overflow: "hidden", background: imgProgress[color] !== undefined ? `linear-gradient(to top, #4f8cff ${imgProgress[color]}%, var(--bg4) ${imgProgress[color]}%)` : "var(--bg4)", transition: "background 0.3s ease" }}>
-                      {imgProgress[color] !== undefined ? `${imgProgress[color]}%` : "+"}
+                      style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, background: "var(--bg4)", color: "var(--text3)", fontSize: 20, cursor: "pointer" }}>
+                      {uploadingImg ? "…" : "+"}
                     </button>
-                  </div>
-
-                  <div style={{ fontSize: 12, fontWeight: 600, marginTop: 12, marginBottom: 8, paddingTop: 12, borderTop: "1px dashed var(--border)" }}>Hover Video (optional, exactly 1 per color)</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {form.hover_videos?.[color] ? (
-                      <div style={{ position: "relative", width: 60, height: 72 }}>
-                         <video src={form.hover_videos[color]} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
-                         <button onClick={() => { deleteFromS3(form.hover_videos[color]); set("hover_videos", { ...form.hover_videos, [color]: null }); }} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer" }}>✕</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => { vidRef.current._color = color; vidRef.current.click(); }}
-                        disabled={vidProgress[color] !== undefined}
-                        style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, color: vidProgress[color] !== undefined ? "#fff" : "var(--text3)", fontSize: vidProgress[color] !== undefined ? 11 : 20, fontWeight: vidProgress[color] !== undefined ? 700 : 400, cursor: vidProgress[color] !== undefined ? "wait" : "pointer", position: "relative", overflow: "hidden", background: vidProgress[color] !== undefined ? `linear-gradient(to top, #22c55e ${vidProgress[color]}%, var(--bg4) ${vidProgress[color]}%)` : "var(--bg4)", transition: "background 0.3s ease" }}>
-                        {vidProgress[color] !== undefined ? `${vidProgress[color]}%` : "🎬+"}
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
-              <input ref={fileRef} type="file" accept="image/*,video/mp4,video/webm" multiple style={{ display: "none" }}
+              <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }}
                 onChange={e => { if (e.target.files && e.target.files.length > 0) uploadImage(Array.from(e.target.files), fileRef.current._color); e.target.value = ""; }} />
-              <input ref={vidRef} type="file" accept="video/mp4,video/webm,video/ogg" style={{ display: "none" }}
-                onChange={e => { if (e.target.files && e.target.files.length > 0) uploadVideo(e.target.files, vidRef.current._color); e.target.value = ""; }} />
             </div>
           )}
 
@@ -467,9 +397,7 @@ export default function ListProductInner() {
                         <div key={color} style={{ textAlign: "center" }}>
                           <div style={{ width: 64, height: 80, borderRadius: 8, overflow: "hidden", border: "1px solid var(--border)", background: "var(--bg3)", marginBottom: 5 }}>
                             {imgs[0]
-                              ? (/\.(mp4|webm|ogg)$/i.test(imgs[0]) 
-                                  ? <video src={imgs[0]} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                  : <img src={imgs[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)
+                              ? <img src={imgs[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                               : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>📷</div>
                             }
                           </div>
@@ -510,8 +438,8 @@ export default function ListProductInner() {
                 )}
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <button className="btn btn-sm" style={{ flex: 1 }} disabled={saving || isUploading || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(true)}>{saving ? "Saving…" : isUploading ? "⏳ Uploading media…" : "Save as draft"}</button>
-                <button className="btn btn-accent btn-sm" style={{ flex: 1 }} disabled={saving || isUploading || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(false)}>{saving ? "Publishing…" : isUploading ? "⏳ Uploading media…" : editId ? "Update product" : "Publish product"}</button>
+                <button className="btn btn-sm" style={{ flex: 1 }} disabled={saving || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(true)}>{saving ? "Saving…" : "Save as draft"}</button>
+                <button className="btn btn-accent btn-sm" style={{ flex: 1 }} disabled={saving || Object.values(skuErrors).some(v => v)} onClick={() => handleSubmit(false)}>{saving ? "Publishing…" : editId ? "Update product" : "Publish product"}</button>
               </div>
             </div>
           )}
