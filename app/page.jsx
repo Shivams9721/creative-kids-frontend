@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
 import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
@@ -71,6 +71,7 @@ export default function Home() {
   const [heroSlides, setHeroSlides] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [swipeStart, setSwipeStart] = useState(null);
   const [swipeEnd, setSwipeEnd] = useState(null);
   
@@ -209,7 +210,6 @@ export default function Home() {
               const isActive = index === activeSlide;
               const hasVideo = isVideo(slide.imageUrl) || isVideo(slide.mobileImageUrl);
               
-              // Handle video playing states so auto-rotate pauses
               const handleVideoPlay = () => isActive && setIsVideoPlaying(true);
               const handleVideoEnded = () => {
                 if (isActive) {
@@ -224,7 +224,7 @@ export default function Home() {
                   {slide.mobileImageUrl && (
                     <div className="absolute inset-0 block md:hidden">
                       {isVideo(slide.mobileImageUrl) ? (
-                        <video src={slide.mobileImageUrl} autoPlay={isActive} muted playsInline onPlay={handleVideoPlay} onEnded={handleVideoEnded} className="object-cover object-center w-full h-full" />
+                        <video id={`hero-mobile-video-${index}`} src={slide.mobileImageUrl} autoPlay={isActive} muted={isMuted} playsInline onPlay={handleVideoPlay} onEnded={handleVideoEnded} className="object-cover object-center w-full h-full" />
                       ) : (
                         <Image src={slide.mobileImageUrl} alt={slide.title || "Banner"} fill priority={index === 0} unoptimized className="object-cover object-center" sizes="100vw" />
                       )}
@@ -234,7 +234,7 @@ export default function Home() {
                   {slide.imageUrl && (
                     <div className={`absolute inset-0 ${slide.mobileImageUrl ? 'hidden md:block' : 'block'}`}>
                       {isVideo(slide.imageUrl) ? (
-                        <video src={slide.imageUrl} autoPlay={isActive} muted playsInline onPlay={handleVideoPlay} onEnded={handleVideoEnded} className="object-cover object-center w-full h-full" />
+                        <video id={`hero-desktop-video-${index}`} src={slide.imageUrl} autoPlay={isActive} muted={isMuted} playsInline onPlay={handleVideoPlay} onEnded={handleVideoEnded} className="object-cover object-center w-full h-full" />
                       ) : (
                         <Image src={slide.imageUrl} alt={slide.title || "Banner"} fill priority={index === 0} unoptimized className="object-cover object-center" sizes="100vw" />
                       )}
@@ -242,6 +242,17 @@ export default function Home() {
                   )}
                   
                   <div className="absolute inset-0 bg-black/30" />
+                  
+                  {hasVideo && isActive && (
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsMuted(!isMuted); }}
+                      className="absolute bottom-6 sm:bottom-8 right-4 sm:right-8 z-30 p-2 sm:p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-colors"
+                      aria-label="Toggle Mute"
+                    >
+                      {isMuted ? <VolumeX className="text-white w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="text-white w-4 h-4 sm:w-5 sm:h-5" />}
+                    </button>
+                  )}
+
                   <div className="absolute inset-0 flex flex-col items-center justify-end pb-12 sm:pb-16 md:pb-24 px-4 text-white text-center">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={{ duration: 0.8, delay: 0.2 }} className="flex flex-col items-center pointer-events-none">
                       <span className="text-[9px] sm:text-[10px] tracking-[0.15em] sm:tracking-[0.2em] font-medium uppercase text-white/80 mb-1.5 sm:mb-2">{slide.tag}</span>
