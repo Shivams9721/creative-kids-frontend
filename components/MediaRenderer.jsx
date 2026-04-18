@@ -79,12 +79,26 @@ export default function MediaRenderer({
           ref={videoRef}
           src={src}
           loop
-          muted
+          muted={isMuted}
           playsInline
           preload="metadata"
           className={mediaClass}
           style={{ display: isHovering ? 'block' : 'none' }}
         />
+        {/* Play/Mute toggle button when hovering */}
+        {isHovering && !hideVolume && (
+          <button
+            onClick={handleToggleMute}
+            className="absolute bottom-2 left-2 z-10 w-6 h-6 sm:w-8 sm:h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/60 transition-colors"
+            aria-label="Toggle Sound"
+          >
+            {isMuted ? (
+              <VolumeX size={14} className="text-white sm:scale-100 scale-75" />
+            ) : (
+              <Volume2 size={14} className="text-white sm:scale-100 scale-75" />
+            )}
+          </button>
+        )}
       </div>
     );
   }

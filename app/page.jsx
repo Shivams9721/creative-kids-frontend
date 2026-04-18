@@ -302,7 +302,7 @@ export default function Home() {
                   <MediaRenderer 
                     src={item.videoUrl || item.imageUrl || "/images/logo.png"} 
                     poster={item.imageUrl} 
-                    hoverPlay={!hasCatVideo} 
+                    hoverPlay={true} 
                     alt={item.label || "Category"} 
                     fill 
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-1000 ease-out" 
