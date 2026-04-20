@@ -46,9 +46,15 @@ function GridCard({ product, wishlist, toggleWishlist }) {
             hideVolume 
             hoverPlay
           />
+          {/* Add to Cart Overlay Button */}
+          <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
+            <div className="w-full bg-[#D32F2F] text-white text-[10px] sm:text-[12px] font-bold tracking-widest uppercase py-3 sm:py-4 flex items-center justify-center hover:bg-black transition-colors">
+              ADD TO CART
+            </div>
+          </div>
         </Link>
       </div>
-      <Link href={`/product/${product.id}`} className="flex flex-col px-0.5 sm:px-1">
+      <Link href={`/product/${product.id}`} className="flex flex-col px-0.5 sm:px-1 mt-auto">
         <h3 className="text-[11px] sm:text-[13px] text-black mb-0.5 sm:mb-1 truncate">{cleanTitle(product.title)}</h3>
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 flex-wrap">
           <p className="text-[11px] sm:text-[12px] text-black font-medium">₹{product.price ? parseFloat(product.price).toFixed(2) : "0.00"}</p>

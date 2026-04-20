@@ -469,12 +469,20 @@ export default function ShopClient({ initialProducts }) {
                         hoverPlay
                       />
                       {soldOut && (
-                        <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <span className="bg-white/90 text-black text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 border border-black/20">Sold Out</span>
                         </div>
                       )}
+                      {/* Add to Cart Overlay Button */}
+                      {!soldOut && (
+                        <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out pointer-events-none group-hover:pointer-events-auto">
+                          <div className="w-full bg-[#D32F2F] text-white text-[10px] sm:text-[12px] font-bold tracking-widest uppercase py-3 sm:py-4 flex items-center justify-center hover:bg-black transition-colors pointer-events-auto">
+                            ADD TO CART
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="px-2 sm:px-3 md:px-5 flex flex-col">
+                    <div className="px-2 sm:px-3 md:px-5 flex flex-col mt-auto">
                       <h4 className="text-[11px] sm:text-[12px] font-medium text-black mb-1 sm:mb-1.5 capitalize truncate">{cleanTitle(product.title)}</h4>
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                         <span className={`text-[11px] sm:text-[12px] font-bold ${product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? 'text-[#D32F2F]' : 'text-black'}`}>

@@ -235,22 +235,22 @@ export default function Navbar() {
                 </Link>
 
                 <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 cursor-default">
-                  <div className="bg-[#fafafa] shadow-2xl border border-black/5 w-[500px] p-8 flex rounded-b-md relative">
-                    <div className="absolute top-0 left-0 w-full h-[2px] flex">
+                  <div className="bg-white shadow-xl border border-black/5 w-[560px] p-10 flex rounded-b-md relative">
+                    <div className="absolute top-0 left-0 w-full h-[3px] flex">
                       <div className="h-full w-1/2 bg-[#4A90E2]"></div>
                       <div className="h-full w-1/2 bg-[#E2889D]"></div>
                     </div>
 
-                    <div className="w-1/2 pr-6 border-r border-black/5">
-                      <h3 className="text-[13px] font-medium tracking-widest uppercase text-[#4A90E2] mb-6 flex items-center gap-3">
-                        <span className="w-[2px] h-[14px] bg-[#4A90E2]"></span> BABY BOYS
+                    <div className="w-1/2 pr-8">
+                      <h3 className="text-[14px] font-medium tracking-widest uppercase text-[#4A90E2] mb-8 flex items-center gap-3">
+                        <span className="w-[2px] h-[16px] bg-[#4A90E2]"></span> BABY BOYS
                       </h3>
-                      <ul className="flex flex-col gap-4">
+                      <ul className="flex flex-col gap-5">
                         {menuData.BABY.boys.map((item) => {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/baby-boy/${itemSlug}`} className="text-[11px] font-medium tracking-widest text-black/70 hover:text-black transition-colors block uppercase">
+                              <Link href={`/shop/baby-boy/${itemSlug}`} className="text-[13px] font-medium tracking-wider text-[#444] hover:text-black hover:translate-x-1 transition-all block uppercase">
                                 {item}
                               </Link>
                             </li>
@@ -259,16 +259,16 @@ export default function Navbar() {
                       </ul>
                     </div>
 
-                    <div className="w-1/2 pl-6">
-                      <h3 className="text-[13px] font-medium tracking-widest uppercase text-[#E2889D] mb-6 flex items-center gap-3">
-                        <span className="w-[2px] h-[14px] bg-[#E2889D]"></span> BABY GIRLS
+                    <div className="w-1/2 pl-8">
+                      <h3 className="text-[14px] font-medium tracking-widest uppercase text-[#E2889D] mb-8 flex items-center gap-3">
+                        <span className="w-[2px] h-[16px] bg-[#E2889D]"></span> BABY GIRLS
                       </h3>
-                      <ul className="flex flex-col gap-4">
+                      <ul className="flex flex-col gap-5">
                         {menuData.BABY.girls.map((item) => {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/baby-girl/${itemSlug}`} className="text-[11px] font-medium tracking-widest text-black/70 hover:text-black transition-colors block uppercase">
+                              <Link href={`/shop/baby-girl/${itemSlug}`} className="text-[13px] font-medium tracking-wider text-[#444] hover:text-black hover:translate-x-1 transition-all block uppercase">
                                 {item}
                               </Link>
                             </li>
@@ -287,22 +287,22 @@ export default function Navbar() {
                 </Link>
 
                 <div className="absolute top-full left-0 pt-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 cursor-default">
-                  <div className="bg-[#fafafa] shadow-2xl border border-black/5 w-[500px] p-8 flex rounded-b-md relative">
-                    <div className="absolute top-0 left-0 w-full h-[2px] flex">
+                  <div className="bg-white shadow-xl border border-black/5 w-[560px] p-10 flex rounded-b-md relative">
+                    <div className="absolute top-0 left-0 w-full h-[3px] flex">
                       <div className="h-full w-1/2 bg-[#4A90E2]"></div>
                       <div className="h-full w-1/2 bg-[#E2889D]"></div>
                     </div>
 
-                    <div className="w-1/2 pr-6 border-r border-black/5">
-                      <h3 className="text-[13px] font-medium tracking-widest uppercase text-[#4A90E2] mb-6 flex items-center gap-3">
-                        <span className="w-[2px] h-[14px] bg-[#4A90E2]"></span> BOYS CLOTHING
+                    <div className="w-1/2 pr-8">
+                      <h3 className="text-[14px] font-medium tracking-widest uppercase text-[#4A90E2] mb-8 flex items-center gap-3">
+                        <span className="w-[2px] h-[16px] bg-[#4A90E2]"></span> BOYS CLOTHING
                       </h3>
-                      <ul className="flex flex-col gap-4">
+                      <ul className="flex flex-col gap-5">
                         {menuData.KIDS.boys.map((item) => {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/kids-boy/${itemSlug}`} className="text-[11px] font-medium tracking-widest text-black/70 hover:text-black transition-colors block uppercase">
+                              <Link href={`/shop/kids-boy/${itemSlug}`} className="text-[13px] font-medium tracking-wider text-[#444] hover:text-black hover:translate-x-1 transition-all block uppercase">
                                 {item}
                               </Link>
                             </li>
@@ -311,16 +311,16 @@ export default function Navbar() {
                       </ul>
                     </div>
 
-                    <div className="w-1/2 pl-6">
-                      <h3 className="text-[13px] font-medium tracking-widest uppercase text-[#E2889D] mb-6 flex items-center gap-3">
-                        <span className="w-[2px] h-[14px] bg-[#E2889D]"></span> GIRLS CLOTHING
+                    <div className="w-1/2 pl-8">
+                      <h3 className="text-[14px] font-medium tracking-widest uppercase text-[#E2889D] mb-8 flex items-center gap-3">
+                        <span className="w-[2px] h-[16px] bg-[#E2889D]"></span> GIRLS CLOTHING
                       </h3>
-                      <ul className="flex flex-col gap-4">
+                      <ul className="flex flex-col gap-5">
                         {menuData.KIDS.girls.map((item) => {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/kids-girl/${itemSlug}`} className="text-[11px] font-medium tracking-widest text-black/70 hover:text-black transition-colors block uppercase">
+                              <Link href={`/shop/kids-girl/${itemSlug}`} className="text-[13px] font-medium tracking-wider text-[#444] hover:text-black hover:translate-x-1 transition-all block uppercase">
                                 {item}
                               </Link>
                             </li>
