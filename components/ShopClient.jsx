@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, SlidersHorizontal, Heart, X } from "lucide-react";
 import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
+import { useCart } from "@/context/CartContext";
 
 // Filter Constants — sizes match exactly what's stored in DB (admin form format)
 const SIZE_GROUPS = {
@@ -42,6 +43,7 @@ import { cleanTitle } from "@/lib/cleanTitle";
 const normalise = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 export default function ShopClient({ initialProducts }) {
+  const { addToCart } = useCart();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -476,9 +478,29 @@ export default function ShopClient({ initialProducts }) {
                       {/* Add to Cart Overlay Button */}
                       {!soldOut && (
                         <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out pointer-events-none group-hover:pointer-events-auto">
-                          <div className="w-full bg-black text-white text-[9px] sm:text-[10px] font-bold tracking-widest uppercase py-2 sm:py-2.5 flex items-center justify-center hover:bg-black/80 transition-colors pointer-events-auto">
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const variants = (() => { try { return typeof product.variants === 'string' ? JSON.parse(product.variants) : (product.variants || []); } catch { return []; } })();
+                              const availableVariant = variants.find(v => (parseInt(v.stock) || 0) > 0) || variants[0] || {};
+                              
+                              addToCart({
+                                id: product.id,
+                                title: product.title,
+                                price: product.price,
+                                mrp: product.mrp,
+                                image: product.image_urls?.[0] || "/images/logo.png",
+                                selectedColor: availableVariant.color && availableVariant.color !== "null" ? availableVariant.color : "Default",
+                                selectedSize: availableVariant.size && availableVariant.size !== "null" ? availableVariant.size : "Default",
+                                sku: availableVariant.sku || product.sku || null,
+                                baseSku: product.sku || null,
+                                quantity: 1
+                              });
+                            }}
+                            className="w-full bg-black text-white text-[9px] sm:text-[10px] font-bold tracking-widest uppercase py-2 sm:py-2.5 flex items-center justify-center hover:bg-black/80 transition-colors pointer-events-auto">
                             ADD TO CART
-                          </div>
+                          </button>
                         </div>
                       )}
                     </div>

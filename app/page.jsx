@@ -8,6 +8,7 @@ import { Heart, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
 import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
+import { useCart } from "@/context/CartContext";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
@@ -19,6 +20,8 @@ const DEFAULT_CATEGORIES = [
 
 // Defined outside Home so React never remounts cards on wishlist state changes
 function GridCard({ product, wishlist, toggleWishlist }) {
+  const { addToCart } = useCart();
+
   if (!product) {
     return (
       <div className="w-full flex flex-col group">
@@ -47,10 +50,30 @@ function GridCard({ product, wishlist, toggleWishlist }) {
             hoverPlay
           />
           {/* Add to Cart Overlay Button */}
-          <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
-            <div className="w-full bg-black text-white text-[9px] sm:text-[10px] font-bold tracking-widest uppercase py-2 sm:py-2.5 flex items-center justify-center hover:bg-black/80 transition-colors">
+          <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out pointer-events-none group-hover:pointer-events-auto">
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const variants = (() => { try { return typeof product.variants === 'string' ? JSON.parse(product.variants) : (product.variants || []); } catch { return []; } })();
+                const availableVariant = variants.find(v => (parseInt(v.stock) || 0) > 0) || variants[0] || {};
+                
+                addToCart({
+                  id: product.id,
+                  title: product.title,
+                  price: product.price,
+                  mrp: product.mrp,
+                  image: product.image_urls?.[0] || "/images/logo.png",
+                  selectedColor: availableVariant.color && availableVariant.color !== "null" ? availableVariant.color : "Default",
+                  selectedSize: availableVariant.size && availableVariant.size !== "null" ? availableVariant.size : "Default",
+                  sku: availableVariant.sku || product.sku || null,
+                  baseSku: product.sku || null,
+                  quantity: 1
+                });
+              }}
+              className="w-full bg-black text-white text-[9px] sm:text-[10px] font-bold tracking-widest uppercase py-2 sm:py-2.5 flex items-center justify-center hover:bg-black/80 transition-colors pointer-events-auto">
               ADD TO CART
-            </div>
+            </button>
           </div>
         </Link>
       </div>
