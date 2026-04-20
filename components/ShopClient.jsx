@@ -6,9 +6,10 @@ import Image from "next/image";
 import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, SlidersHorizontal, Heart, X } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, Heart, X, Eye } from "lucide-react";
 import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
 import { useCart } from "@/context/CartContext";
+import QuickViewModal from "@/components/QuickViewModal";
 
 // Filter Constants — sizes match exactly what's stored in DB (admin form format)
 const SIZE_GROUPS = {
@@ -47,6 +48,7 @@ export default function ShopClient({ initialProducts }) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [quickViewId, setQuickViewId] = useState(null);
 
   const [products, setProducts] = useState(initialProducts);
   const [loading, setLoading] = useState(false); // No initial load, only on navigation
@@ -460,6 +462,14 @@ export default function ShopClient({ initialProducts }) {
                       <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-4 right-4 z-10 hover:scale-110 transition-transform">
                         <Heart size={18} strokeWidth={1} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black/50 hover:fill-black/10 transition-colors"} />
                       </button>
+                      {/* Quick View button */}
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewId(product.id); }}
+                        className="absolute top-4 left-4 z-10 p-1.5 bg-white/80 hover:bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-sm backdrop-blur-sm"
+                        title="Quick View"
+                      >
+                        <Eye size={14} strokeWidth={1.5} className="text-black" />
+                      </button>
                       <MediaRenderer
                         src={(product.hover_videos && Object.values(product.hover_videos).find(v => v)) || product.image_urls?.find(isVideo) || product.image_urls?.[0] || '/images/logo.png'}
                         poster={product.image_urls?.find(u => !isVideo(u))}
@@ -524,6 +534,11 @@ export default function ShopClient({ initialProducts }) {
         </main>
 
       </div>
+
+      {/* Quick View Modal */}
+      {quickViewId && (
+        <QuickViewModal productId={quickViewId} onClose={() => setQuickViewId(null)} />
+      )}
     </div>
   );
 }

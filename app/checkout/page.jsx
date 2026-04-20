@@ -52,8 +52,15 @@ export default function CheckoutPage() {
     const [paymentMethod, setPaymentMethod] = useState("COD");
     const [savedAddress, setSavedAddress] = useState(null);
     const [coupon, setCoupon] = useState("");
-    const [couponStatus, setCouponStatus] = useState(null); // null | 'checking' | { discount, code } | 'error'
+    const [couponStatus, setCouponStatus] = useState(null); // null | 'checking' | { discount_amount, code } | 'error'
     const [couponError, setCouponError] = useState("");
+
+    // Loyalty Points
+    const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+    const [loyaltyPointsInput, setLoyaltyPointsInput] = useState("");
+    const [loyaltyDiscount, setLoyaltyDiscount] = useState(0);
+    const [loyaltyPointsUsed, setLoyaltyPointsUsed] = useState(0);
+    const [loyaltyError, setLoyaltyError] = useState("");
 
     // UI States
     const [showAltPhone, setShowAltPhone] = useState(false);
@@ -92,6 +99,11 @@ export default function CheckoutPage() {
                     if (a) { const parsed = JSON.parse(a); setAddress(prev => ({ ...prev, ...parsed })); setSavedAddress(parsed); }
                 } catch {}
             });
+        // Load loyalty points balance
+        safeFetch('/api/loyalty/balance', { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => { if (typeof data.balance === 'number') setLoyaltyBalance(data.balance); })
+            .catch(() => {});
     }, [router]);
 
     // ==========================================
@@ -164,20 +176,47 @@ export default function CheckoutPage() {
         setCouponStatus('checking');
         setCouponError("");
         try {
+            const token = localStorage.getItem("token");
             const res = await safeFetch(`/api/coupons/validate`, {
                 method: "POST",
-                headers: await csrfHeaders({ "Content-Type": "application/json" }),
-                credentials: 'include',
-                body: JSON.stringify({ code: coupon, orderAmount: cartTotal })
+                headers: {
+                  ...(await csrfHeaders({ "Content-Type": "application/json" })),
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ code: coupon.trim(), order_total: cartTotal })
             });
             const data = await res.json();
-            if (res.ok) setCouponStatus(data);
+            if (res.ok && data.valid) setCouponStatus(data);
             else { setCouponStatus(null); setCouponError(data.error || "Invalid coupon."); }
         } catch { setCouponStatus(null); setCouponError("Failed to validate coupon."); }
     };
 
-    const discountAmount = couponStatus?.discount || 0;
-    const finalTotal = Math.max(0, cartTotal - discountAmount);
+    const applyLoyaltyPoints = async () => {
+        setLoyaltyError("");
+        const pts = parseInt(loyaltyPointsInput) || 0;
+        if (pts <= 0) { setLoyaltyError("Enter a valid number of points"); return; }
+        try {
+            const token = localStorage.getItem("token");
+            const res = await safeFetch('/api/loyalty/validate-redeem', {
+                method: 'POST',
+                headers: {
+                  ...(await csrfHeaders({ 'Content-Type': 'application/json' })),
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ points_to_redeem: pts, order_total: cartTotal }),
+            });
+            const data = await res.json();
+            if (res.ok && data.valid) {
+                setLoyaltyDiscount(data.discount_amount);
+                setLoyaltyPointsUsed(data.points_used);
+            } else {
+                setLoyaltyError(data.error || 'Could not apply points');
+            }
+        } catch { setLoyaltyError('Failed to apply points'); }
+    };
+
+    const discountAmount = couponStatus?.discount_amount || 0;
+    const finalTotal = Math.max(0, cartTotal - discountAmount - loyaltyDiscount);
 
     const handlePlaceOrder = async () => {
         setLoading(true);
@@ -479,15 +518,21 @@ export default function CheckoutPage() {
                                             <span>- ₹{discountAmount.toFixed(2)}</span>
                                         </div>
                                     )}
+                                    {loyaltyDiscount > 0 && (
+                                        <div className="flex justify-between text-purple-600 font-medium">
+                                            <span>Loyalty Points ({loyaltyPointsUsed} pts)</span>
+                                            <span>- ₹{loyaltyDiscount.toFixed(2)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-black/70">
                                         <span>Delivery Charges</span>
                                         <span className="text-black font-medium tracking-widest uppercase text-[10px] bg-black/5 px-2 py-1 rounded">Free</span>
                                     </div>
                                 </div>
                                 {/* Coupon Input */}
-                                <div className="mb-6">
+                                <div className="mb-4">
                                     <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-2">Coupon Code</p>
-                                    {couponStatus && couponStatus.discount ? (
+                                    {couponStatus && couponStatus.discount_amount ? (
                                         <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
                                             <span className="text-[12px] font-bold text-green-700">{couponStatus.code} applied — ₹{discountAmount} off</span>
                                             <button onClick={() => { setCouponStatus(null); setCoupon(""); }} className="text-green-600 hover:text-red-500 transition-colors"><X size={14} /></button>
@@ -504,6 +549,27 @@ export default function CheckoutPage() {
                                     )}
                                     {couponError && <p className="text-[11px] text-red-500 mt-1">{couponError}</p>}
                                 </div>
+                                {/* Loyalty Points Redemption */}
+                                {loyaltyBalance > 0 && (
+                                  <div className="mb-6">
+                                    <p className="text-[10px] font-bold tracking-widest uppercase text-black/50 mb-1">Loyalty Points</p>
+                                    <p className="text-[11px] text-purple-600 mb-2">You have <strong>{loyaltyBalance}</strong> pts (≈ ₹{Math.floor(loyaltyBalance / 100)} off). Max 20% of order.</p>
+                                    {loyaltyDiscount > 0 ? (
+                                      <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg px-3 py-2">
+                                        <span className="text-[12px] font-bold text-purple-700">{loyaltyPointsUsed} pts applied — ₹{loyaltyDiscount} off</span>
+                                        <button onClick={() => { setLoyaltyDiscount(0); setLoyaltyPointsUsed(0); setLoyaltyPointsInput(""); }} className="text-purple-600 hover:text-red-500 transition-colors"><X size={14} /></button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex gap-2">
+                                        <input type="number" min={100} step={100} value={loyaltyPointsInput}
+                                          onChange={e => { setLoyaltyPointsInput(e.target.value); setLoyaltyError(""); }}
+                                          placeholder="Points to use" className="flex-1 border border-black/20 rounded-lg px-3 py-2 text-[12px] outline-none focus:border-black" />
+                                        <button onClick={applyLoyaltyPoints} className="px-4 py-2 bg-purple-700 text-white rounded-lg text-[11px] font-bold tracking-widest uppercase">Apply</button>
+                                      </div>
+                                    )}
+                                    {loyaltyError && <p className="text-[11px] text-red-500 mt-1">{loyaltyError}</p>}
+                                  </div>
+                                )}
                                 <div className="flex justify-between text-[16px] font-bold text-black mb-6">
                                     <span>Total Amount</span>
                                     <span>₹{finalTotal.toFixed(2)}</span>

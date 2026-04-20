@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { Heart, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
 import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
 import { useCart } from "@/context/CartContext";
+import { memo, useCallback } from "react";
+import QuickViewModal from "@/components/QuickViewModal";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
@@ -19,7 +21,22 @@ const DEFAULT_CATEGORIES = [
 ];
 
 // Defined outside Home so React never remounts cards on wishlist state changes
-function GridCard({ product, wishlist, toggleWishlist }) {
+// Skeleton card shown while products are loading
+function GridCardSkeleton() {
+  return (
+    <div className="w-full flex flex-col">
+      <div className="w-full aspect-[3/4] bg-[#f0efed] animate-pulse mb-3 sm:mb-4" />
+      <div className="px-0.5 sm:px-1">
+        <div className="h-3 bg-[#f0efed] animate-pulse rounded w-3/4 mb-2" />
+        <div className="h-3 bg-[#f0efed] animate-pulse rounded w-1/3" />
+      </div>
+    </div>
+  );
+}
+
+// Wrap in React.memo with fine-grained comparison — only re-render when this
+// card's product data or its own wishlist status changes.
+const GridCard = memo(function GridCard({ product, wishlist, toggleWishlist, onQuickView }) {
   const { addToCart } = useCart();
 
   if (!product) {
@@ -35,8 +52,17 @@ function GridCard({ product, wishlist, toggleWishlist }) {
   return (
     <div className="w-full flex flex-col group">
       <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-3 sm:mb-4">
+        {/* Wishlist button */}
         <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10 p-1 hover:scale-110 transition-transform">
           <Heart strokeWidth={1} size={18} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
+        </button>
+        {/* Quick View button */}
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onQuickView(product.id); }}
+          className="absolute top-3 sm:top-4 left-3 sm:left-4 z-10 p-1.5 bg-white/80 hover:bg-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-sm backdrop-blur-sm"
+          title="Quick View"
+        >
+          <Eye size={14} strokeWidth={1.5} className="text-black" />
         </button>
         <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
           <MediaRenderer 
@@ -91,7 +117,13 @@ function GridCard({ product, wishlist, toggleWishlist }) {
       </Link>
     </div>
   );
-}
+// Only re-render when this specific product's wishlist state changes
+}, (prev, next) => {
+  if (prev.product?.id !== next.product?.id) return false;
+  const prevWishlisted = prev.wishlist.has(prev.product?.id);
+  const nextWishlisted = next.wishlist.has(next.product?.id);
+  return prevWishlisted === nextWishlisted;
+});
 
 export default function Home() {
   const [girlsProducts, setGirlsProducts] = useState([null, null, null, null]);
@@ -109,6 +141,7 @@ export default function Home() {
   const [sectionMeta, setSectionMeta] = useState({});
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(new Set());
+  const [quickViewId, setQuickViewId] = useState(null);
 
   const carouselRef = useRef(null);
 
@@ -351,8 +384,16 @@ export default function Home() {
       )}
 
       {loading ? (
-        <div className="w-full h-40 flex justify-center items-center">
-          <span className="text-[11px] tracking-widest uppercase text-black animate-pulse">Curating...</span>
+        <div className="w-full py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
+          <div className="max-w-[1600px] mx-auto">
+            <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
+              <div className="h-2.5 bg-[#f0efed] animate-pulse rounded w-20 mb-2" />
+              <div className="h-4 bg-[#f0efed] animate-pulse rounded w-40" />
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-[2px] lg:gap-0 pb-3 sm:pb-4">
+              {[0,1,2,3].map(i => <GridCardSkeleton key={i} />)}
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -365,7 +406,7 @@ export default function Home() {
                 <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.girls_new_arrivals?.title || "New Arrivals"}</h2>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-[2px] lg:gap-0 pb-3 sm:pb-4 md:pb-0">
-                {girlsProducts.map((product, index) => (<GridCard key={`girl-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
+                {girlsProducts.map((product, index) => (<GridCard key={`girl-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} onQuickView={setQuickViewId} />))}
               </div>
               <div className="flex justify-center mt-5 sm:mt-6 px-4">
                 <Link href="/shop/kids-girl" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">View Collection</Link>
@@ -383,7 +424,7 @@ export default function Home() {
                 <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.season_bestsellers?.title || "Season Bestsellers"}</h2>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-[2px] lg:gap-0 pb-3 sm:pb-4 md:pb-0">
-                {bestsellerProducts.map((product, index) => (<GridCard key={`best-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} />))}
+                {bestsellerProducts.map((product, index) => (<GridCard key={`best-${index}`} product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} onQuickView={setQuickViewId} />))}
               </div>
               <div className="flex justify-center mt-5 sm:mt-6 px-4">
                 <Link href="/shop" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">View All</Link>
@@ -419,6 +460,13 @@ export default function Home() {
                           <button onClick={(e) => toggleWishlist(e, product.id)} className="absolute top-3 right-3 z-10 p-1 hover:scale-110 transition-transform">
                             <Heart strokeWidth={1} size={16} className={wishlist.has(product.id) ? "fill-red-500 text-red-500" : "text-black hover:fill-black/10 transition-colors"} />
                           </button>
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickViewId(product.id); }}
+                            className="absolute top-3 left-3 z-10 p-1.5 bg-white/80 hover:bg-white rounded-full opacity-0 group-hover/card:opacity-100 transition-all shadow-sm backdrop-blur-sm"
+                            title="Quick View"
+                          >
+                            <Eye size={13} strokeWidth={1.5} className="text-black" />
+                          </button>
                           <Link href={`/product/${product.id}`} className="absolute inset-0 w-full h-full">
                             <MediaRenderer 
                               src={product.image_urls?.find(isVideo) || product.image_urls?.[0] || "/images/logo.png"} 
@@ -453,6 +501,11 @@ export default function Home() {
           </section>
           )}
         </>
+      )}
+
+      {/* Quick View Modal — rendered at page level so it overlays everything */}
+      {quickViewId && (
+        <QuickViewModal productId={quickViewId} onClose={() => setQuickViewId(null)} />
       )}
     </main>
   );
