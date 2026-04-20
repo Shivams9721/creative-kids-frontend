@@ -104,14 +104,15 @@ export default function QuickViewModal({ productId, onClose }) {
             className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm"
           />
 
-          {/* Modal Panel */}
-          <motion.div
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: "100%", opacity: 0 }}
-            transition={{ type: "spring", stiffness: 280, damping: 28 }}
-            className="fixed bottom-0 left-0 right-0 z-[90] bg-white rounded-t-3xl shadow-2xl max-h-[92vh] flex flex-col md:top-1/2 md:bottom-auto md:left-1/2 md:right-auto md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:w-[860px] md:max-h-[90vh]"
-          >
+          {/* Centering wrapper — flex handles positioning, framer-motion only animates */}
+          <div className="fixed inset-0 z-[90] flex items-end justify-center md:items-center pointer-events-none">
+            <motion.div
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="pointer-events-auto w-full md:w-[860px] bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[92vh] md:max-h-[88vh] flex flex-col"
+            >
             {/* Handle bar (mobile) */}
             <div className="flex justify-center pt-3 pb-1 md:hidden">
               <div className="w-10 h-1 bg-black/15 rounded-full" />
@@ -295,6 +296,7 @@ export default function QuickViewModal({ productId, onClose }) {
               </div>
             )}
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
