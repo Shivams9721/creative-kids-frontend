@@ -48,7 +48,7 @@ function GridCard({ product, wishlist, toggleWishlist }) {
           />
           {/* Add to Cart Overlay Button */}
           <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out">
-            <div className="w-full bg-black text-[#D32F2F] text-[9px] sm:text-[10px] font-bold tracking-widest uppercase py-2 sm:py-2.5 flex items-center justify-center hover:bg-black/90 transition-colors">
+            <div className="w-full bg-black text-white text-[9px] sm:text-[10px] font-bold tracking-widest uppercase py-2 sm:py-2.5 flex items-center justify-center hover:bg-black/80 transition-colors">
               ADD TO CART
             </div>
           </div>
