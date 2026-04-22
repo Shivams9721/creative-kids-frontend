@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { safeFetch } from "../api";
@@ -250,12 +250,6 @@ export default function HomepageAdminPage() {
       });
     });
 
-    // About Us Banner validation (only if enabled)
-    const aboutUs = sectionMap.about_us_banner;
-    if (aboutUs?.is_enabled === true) {
-      const settings = typeof aboutUs.settings_json === "string" ? JSON.parse(aboutUs.settings_json || "{}") : (aboutUs.settings_json || {});
-      if (!settings.imageUrl && !settings.mobileImageUrl) errs.push("About Us Banner: Upload a banner image or video.");
-    }
 
     setValidationErrors(errs);
     return errs.length === 0;
