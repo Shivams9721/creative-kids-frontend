@@ -457,19 +457,21 @@ export default function Home() {
     if (!imageUrl && !mobileImageUrl) return null;
 
     return (
-      <section key={key} className="relative w-full h-[70vh] sm:h-[85vh] md:h-screen overflow-hidden bg-[#f6f5f3]">
+      <section key={key} className="relative w-full overflow-hidden bg-[#f6f5f3]">
+        {/* Mobile image/video */}
         {mobileImageUrl && (
-          <div className="absolute inset-0 block md:hidden">
+          <div className="block md:hidden">
             {checkIsVideo(mobileImageUrl)
-              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-              : <Image src={mobileImageUrl} alt="Banner" fill unoptimized className="object-cover object-center" sizes="100vw" />
+              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+              : <img src={mobileImageUrl} alt="Banner" className="w-full h-auto block" />
             }
           </div>
         )}
-        <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
+        {/* Desktop image/video */}
+        <div className={mobileImageUrl ? "hidden md:block" : "block"}>
           {imageUrl && (checkIsVideo(imageUrl)
-            ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-            : <Image src={imageUrl} alt="Banner" fill unoptimized className="object-cover object-center" sizes="100vw" />
+            ? <video src={imageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+            : <img src={imageUrl} alt="Banner" className="w-full h-auto block" />
           )}
         </div>
       </section>
