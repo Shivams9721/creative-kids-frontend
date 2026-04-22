@@ -452,8 +452,18 @@ export default function Home() {
   );
 
   const renderAboutUsBanner = () => {
-    if (!isEnabled("about_us_banner") || !aboutUsBanner) return null;
-    const { imageUrl, mobileImageUrl, title, subtitle, description, ctaLabel, ctaHref, bgColor, textTheme } = aboutUsBanner;
+    // If the admin has explicitly disabled the section, hide it
+    if (sectionMeta.about_us_banner && !isEnabled("about_us_banner")) return null;
+    // Fall back to placeholder SVG when no API data
+    const data = aboutUsBanner || {
+      imageUrl: "/images/about-us-banner.svg",
+      title: "Our Story",
+      subtitle: "About Us",
+      ctaLabel: "Learn More",
+      ctaHref: "/about",
+      textTheme: "dark",
+    };
+    const { imageUrl, mobileImageUrl, title, subtitle, description, ctaLabel, ctaHref, bgColor, textTheme } = data;
     const hasImage = imageUrl || mobileImageUrl;
     const isLight = textTheme === "light";
     const textColor = hasImage ? "text-white" : (isLight ? "text-white" : "text-black");
@@ -497,13 +507,21 @@ export default function Home() {
   };
 
   const renderTestimonials = () => {
-    if (!isEnabled("testimonials") || !testimonials) return null;
-    const { imageUrl, mobileImageUrl, bgColor, textTheme, description } = testimonials;
-    const title = testimonials.title || sectionMeta.testimonials?.title;
-    const subtitle = testimonials.subtitle || sectionMeta.testimonials?.subtitle;
+    // If the admin has explicitly disabled the section, hide it
+    if (sectionMeta.testimonials && !isEnabled("testimonials")) return null;
+    // Fall back to placeholder SVG when no API data
+    const data = testimonials || {
+      imageUrl: "/images/testimonials-banner.svg",
+      title: "What Parents Say",
+      subtitle: "Testimonials",
+      ctaLabel: "Read Reviews",
+      ctaHref: "/reviews",
+      textTheme: "light",
+    };
+    const { imageUrl, mobileImageUrl, bgColor, textTheme, description } = data;
+    const title = data.title || sectionMeta.testimonials?.title;
+    const subtitle = data.subtitle || sectionMeta.testimonials?.subtitle;
     const hasImage = imageUrl || mobileImageUrl;
-    // Only show if there's something to display
-    if (!hasImage && !title && !bgColor) return null;
     const isLight = textTheme === "light";
     const textColor = hasImage ? "text-white" : (isLight ? "text-white" : "text-black");
     const subColor = hasImage ? "text-white/70" : (isLight ? "text-white/60" : "text-black/50");

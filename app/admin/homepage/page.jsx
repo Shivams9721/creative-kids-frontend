@@ -736,7 +736,8 @@ export default function HomepageAdminPage() {
       {!aboutUsSection ? (
         <div className="card card-pad" style={{ marginBottom: 16 }}>
           <div className="card-title">About Us Banner</div>
-          <p style={{ fontSize: 12, color: "var(--text3)" }}>Create a new draft to enable this section.</p>
+          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
+          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
         </div>
       ) : (
         <div className="card card-pad" style={{ marginBottom: 16, opacity: aboutUsSection.is_enabled === false ? 0.7 : 1 }}>
@@ -842,7 +843,13 @@ export default function HomepageAdminPage() {
       )}
 
       {/* ─── Testimonials Banner ─── */}
-      {testimonialsSection ? (
+      {!testimonialsSection ? (
+        <div className="card card-pad" style={{ marginBottom: 16 }}>
+          <div className="card-title">Testimonials Banner</div>
+          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
+          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
+        </div>
+      ) : (
         <div className="card card-pad" style={{ marginBottom: 16, opacity: testimonialsSection.is_enabled === false ? 0.7 : 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div className="card-title" style={{ margin: 0 }}>Testimonials Banner</div>
@@ -935,7 +942,7 @@ export default function HomepageAdminPage() {
             {renderUploadBtn("testimonials-mobile", () => uploadFile((url) => updateTestimonialsField("mobileImageUrl", url), rawTestimonialsSettings.mobileImageUrl, "testimonials-mobile", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
           </div>
         </div>
-      ) : null}
+      )}
 
       {/* ─── Validation Errors ─── */}
       {validationErrors.length > 0 && (
