@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Heart, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye, Star } from "lucide-react";
+import { Heart, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
 import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
@@ -165,7 +165,7 @@ export default function Home() {
   const [categoryItems, setCategoryItems] = useState([]);
   const [sectionMeta, setSectionMeta] = useState({});
   const [aboutUsBanner, setAboutUsBanner] = useState(null);
-  const [testimonials, setTestimonials] = useState([]);
+  const [testimonials, setTestimonials] = useState(null);
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(new Set());
   const [quickViewId, setQuickViewId] = useState(null);
@@ -232,7 +232,7 @@ export default function Home() {
         }
 
         if (data.aboutUsBanner) setAboutUsBanner(data.aboutUsBanner);
-        if (Array.isArray(data.testimonials)) setTestimonials(data.testimonials);
+        if (data.testimonials && typeof data.testimonials === "object" && !Array.isArray(data.testimonials)) setTestimonials(data.testimonials);
 
         setLoading(false);
       })
@@ -487,41 +487,36 @@ export default function Home() {
   };
 
   const renderTestimonials = () => {
-    if (!isEnabled("testimonials") || !testimonials || testimonials.length === 0) return null;
+    if (!isEnabled("testimonials") || !testimonials) return null;
+    const { imageUrl, mobileImageUrl, title, subtitle, description } = testimonials;
+    if (!imageUrl && !mobileImageUrl) return null;
     return (
-      <section key="testimonials" className="py-8 sm:py-10 md:py-14 bg-[#faf9f7] border-b border-black/5">
-        <div className="max-w-[1600px] mx-auto px-4">
-          <div className="flex flex-col items-center mb-6 sm:mb-8">
-            <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.testimonials?.subtitle || "Reviews"}</span>
-            <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.testimonials?.title || "What Parents Say"}</h2>
+      <section key="testimonials" className="relative w-full overflow-hidden bg-[#f6f5f3]" style={{ minHeight: "40vh" }}>
+        {mobileImageUrl && (
+          <div className="absolute inset-0 block md:hidden">
+            {checkIsVideo(mobileImageUrl)
+              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+              : <Image src={mobileImageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
+            }
           </div>
-          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
-            {testimonials.map((t, i) => (
-              <div key={i} className="flex-none w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[22vw] snap-start bg-white border border-black/8 p-5 sm:p-6 flex flex-col">
-                {/* Stars */}
-                <div className="flex gap-0.5 mb-3">
-                  {[1,2,3,4,5].map(star => (
-                    <Star key={star} size={13} strokeWidth={0} className={star <= (t.rating || 5) ? "fill-[#f59e0b]" : "fill-black/10"} />
-                  ))}
-                </div>
-                {/* Review text */}
-                {t.review && <p className="text-[12px] sm:text-[13px] text-black/70 leading-relaxed mb-4 flex-1">"{t.review}"</p>}
-                {/* Reviewer */}
-                <div className="flex items-center gap-3 mt-auto pt-4 border-t border-black/6">
-                  {t.imageUrl ? (
-                    <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#f6f5f3]">
-                      <Image src={t.imageUrl} alt={t.name || "Reviewer"} fill unoptimized className="object-cover" sizes="40px" />
-                    </div>
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-[#f0efed] flex-shrink-0 flex items-center justify-center">
-                      <span className="text-[11px] font-bold text-black/40">{(t.name || "?")[0]?.toUpperCase()}</span>
-                    </div>
-                  )}
-                  <span className="text-[11px] sm:text-[12px] font-medium text-black tracking-wide">{t.name || "Happy Customer"}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+        )}
+        <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
+          {imageUrl && (checkIsVideo(imageUrl)
+            ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+            : <Image src={imageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
+          )}
+        </div>
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28 text-white">
+          {(subtitle || sectionMeta.testimonials?.subtitle) && (
+            <span className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-white/70 mb-2">{subtitle || sectionMeta.testimonials?.subtitle}</span>
+          )}
+          {(title || sectionMeta.testimonials?.title) && (
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>
+              {title || sectionMeta.testimonials?.title}
+            </h2>
+          )}
+          {description && <p className="text-[12px] sm:text-[13px] text-white/80 max-w-lg leading-relaxed">{description}</p>}
         </div>
       </section>
     );

@@ -52,27 +52,6 @@ function CtaLinkSelect({ value, onChange, placeholder }) {
   );
 }
 
-// Star rating selector
-function StarRating({ value, onChange }) {
-  return (
-    <div style={{ display: "flex", gap: 4 }}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => onChange(star)}
-          style={{
-            background: "none", border: "none", cursor: "pointer", fontSize: 20,
-            color: star <= value ? "#f59e0b" : "#d1d5db", padding: "0 2px"
-          }}
-        >
-          ★
-        </button>
-      ))}
-      <span style={{ fontSize: 11, color: "var(--text3)", alignSelf: "center", marginLeft: 4 }}>{value}/5</span>
-    </div>
-  );
-}
 
 export default function HomepageAdminPage() {
   const [loading, setLoading] = useState(true);
@@ -189,14 +168,6 @@ export default function HomepageAdminPage() {
     ]);
   };
 
-  const addTestimonialItem = (sectionId) => {
-    if (!sectionId) return;
-    const sectionItems = getItems(sectionId);
-    setItems((prev) => [
-      ...prev,
-      { section_id: sectionId, item_type: "testimonial", display_order: sectionItems.length + 1, label: "Customer Name", image_url: "", settings_json: { review: "", rating: 5 } },
-    ]);
-  };
 
   const populateDefaultCategories = (sectionId) => {
     if (!sectionId) return;
@@ -239,16 +210,6 @@ export default function HomepageAdminPage() {
     );
   };
 
-  const updateItemSettingsJson = (target, key, value) => {
-    setItems((prev) =>
-      prev.map((it) => {
-        const matches = (target.id && it.id === target.id) || (!target.id && it.section_id === target.section_id && it.display_order === target.display_order);
-        if (!matches) return it;
-        const sj = typeof it.settings_json === "string" ? JSON.parse(it.settings_json || "{}") : (it.settings_json || {});
-        return { ...it, settings_json: { ...sj, [key]: value } };
-      })
-    );
-  };
 
   const validateBeforePublish = () => {
     const errs = [];
@@ -504,7 +465,12 @@ export default function HomepageAdminPage() {
   };
 
   const testimonialsSection = bySectionKey.testimonials;
-  const testimonialItems = getItems(testimonialsSection?.id || -1);
+  const rawTestimonialsSettings = typeof testimonialsSection?.settings_json === "string"
+    ? JSON.parse(testimonialsSection.settings_json || "{}") : (testimonialsSection?.settings_json || {});
+  const updateTestimonialsField = (key, value) => {
+    if (!testimonialsSection?.id) return;
+    setSectionField(testimonialsSection.id, "settings_json", { ...rawTestimonialsSettings, [key]: value });
+  };
 
   const isBusy = saving || publishing || Object.keys(uploadProgress).length > 0;
   const busyLabel = Object.keys(uploadProgress).length > 0 ? "Uploading..." : saving ? "Saving..." : publishing ? "Publishing..." : null;
@@ -836,84 +802,61 @@ export default function HomepageAdminPage() {
         </div>
       )}
 
-      {/* ─── Testimonials ─── */}
-      {!testimonialsSection ? (
-        <div className="card card-pad" style={{ marginBottom: 16 }}>
-          <div className="card-title">Testimonials</div>
-          <p style={{ fontSize: 12, color: "var(--text3)" }}>Create a new draft to enable this section.</p>
-        </div>
-      ) : (
+      {/* ─── Testimonials Banner ─── */}
+      {testimonialsSection ? (
         <div className="card card-pad" style={{ marginBottom: 16, opacity: testimonialsSection.is_enabled === false ? 0.7 : 1 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div className="card-title" style={{ margin: 0 }}>Testimonials</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input type="checkbox" checked={testimonialsSection.is_enabled !== false} onChange={(e) => setSectionField(testimonialsSection.id, "is_enabled", e.target.checked)} />
-                {testimonialsSection.is_enabled !== false ? "Enabled" : "Disabled"}
-              </label>
-              <button className="btn btn-sm btn-accent" onClick={() => addTestimonialItem(testimonialsSection.id)}>+ Add Testimonial</button>
-            </div>
+            <div className="card-title" style={{ margin: 0 }}>Testimonials Banner</div>
+            <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <input type="checkbox" checked={testimonialsSection.is_enabled !== false} onChange={(e) => setSectionField(testimonialsSection.id, "is_enabled", e.target.checked)} />
+              {testimonialsSection.is_enabled !== false ? "Enabled" : "Disabled"}
+            </label>
           </div>
           {testimonialsSection.is_enabled === false && (
             <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
-              Testimonials section is hidden on the storefront.
+              This banner is hidden on the storefront.
             </div>
           )}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <input className="field-input" value={testimonialsSection.title || ""} onChange={(e) => setSectionField(testimonialsSection.id, "title", e.target.value)} placeholder="Section Title (e.g. What Parents Say)" />
             <input className="field-input" value={testimonialsSection.subtitle || ""} onChange={(e) => setSectionField(testimonialsSection.id, "subtitle", e.target.value)} placeholder="Subtitle (e.g. Reviews)" />
           </div>
-
-          {testimonialItems.length === 0 && (
-            <div style={{ fontSize: 12, color: "var(--text3)", padding: 8, background: "var(--bg)", borderRadius: 6, marginBottom: 8 }}>
-              No testimonials added yet. Click "+ Add Testimonial" above.
+          <textarea
+            className="field-input"
+            rows={2}
+            value={rawTestimonialsSettings.description || ""}
+            onChange={(e) => updateTestimonialsField("description", e.target.value)}
+            placeholder="Optional text shown on the banner"
+            style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
+          />
+          {/* Desktop banner */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO</label>
+              {rawTestimonialsSettings.imageUrl && (
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawTestimonialsSettings.imageUrl.split("/").pop()}</span>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.imageUrl); updateTestimonialsField("imageUrl", ""); }}>✕</button>
+                </div>
+              )}
             </div>
-          )}
-
-          {testimonialItems.map((item, idx) => {
-            const sj = typeof item.settings_json === "string" ? JSON.parse(item.settings_json || "{}") : (item.settings_json || {});
-            return (
-              <div key={`${item.id || "new"}-${idx}`} style={{ marginBottom: 16, padding: 12, border: "1px solid var(--border)", borderRadius: 6 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, fontSize: 12, fontWeight: 600 }}>
-                  <span>Review #{idx + 1}</span>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="btn btn-sm" onClick={() => shiftItem(testimonialsSection.id, idx, -1)} disabled={idx === 0}>↑</button>
-                    <button className="btn btn-sm" onClick={() => shiftItem(testimonialsSection.id, idx, 1)} disabled={idx === testimonialItems.length - 1}>↓</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>Remove</button>
-                  </div>
+            {renderUploadBtn("testimonials-desktop", () => uploadFile((url) => updateTestimonialsField("imageUrl", url), rawTestimonialsSettings.imageUrl, "testimonials-desktop", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.imageUrl ? "Replace" : "Upload Desktop")}
+          </div>
+          {/* Mobile banner */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO (optional)</label>
+              {rawTestimonialsSettings.mobileImageUrl && (
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawTestimonialsSettings.mobileImageUrl.split("/").pop()}</span>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.mobileImageUrl); updateTestimonialsField("mobileImageUrl", ""); }}>✕</button>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-                  <input className="field-input" value={item.label || ""} onChange={(e) => updateItemField(item, "label", e.target.value)} placeholder="Reviewer Name" />
-                  <div>
-                    <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 3 }}>RATING</label>
-                    <StarRating value={sj.rating || 5} onChange={(v) => updateItemSettingsJson(item, "rating", v)} />
-                  </div>
-                </div>
-                <textarea
-                  className="field-input"
-                  rows={2}
-                  value={sj.review || ""}
-                  onChange={(e) => updateItemSettingsJson(item, "review", e.target.value)}
-                  placeholder="Review text..."
-                  style={{ resize: "vertical", width: "100%", boxSizing: "border-box", marginBottom: 8 }}
-                />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>AVATAR IMAGE (optional)</label>
-                    {item.image_url && (
-                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                        <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.image_url.split("/").pop()}</span>
-                        <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(item.image_url); updateItemField(item, "image_url", ""); }}>✕</button>
-                      </div>
-                    )}
-                  </div>
-                  {renderUploadBtn(`testimonial-${item.id || idx}-avatar`, () => uploadFile((url) => updateItemField(item, "image_url", url), item.image_url, `testimonial-${item.id || idx}-avatar`, "image/*"), item.image_url ? "Replace Avatar" : "Upload Avatar")}
-                </div>
-              </div>
-            );
-          })}
+              )}
+            </div>
+            {renderUploadBtn("testimonials-mobile", () => uploadFile((url) => updateTestimonialsField("mobileImageUrl", url), rawTestimonialsSettings.mobileImageUrl, "testimonials-mobile", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
+          </div>
         </div>
-      )}
+      ) : null}
 
       {/* ─── Validation Errors ─── */}
       {validationErrors.length > 0 && (
