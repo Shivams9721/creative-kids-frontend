@@ -472,6 +472,22 @@ export default function HomepageAdminPage() {
     setSectionField(testimonialsSection.id, "settings_json", { ...rawTestimonialsSettings, [key]: value });
   };
 
+  const promoBanner1Section = bySectionKey.promo_banner_1;
+  const rawPromo1Settings = typeof promoBanner1Section?.settings_json === "string"
+    ? JSON.parse(promoBanner1Section.settings_json || "{}") : (promoBanner1Section?.settings_json || {});
+  const updatePromo1Field = (key, value) => {
+    if (!promoBanner1Section?.id) return;
+    setSectionField(promoBanner1Section.id, "settings_json", { ...rawPromo1Settings, [key]: value });
+  };
+
+  const promoBanner2Section = bySectionKey.promo_banner_2;
+  const rawPromo2Settings = typeof promoBanner2Section?.settings_json === "string"
+    ? JSON.parse(promoBanner2Section.settings_json || "{}") : (promoBanner2Section?.settings_json || {});
+  const updatePromo2Field = (key, value) => {
+    if (!promoBanner2Section?.id) return;
+    setSectionField(promoBanner2Section.id, "settings_json", { ...rawPromo2Settings, [key]: value });
+  };
+
   const isBusy = saving || publishing || Object.keys(uploadProgress).length > 0;
   const busyLabel = Object.keys(uploadProgress).length > 0 ? "Uploading..." : saving ? "Saving..." : publishing ? "Publishing..." : null;
 
@@ -940,6 +956,204 @@ export default function HomepageAdminPage() {
               )}
             </div>
             {renderUploadBtn("testimonials-mobile", () => uploadFile((url) => updateTestimonialsField("mobileImageUrl", url), rawTestimonialsSettings.mobileImageUrl, "testimonials-mobile", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Promo Banner 1 ─── */}
+      {!promoBanner1Section ? (
+        <div className="card card-pad" style={{ marginBottom: 16 }}>
+          <div className="card-title">Promo Banner 1</div>
+          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
+          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
+        </div>
+      ) : (
+        <div className="card card-pad" style={{ marginBottom: 16, opacity: promoBanner1Section.is_enabled === false ? 0.7 : 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div className="card-title" style={{ margin: 0 }}>Promo Banner 1</div>
+            <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <input type="checkbox" checked={promoBanner1Section.is_enabled !== false} onChange={(e) => setSectionField(promoBanner1Section.id, "is_enabled", e.target.checked)} />
+              {promoBanner1Section.is_enabled !== false ? "Enabled" : "Disabled"}
+            </label>
+          </div>
+          {promoBanner1Section.is_enabled === false && (
+            <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
+              This banner is hidden on the storefront.
+            </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <input className="field-input" value={promoBanner1Section.title || ""} onChange={(e) => setSectionField(promoBanner1Section.id, "title", e.target.value)} placeholder="Banner Title" />
+            <input className="field-input" value={promoBanner1Section.subtitle || ""} onChange={(e) => setSectionField(promoBanner1Section.id, "subtitle", e.target.value)} placeholder="Subtitle / Tag" />
+          </div>
+          <textarea
+            className="field-input"
+            rows={2}
+            value={rawPromo1Settings.description || ""}
+            onChange={(e) => updatePromo1Field("description", e.target.value)}
+            placeholder="Short description shown on the banner (optional)"
+            style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
+          />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <input className="field-input" value={rawPromo1Settings.ctaLabel || ""} onChange={(e) => updatePromo1Field("ctaLabel", e.target.value)} placeholder="CTA Button Label (e.g. Shop Now)" />
+            <div>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 3 }}>CTA PAGE</label>
+              <CtaLinkSelect value={rawPromo1Settings.ctaHref || ""} onChange={(v) => updatePromo1Field("ctaHref", v)} placeholder="Custom CTA URL" />
+            </div>
+          </div>
+
+          {/* ── Banner Design ── */}
+          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="color" value={rawPromo1Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo1Field("bgColor", e.target.value)} style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }} />
+                  <input className="field-input" value={rawPromo1Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo1Field("bgColor", e.target.value)} placeholder="#f6f5f3" style={{ flex: 1 }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
+                <select className="field-input" value={rawPromo1Settings.textTheme || "dark"} onChange={(e) => updatePromo1Field("textTheme", e.target.value)}>
+                  <option value="dark">Dark text (black) — for light backgrounds</option>
+                  <option value="light">Light text (white) — for dark backgrounds</option>
+                </select>
+              </div>
+            </div>
+            {/* Mini live preview */}
+            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawPromo1Settings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
+              {promoBanner1Section.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawPromo1Settings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{promoBanner1Section.subtitle}</span>}
+              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawPromo1Settings.textTheme === "light" ? "#fff" : "#000" }}>{promoBanner1Section.title || "Promo Banner 1"}</span>
+              {rawPromo1Settings.description && <span style={{ fontSize: 9, color: rawPromo1Settings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawPromo1Settings.description.slice(0, 60)}{rawPromo1Settings.description.length > 60 ? "…" : ""}</span>}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
+          </div>
+
+          {/* Desktop banner image */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
+              {rawPromo1Settings.imageUrl && (
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo1Settings.imageUrl.split("/").pop()}</span>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.imageUrl); updatePromo1Field("imageUrl", ""); }}>✕ Remove</button>
+                </div>
+              )}
+            </div>
+            {renderUploadBtn("promo1-desktop", () => uploadFile((url) => updatePromo1Field("imageUrl", url), rawPromo1Settings.imageUrl, "promo1-desktop", "image/*,video/mp4,video/webm"), rawPromo1Settings.imageUrl ? "Replace" : "Upload Image/Video")}
+          </div>
+
+          {/* Mobile banner image */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
+              {rawPromo1Settings.mobileImageUrl && (
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo1Settings.mobileImageUrl.split("/").pop()}</span>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.mobileImageUrl); updatePromo1Field("mobileImageUrl", ""); }}>✕ Remove</button>
+                </div>
+              )}
+            </div>
+            {renderUploadBtn("promo1-mobile", () => uploadFile((url) => updatePromo1Field("mobileImageUrl", url), rawPromo1Settings.mobileImageUrl, "promo1-mobile", "image/*,video/mp4,video/webm"), rawPromo1Settings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Promo Banner 2 ─── */}
+      {!promoBanner2Section ? (
+        <div className="card card-pad" style={{ marginBottom: 16 }}>
+          <div className="card-title">Promo Banner 2</div>
+          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
+          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
+        </div>
+      ) : (
+        <div className="card card-pad" style={{ marginBottom: 16, opacity: promoBanner2Section.is_enabled === false ? 0.7 : 1 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div className="card-title" style={{ margin: 0 }}>Promo Banner 2</div>
+            <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <input type="checkbox" checked={promoBanner2Section.is_enabled !== false} onChange={(e) => setSectionField(promoBanner2Section.id, "is_enabled", e.target.checked)} />
+              {promoBanner2Section.is_enabled !== false ? "Enabled" : "Disabled"}
+            </label>
+          </div>
+          {promoBanner2Section.is_enabled === false && (
+            <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
+              This banner is hidden on the storefront.
+            </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <input className="field-input" value={promoBanner2Section.title || ""} onChange={(e) => setSectionField(promoBanner2Section.id, "title", e.target.value)} placeholder="Banner Title" />
+            <input className="field-input" value={promoBanner2Section.subtitle || ""} onChange={(e) => setSectionField(promoBanner2Section.id, "subtitle", e.target.value)} placeholder="Subtitle / Tag" />
+          </div>
+          <textarea
+            className="field-input"
+            rows={2}
+            value={rawPromo2Settings.description || ""}
+            onChange={(e) => updatePromo2Field("description", e.target.value)}
+            placeholder="Short description shown on the banner (optional)"
+            style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
+          />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <input className="field-input" value={rawPromo2Settings.ctaLabel || ""} onChange={(e) => updatePromo2Field("ctaLabel", e.target.value)} placeholder="CTA Button Label (e.g. Explore)" />
+            <div>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 3 }}>CTA PAGE</label>
+              <CtaLinkSelect value={rawPromo2Settings.ctaHref || ""} onChange={(v) => updatePromo2Field("ctaHref", v)} placeholder="Custom CTA URL" />
+            </div>
+          </div>
+
+          {/* ── Banner Design ── */}
+          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="color" value={rawPromo2Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo2Field("bgColor", e.target.value)} style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }} />
+                  <input className="field-input" value={rawPromo2Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo2Field("bgColor", e.target.value)} placeholder="#f6f5f3" style={{ flex: 1 }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
+                <select className="field-input" value={rawPromo2Settings.textTheme || "dark"} onChange={(e) => updatePromo2Field("textTheme", e.target.value)}>
+                  <option value="dark">Dark text (black) — for light backgrounds</option>
+                  <option value="light">Light text (white) — for dark backgrounds</option>
+                </select>
+              </div>
+            </div>
+            {/* Mini live preview */}
+            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawPromo2Settings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
+              {promoBanner2Section.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawPromo2Settings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{promoBanner2Section.subtitle}</span>}
+              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawPromo2Settings.textTheme === "light" ? "#fff" : "#000" }}>{promoBanner2Section.title || "Promo Banner 2"}</span>
+              {rawPromo2Settings.description && <span style={{ fontSize: 9, color: rawPromo2Settings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawPromo2Settings.description.slice(0, 60)}{rawPromo2Settings.description.length > 60 ? "…" : ""}</span>}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
+          </div>
+
+          {/* Desktop banner image */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
+              {rawPromo2Settings.imageUrl && (
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo2Settings.imageUrl.split("/").pop()}</span>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.imageUrl); updatePromo2Field("imageUrl", ""); }}>✕ Remove</button>
+                </div>
+              )}
+            </div>
+            {renderUploadBtn("promo2-desktop", () => uploadFile((url) => updatePromo2Field("imageUrl", url), rawPromo2Settings.imageUrl, "promo2-desktop", "image/*,video/mp4,video/webm"), rawPromo2Settings.imageUrl ? "Replace" : "Upload Image/Video")}
+          </div>
+
+          {/* Mobile banner image */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
+              {rawPromo2Settings.mobileImageUrl && (
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo2Settings.mobileImageUrl.split("/").pop()}</span>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.mobileImageUrl); updatePromo2Field("mobileImageUrl", ""); }}>✕ Remove</button>
+                </div>
+              )}
+            </div>
+            {renderUploadBtn("promo2-mobile", () => uploadFile((url) => updatePromo2Field("mobileImageUrl", url), rawPromo2Settings.mobileImageUrl, "promo2-mobile", "image/*,video/mp4,video/webm"), rawPromo2Settings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
           </div>
         </div>
       )}
