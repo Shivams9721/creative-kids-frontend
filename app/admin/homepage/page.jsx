@@ -772,28 +772,67 @@ export default function HomepageAdminPage() {
             </div>
           </div>
 
-          {/* Desktop banner */}
+          {/* ── Banner Design (color-based, no image needed) ── */}
+          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="color"
+                    value={rawAboutSettings.bgColor || "#f6f5f3"}
+                    onChange={(e) => updateAboutField("bgColor", e.target.value)}
+                    style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }}
+                  />
+                  <input
+                    className="field-input"
+                    value={rawAboutSettings.bgColor || "#f6f5f3"}
+                    onChange={(e) => updateAboutField("bgColor", e.target.value)}
+                    placeholder="#f6f5f3"
+                    style={{ flex: 1 }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
+                <select className="field-input" value={rawAboutSettings.textTheme || "dark"} onChange={(e) => updateAboutField("textTheme", e.target.value)}>
+                  <option value="dark">Dark text (black) — for light backgrounds</option>
+                  <option value="light">Light text (white) — for dark backgrounds</option>
+                </select>
+              </div>
+            </div>
+            {/* Mini live preview */}
+            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawAboutSettings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
+              {aboutUsSection.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawAboutSettings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{aboutUsSection.subtitle}</span>}
+              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawAboutSettings.textTheme === "light" ? "#fff" : "#000" }}>{aboutUsSection.title || "Banner Title"}</span>
+              {rawAboutSettings.description && <span style={{ fontSize: 9, color: rawAboutSettings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawAboutSettings.description.slice(0, 60)}{rawAboutSettings.description.length > 60 ? "…" : ""}</span>}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
+          </div>
+
+          {/* Desktop banner image (optional) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO</label>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
               {rawAboutSettings.imageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawAboutSettings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawAboutSettings.imageUrl); updateAboutField("imageUrl", ""); }}>✕</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawAboutSettings.imageUrl); updateAboutField("imageUrl", ""); }}>✕ Remove</button>
                 </div>
               )}
             </div>
-            {renderUploadBtn("about-desktop", () => uploadFile((url) => updateAboutField("imageUrl", url), rawAboutSettings.imageUrl, "about-desktop", "image/*,video/mp4,video/webm"), rawAboutSettings.imageUrl ? "Replace" : "Upload Desktop")}
+            {renderUploadBtn("about-desktop", () => uploadFile((url) => updateAboutField("imageUrl", url), rawAboutSettings.imageUrl, "about-desktop", "image/*,video/mp4,video/webm"), rawAboutSettings.imageUrl ? "Replace" : "Upload Image/Video")}
           </div>
 
-          {/* Mobile banner */}
+          {/* Mobile banner image (optional) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO (optional)</label>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
               {rawAboutSettings.mobileImageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawAboutSettings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawAboutSettings.mobileImageUrl); updateAboutField("mobileImageUrl", ""); }}>✕</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawAboutSettings.mobileImageUrl); updateAboutField("mobileImageUrl", ""); }}>✕ Remove</button>
                 </div>
               )}
             </div>
@@ -829,27 +868,67 @@ export default function HomepageAdminPage() {
             placeholder="Optional text shown on the banner"
             style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
           />
-          {/* Desktop banner */}
+
+          {/* ── Banner Design (color-based, no image needed) ── */}
+          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="color"
+                    value={rawTestimonialsSettings.bgColor || "#f6f5f3"}
+                    onChange={(e) => updateTestimonialsField("bgColor", e.target.value)}
+                    style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }}
+                  />
+                  <input
+                    className="field-input"
+                    value={rawTestimonialsSettings.bgColor || "#f6f5f3"}
+                    onChange={(e) => updateTestimonialsField("bgColor", e.target.value)}
+                    placeholder="#f6f5f3"
+                    style={{ flex: 1 }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
+                <select className="field-input" value={rawTestimonialsSettings.textTheme || "dark"} onChange={(e) => updateTestimonialsField("textTheme", e.target.value)}>
+                  <option value="dark">Dark text (black) — for light backgrounds</option>
+                  <option value="light">Light text (white) — for dark backgrounds</option>
+                </select>
+              </div>
+            </div>
+            {/* Mini live preview */}
+            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawTestimonialsSettings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
+              {testimonialsSection.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawTestimonialsSettings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{testimonialsSection.subtitle}</span>}
+              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawTestimonialsSettings.textTheme === "light" ? "#fff" : "#000" }}>{testimonialsSection.title || "What Parents Say"}</span>
+              {rawTestimonialsSettings.description && <span style={{ fontSize: 9, color: rawTestimonialsSettings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawTestimonialsSettings.description.slice(0, 60)}{rawTestimonialsSettings.description.length > 60 ? "…" : ""}</span>}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
+          </div>
+
+          {/* Desktop banner image (optional) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO</label>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
               {rawTestimonialsSettings.imageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawTestimonialsSettings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.imageUrl); updateTestimonialsField("imageUrl", ""); }}>✕</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.imageUrl); updateTestimonialsField("imageUrl", ""); }}>✕ Remove</button>
                 </div>
               )}
             </div>
-            {renderUploadBtn("testimonials-desktop", () => uploadFile((url) => updateTestimonialsField("imageUrl", url), rawTestimonialsSettings.imageUrl, "testimonials-desktop", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.imageUrl ? "Replace" : "Upload Desktop")}
+            {renderUploadBtn("testimonials-desktop", () => uploadFile((url) => updateTestimonialsField("imageUrl", url), rawTestimonialsSettings.imageUrl, "testimonials-desktop", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.imageUrl ? "Replace" : "Upload Image/Video")}
           </div>
-          {/* Mobile banner */}
+          {/* Mobile banner image (optional) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO (optional)</label>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
               {rawTestimonialsSettings.mobileImageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawTestimonialsSettings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.mobileImageUrl); updateTestimonialsField("mobileImageUrl", ""); }}>✕</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.mobileImageUrl); updateTestimonialsField("mobileImageUrl", ""); }}>✕ Remove</button>
                 </div>
               )}
             </div>

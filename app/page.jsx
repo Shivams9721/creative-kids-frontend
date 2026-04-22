@@ -453,31 +453,41 @@ export default function Home() {
 
   const renderAboutUsBanner = () => {
     if (!isEnabled("about_us_banner") || !aboutUsBanner) return null;
-    const { imageUrl, mobileImageUrl, title, subtitle, description, ctaLabel, ctaHref } = aboutUsBanner;
-    if (!imageUrl && !mobileImageUrl) return null;
+    const { imageUrl, mobileImageUrl, title, subtitle, description, ctaLabel, ctaHref, bgColor, textTheme } = aboutUsBanner;
+    const hasImage = imageUrl || mobileImageUrl;
+    const isLight = textTheme === "light";
+    const textColor = hasImage ? "text-white" : (isLight ? "text-white" : "text-black");
+    const subColor = hasImage ? "text-white/70" : (isLight ? "text-white/60" : "text-black/50");
+    const descColor = hasImage ? "text-white/80" : (isLight ? "text-white/70" : "text-black/60");
+    const borderColor = isLight ? "border-white hover:bg-white hover:text-black" : "border-black hover:bg-black hover:text-white";
+
     return (
-      <section key="about_us_banner" className="relative w-full overflow-hidden bg-[#f6f5f3]" style={{ minHeight: "40vh" }}>
-        {mobileImageUrl && (
-          <div className="absolute inset-0 block md:hidden">
-            {checkIsVideo(mobileImageUrl)
-              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-              : <Image src={mobileImageUrl} alt={title || "About Us"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-            }
-          </div>
+      <section key="about_us_banner" className="relative w-full overflow-hidden" style={{ minHeight: "40vh", backgroundColor: hasImage ? "#f6f5f3" : (bgColor || "#f6f5f3") }}>
+        {hasImage && (
+          <>
+            {mobileImageUrl && (
+              <div className="absolute inset-0 block md:hidden">
+                {checkIsVideo(mobileImageUrl)
+                  ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+                  : <Image src={mobileImageUrl} alt={title || "About Us"} fill unoptimized className="object-cover object-center" sizes="100vw" />
+                }
+              </div>
+            )}
+            <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
+              {imageUrl && (checkIsVideo(imageUrl)
+                ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+                : <Image src={imageUrl} alt={title || "About Us"} fill unoptimized className="object-cover object-center" sizes="100vw" />
+              )}
+            </div>
+            <div className="absolute inset-0 bg-black/40" />
+          </>
         )}
-        <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
-          {imageUrl && (checkIsVideo(imageUrl)
-            ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-            : <Image src={imageUrl} alt={title || "About Us"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-          )}
-        </div>
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28 text-white">
-          {subtitle && <span className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-white/70 mb-2">{subtitle}</span>}
-          {title && <h2 className="text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
-          {description && <p className="text-[12px] sm:text-[13px] text-white/80 max-w-lg mb-6 leading-relaxed">{description}</p>}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28">
+          {subtitle && <span className={`text-[9px] sm:text-[10px] tracking-[0.2em] uppercase mb-2 ${subColor}`}>{subtitle}</span>}
+          {title && <h2 className={`text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl ${textColor}`} style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
+          {description && <p className={`text-[12px] sm:text-[13px] max-w-lg mb-6 leading-relaxed ${descColor}`}>{description}</p>}
           {ctaHref && ctaLabel && (
-            <Link href={ctaHref} className="border border-white px-7 py-2.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-white hover:bg-white hover:text-black transition-colors">
+            <Link href={ctaHref} className={`border px-7 py-2.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase transition-colors ${textColor} ${borderColor}`}>
               {ctaLabel}
             </Link>
           )}
@@ -488,35 +498,42 @@ export default function Home() {
 
   const renderTestimonials = () => {
     if (!isEnabled("testimonials") || !testimonials) return null;
-    const { imageUrl, mobileImageUrl, title, subtitle, description } = testimonials;
-    if (!imageUrl && !mobileImageUrl) return null;
+    const { imageUrl, mobileImageUrl, bgColor, textTheme, description } = testimonials;
+    const title = testimonials.title || sectionMeta.testimonials?.title;
+    const subtitle = testimonials.subtitle || sectionMeta.testimonials?.subtitle;
+    const hasImage = imageUrl || mobileImageUrl;
+    // Only show if there's something to display
+    if (!hasImage && !title && !bgColor) return null;
+    const isLight = textTheme === "light";
+    const textColor = hasImage ? "text-white" : (isLight ? "text-white" : "text-black");
+    const subColor = hasImage ? "text-white/70" : (isLight ? "text-white/60" : "text-black/50");
+    const descColor = hasImage ? "text-white/80" : (isLight ? "text-white/70" : "text-black/60");
+
     return (
-      <section key="testimonials" className="relative w-full overflow-hidden bg-[#f6f5f3]" style={{ minHeight: "40vh" }}>
-        {mobileImageUrl && (
-          <div className="absolute inset-0 block md:hidden">
-            {checkIsVideo(mobileImageUrl)
-              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-              : <Image src={mobileImageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-            }
-          </div>
+      <section key="testimonials" className="relative w-full overflow-hidden" style={{ minHeight: "40vh", backgroundColor: hasImage ? "#f6f5f3" : (bgColor || "#f6f5f3") }}>
+        {hasImage && (
+          <>
+            {mobileImageUrl && (
+              <div className="absolute inset-0 block md:hidden">
+                {checkIsVideo(mobileImageUrl)
+                  ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+                  : <Image src={mobileImageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
+                }
+              </div>
+            )}
+            <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
+              {imageUrl && (checkIsVideo(imageUrl)
+                ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+                : <Image src={imageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
+              )}
+            </div>
+            <div className="absolute inset-0 bg-black/40" />
+          </>
         )}
-        <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
-          {imageUrl && (checkIsVideo(imageUrl)
-            ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-            : <Image src={imageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-          )}
-        </div>
-        <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28 text-white">
-          {(subtitle || sectionMeta.testimonials?.subtitle) && (
-            <span className="text-[9px] sm:text-[10px] tracking-[0.2em] uppercase text-white/70 mb-2">{subtitle || sectionMeta.testimonials?.subtitle}</span>
-          )}
-          {(title || sectionMeta.testimonials?.title) && (
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>
-              {title || sectionMeta.testimonials?.title}
-            </h2>
-          )}
-          {description && <p className="text-[12px] sm:text-[13px] text-white/80 max-w-lg leading-relaxed">{description}</p>}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28">
+          {subtitle && <span className={`text-[9px] sm:text-[10px] tracking-[0.2em] uppercase mb-2 ${subColor}`}>{subtitle}</span>}
+          {title && <h2 className={`text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl ${textColor}`} style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
+          {description && <p className={`text-[12px] sm:text-[13px] max-w-lg leading-relaxed ${descColor}`}>{description}</p>}
         </div>
       </section>
     );
