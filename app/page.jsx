@@ -164,8 +164,6 @@ export default function Home() {
   const checkIsVideo = (url) => url && /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
   const [categoryItems, setCategoryItems] = useState([]);
   const [sectionMeta, setSectionMeta] = useState({});
-  const [aboutUsBanner, setAboutUsBanner] = useState(null);
-  const [testimonials, setTestimonials] = useState(null);
   const [promoBanner1, setPromoBanner1] = useState(null);
   const [promoBanner2, setPromoBanner2] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -233,8 +231,6 @@ export default function Home() {
           setSectionMeta(map);
         }
 
-        if (data.aboutUsBanner) setAboutUsBanner(data.aboutUsBanner);
-        if (data.testimonials && typeof data.testimonials === "object" && !Array.isArray(data.testimonials)) setTestimonials(data.testimonials);
         if (data.promoBanner1) setPromoBanner1(data.promoBanner1);
         if (data.promoBanner2) setPromoBanner2(data.promoBanner2);
 
@@ -455,151 +451,25 @@ export default function Home() {
     )
   );
 
-  const renderAboutUsBanner = () => {
-    // If the admin has explicitly disabled the section, hide it
-    if (sectionMeta.about_us_banner && !isEnabled("about_us_banner")) return null;
-    // Fall back to placeholder SVG when no API data
-    const data = aboutUsBanner || {
-      imageUrl: "/images/about-us-banner.svg",
-      title: "Our Story",
-      subtitle: "About Us",
-      ctaLabel: "Learn More",
-      ctaHref: "/about",
-      textTheme: "dark",
-    };
-    const { imageUrl, mobileImageUrl, title, subtitle, description, ctaLabel, ctaHref, bgColor, textTheme } = data;
-    const hasImage = imageUrl || mobileImageUrl;
-    const isLight = textTheme === "light";
-    const textColor = hasImage ? "text-white" : (isLight ? "text-white" : "text-black");
-    const subColor = hasImage ? "text-white/70" : (isLight ? "text-white/60" : "text-black/50");
-    const descColor = hasImage ? "text-white/80" : (isLight ? "text-white/70" : "text-black/60");
-    const borderColor = isLight ? "border-white hover:bg-white hover:text-black" : "border-black hover:bg-black hover:text-white";
-
-    return (
-      <section key="about_us_banner" className="relative w-full overflow-hidden" style={{ minHeight: "40vh", backgroundColor: hasImage ? "#f6f5f3" : (bgColor || "#f6f5f3") }}>
-        {hasImage && (
-          <>
-            {mobileImageUrl && (
-              <div className="absolute inset-0 block md:hidden">
-                {checkIsVideo(mobileImageUrl)
-                  ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-                  : <Image src={mobileImageUrl} alt={title || "About Us"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-                }
-              </div>
-            )}
-            <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
-              {imageUrl && (checkIsVideo(imageUrl)
-                ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-                : <Image src={imageUrl} alt={title || "About Us"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-              )}
-            </div>
-            <div className="absolute inset-0 bg-black/40" />
-          </>
-        )}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28">
-          {subtitle && <span className={`text-[9px] sm:text-[10px] tracking-[0.2em] uppercase mb-2 ${subColor}`}>{subtitle}</span>}
-          {title && <h2 className={`text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl ${textColor}`} style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
-          {description && <p className={`text-[12px] sm:text-[13px] max-w-lg mb-6 leading-relaxed ${descColor}`}>{description}</p>}
-          {ctaHref && ctaLabel && (
-            <Link href={ctaHref} className={`border px-7 py-2.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase transition-colors ${textColor} ${borderColor}`}>
-              {ctaLabel}
-            </Link>
-          )}
-        </div>
-      </section>
-    );
-  };
-
-  const renderTestimonials = () => {
-    // If the admin has explicitly disabled the section, hide it
-    if (sectionMeta.testimonials && !isEnabled("testimonials")) return null;
-    // Fall back to placeholder SVG when no API data
-    const data = testimonials || {
-      imageUrl: "/images/testimonials-banner.svg",
-      title: "What Parents Say",
-      subtitle: "Testimonials",
-      ctaLabel: "Read Reviews",
-      ctaHref: "/reviews",
-      textTheme: "light",
-    };
-    const { imageUrl, mobileImageUrl, bgColor, textTheme, description } = data;
-    const title = data.title || sectionMeta.testimonials?.title;
-    const subtitle = data.subtitle || sectionMeta.testimonials?.subtitle;
-    const hasImage = imageUrl || mobileImageUrl;
-    const isLight = textTheme === "light";
-    const textColor = hasImage ? "text-white" : (isLight ? "text-white" : "text-black");
-    const subColor = hasImage ? "text-white/70" : (isLight ? "text-white/60" : "text-black/50");
-    const descColor = hasImage ? "text-white/80" : (isLight ? "text-white/70" : "text-black/60");
-
-    return (
-      <section key="testimonials" className="relative w-full overflow-hidden" style={{ minHeight: "40vh", backgroundColor: hasImage ? "#f6f5f3" : (bgColor || "#f6f5f3") }}>
-        {hasImage && (
-          <>
-            {mobileImageUrl && (
-              <div className="absolute inset-0 block md:hidden">
-                {checkIsVideo(mobileImageUrl)
-                  ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-                  : <Image src={mobileImageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-                }
-              </div>
-            )}
-            <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
-              {imageUrl && (checkIsVideo(imageUrl)
-                ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-                : <Image src={imageUrl} alt={title || "Testimonials"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-              )}
-            </div>
-            <div className="absolute inset-0 bg-black/40" />
-          </>
-        )}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28">
-          {subtitle && <span className={`text-[9px] sm:text-[10px] tracking-[0.2em] uppercase mb-2 ${subColor}`}>{subtitle}</span>}
-          {title && <h2 className={`text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl ${textColor}`} style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
-          {description && <p className={`text-[12px] sm:text-[13px] max-w-lg leading-relaxed ${descColor}`}>{description}</p>}
-        </div>
-      </section>
-    );
-  };
-
   const renderPromoBanner = (key, bannerData) => {
     if (!isEnabled(key) || !bannerData) return null;
-    const { imageUrl, mobileImageUrl, title, subtitle, description, ctaLabel, ctaHref, bgColor, textTheme } = bannerData;
-    const hasImage = imageUrl || mobileImageUrl;
-    const isLight = textTheme === "light";
-    const textColor = hasImage ? "text-white" : (isLight ? "text-white" : "text-black");
-    const subColor = hasImage ? "text-white/70" : (isLight ? "text-white/60" : "text-black/50");
-    const descColor = hasImage ? "text-white/80" : (isLight ? "text-white/70" : "text-black/60");
-    const borderColor = isLight ? "border-white hover:bg-white hover:text-black" : "border-black hover:bg-black hover:text-white";
+    const { imageUrl, mobileImageUrl } = bannerData;
+    if (!imageUrl && !mobileImageUrl) return null;
 
     return (
-      <section key={key} className="relative w-full overflow-hidden" style={{ minHeight: "40vh", backgroundColor: hasImage ? "#f6f5f3" : (bgColor || "#f6f5f3") }}>
-        {hasImage && (
-          <>
-            {mobileImageUrl && (
-              <div className="absolute inset-0 block md:hidden">
-                {checkIsVideo(mobileImageUrl)
-                  ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-                  : <Image src={mobileImageUrl} alt={title || "Promo Banner"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-                }
-              </div>
-            )}
-            <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
-              {imageUrl && (checkIsVideo(imageUrl)
-                ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
-                : <Image src={imageUrl} alt={title || "Promo Banner"} fill unoptimized className="object-cover object-center" sizes="100vw" />
-              )}
-            </div>
-            <div className="absolute inset-0 bg-black/40" />
-          </>
+      <section key={key} className="relative w-full h-[70vh] sm:h-[85vh] md:h-screen overflow-hidden bg-[#f6f5f3]">
+        {mobileImageUrl && (
+          <div className="absolute inset-0 block md:hidden">
+            {checkIsVideo(mobileImageUrl)
+              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+              : <Image src={mobileImageUrl} alt="Banner" fill unoptimized className="object-cover object-center" sizes="100vw" />
+            }
+          </div>
         )}
-        <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-16 sm:py-20 md:py-28">
-          {subtitle && <span className={`text-[9px] sm:text-[10px] tracking-[0.2em] uppercase mb-2 ${subColor}`}>{subtitle}</span>}
-          {title && <h2 className={`text-xl sm:text-2xl md:text-3xl font-medium tracking-wide uppercase mb-4 max-w-2xl ${textColor}`} style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
-          {description && <p className={`text-[12px] sm:text-[13px] max-w-lg mb-6 leading-relaxed ${descColor}`}>{description}</p>}
-          {ctaHref && ctaLabel && (
-            <Link href={ctaHref} className={`border px-7 py-2.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase transition-colors ${textColor} ${borderColor}`}>
-              {ctaLabel}
-            </Link>
+        <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
+          {imageUrl && (checkIsVideo(imageUrl)
+            ? <video src={imageUrl} autoPlay muted loop playsInline className="object-cover object-center w-full h-full" />
+            : <Image src={imageUrl} alt="Banner" fill unoptimized className="object-cover object-center" sizes="100vw" />
           )}
         </div>
       </section>
@@ -615,14 +485,12 @@ export default function Home() {
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
-    about_us_banner: renderAboutUsBanner,
-    testimonials: renderTestimonials,
     promo_banner_1: renderPromoBanner1,
     promo_banner_2: renderPromoBanner2,
   };
 
   // Fallback order when API hasn't loaded yet or section meta is empty
-  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "promo_banner_1", "shop_by_category", "promo_banner_2", "about_us_banner", "season_bestsellers", "featured_collection", "testimonials"];
+  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "promo_banner_1", "shop_by_category", "promo_banner_2", "season_bestsellers", "featured_collection"];
   const renderOrder = sortedSectionKeys.length > 0 ? sortedSectionKeys : FALLBACK_ORDER;
 
   return (

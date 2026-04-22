@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { safeFetch } from "../api";
@@ -6,7 +6,7 @@ import { safeFetch } from "../api";
 const PRODUCT_SECTION_KEYS = ["girls_new_arrivals", "season_bestsellers", "featured_collection"];
 
 const CTA_OPTIONS = [
-  { label: "— Select a page —", value: "" },
+  { label: "â€” Select a page â€”", value: "" },
   { label: "Shop All", value: "/shop" },
   { label: "Kids Girls", value: "/shop/kids-girl" },
   { label: "Kids Boys", value: "/shop/kids-boy" },
@@ -455,23 +455,6 @@ export default function HomepageAdminPage() {
   const categorySection = bySectionKey.shop_by_category;
   const categoryItems = getItems(categorySection?.id || -1);
 
-  const aboutUsSection = bySectionKey.about_us_banner;
-  const rawAboutSettings = typeof aboutUsSection?.settings_json === "string"
-    ? JSON.parse(aboutUsSection.settings_json || "{}") : (aboutUsSection?.settings_json || {});
-
-  const updateAboutField = (key, value) => {
-    if (!aboutUsSection?.id) return;
-    setSectionField(aboutUsSection.id, "settings_json", { ...rawAboutSettings, [key]: value });
-  };
-
-  const testimonialsSection = bySectionKey.testimonials;
-  const rawTestimonialsSettings = typeof testimonialsSection?.settings_json === "string"
-    ? JSON.parse(testimonialsSection.settings_json || "{}") : (testimonialsSection?.settings_json || {});
-  const updateTestimonialsField = (key, value) => {
-    if (!testimonialsSection?.id) return;
-    setSectionField(testimonialsSection.id, "settings_json", { ...rawTestimonialsSettings, [key]: value });
-  };
-
   const promoBanner1Section = bySectionKey.promo_banner_1;
   const rawPromo1Settings = typeof promoBanner1Section?.settings_json === "string"
     ? JSON.parse(promoBanner1Section.settings_json || "{}") : (promoBanner1Section?.settings_json || {});
@@ -493,7 +476,7 @@ export default function HomepageAdminPage() {
 
   return (
     <div style={{ padding: 24 }}>
-      {/* ─── Header ─── */}
+      {/* â”€â”€â”€ Header â”€â”€â”€ */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 600 }}>Homepage Editor</div>
@@ -505,7 +488,7 @@ export default function HomepageAdminPage() {
         </div>
       </div>
 
-      {/* ─── Publish Options ─── */}
+      {/* â”€â”€â”€ Publish Options â”€â”€â”€ */}
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <div className="card-title">Publish Options</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -515,11 +498,11 @@ export default function HomepageAdminPage() {
         </div>
       </div>
 
-      {/* ─── Section Arrangement ─── */}
+      {/* â”€â”€â”€ Section Arrangement â”€â”€â”€ */}
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <div className="card-title">Section Arrangement</div>
         <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 8 }}>
-          Use ↑ ↓ to reorder sections. The storefront respects this order. Disabled sections are hidden on the storefront.
+          Use â†‘ â†“ to reorder sections. The storefront respects this order. Disabled sections are hidden on the storefront.
         </div>
         {[...sections].sort((a, b) => a.display_order - b.display_order).map((s, idx, arr) => (
           <div key={s.id} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6, padding: "6px 8px", background: s.is_enabled === false ? "var(--bg2)" : "var(--bg)", borderRadius: 4, border: "1px solid var(--border)" }}>
@@ -527,14 +510,14 @@ export default function HomepageAdminPage() {
               {s.title || s.section_key}
               {s.is_enabled === false && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--text3)", background: "var(--bg3)", padding: "1px 4px", borderRadius: 3 }}>DISABLED</span>}
             </div>
-            <button className="btn btn-sm" onClick={() => shiftSection(idx, -1)} disabled={idx === 0}>↑</button>
-            <button className="btn btn-sm" onClick={() => shiftSection(idx, 1)} disabled={idx === arr.length - 1}>↓</button>
+            <button className="btn btn-sm" onClick={() => shiftSection(idx, -1)} disabled={idx === 0}>â†‘</button>
+            <button className="btn btn-sm" onClick={() => shiftSection(idx, 1)} disabled={idx === arr.length - 1}>â†“</button>
             <span style={{ width: 24, textAlign: "center", fontSize: 11, color: "var(--text3)" }}>{s.display_order}</span>
           </div>
         ))}
       </div>
 
-      {/* ─── Hero Banner ─── */}
+      {/* â”€â”€â”€ Hero Banner â”€â”€â”€ */}
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div className="card-title" style={{ margin: 0 }}>Hero Banner</div>
@@ -562,13 +545,13 @@ export default function HomepageAdminPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, fontSize: 12, fontWeight: 600 }}>
                 <span>Slide #{sIdx + 1}</span>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, -1)} disabled={sIdx === 0}>↑</button>
-                  <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, 1)} disabled={sIdx === heroSlidesData.length - 1}>↓</button>
+                  <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, -1)} disabled={sIdx === 0}>â†‘</button>
+                  <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, 1)} disabled={sIdx === heroSlidesData.length - 1}>â†“</button>
                   <button className="btn btn-sm btn-danger" onClick={() => removeHeroSlide(sIdx)}>Remove</button>
                 </div>
               </div>
 
-              {/* Media Type Toggle — Image or Video, not both */}
+              {/* Media Type Toggle â€” Image or Video, not both */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "6px 10px", background: "var(--bg2)", borderRadius: 6 }}>
                 <span style={{ fontSize: 11, color: "var(--text3)", marginRight: 4 }}>Media Type:</span>
                 <button
@@ -576,14 +559,14 @@ export default function HomepageAdminPage() {
                   onClick={() => switchSlideMediaType(sIdx, "image")}
                   style={{ minWidth: 70 }}
                 >
-                  📷 Image
+                  ðŸ“· Image
                 </button>
                 <button
                   className={`btn btn-sm${mediaType === "video" ? " btn-accent" : ""}`}
                   onClick={() => switchSlideMediaType(sIdx, "video")}
                   style={{ minWidth: 70 }}
                 >
-                  🎬 Video
+                  ðŸŽ¬ Video
                 </button>
                 <span style={{ fontSize: 10, color: "var(--text3)" }}>
                   {mediaType === "image" ? "Upload images only for this slide" : "Upload videos (.mp4/.webm) only"}
@@ -601,7 +584,7 @@ export default function HomepageAdminPage() {
                   {slide.imageUrl ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text2)" }} title={slide.imageUrl}>{slide.imageUrl.split("/").pop()}</span>
-                      <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(slide.imageUrl); updateHeroSlide(sIdx, "imageUrl", ""); }}>✕</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(slide.imageUrl); updateHeroSlide(sIdx, "imageUrl", ""); }}>âœ•</button>
                     </div>
                   ) : null}
                   {renderUploadBtn(`hero-${sIdx}-desktop`, () => uploadFile((url) => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl, `hero-${sIdx}-desktop`, acceptStr), slide.imageUrl ? `Replace ${mediaType}` : uploadLabel)}
@@ -613,7 +596,7 @@ export default function HomepageAdminPage() {
                   {slide.mobileImageUrl ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text2)" }} title={slide.mobileImageUrl}>{slide.mobileImageUrl.split("/").pop()}</span>
-                      <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(slide.mobileImageUrl); updateHeroSlide(sIdx, "mobileImageUrl", ""); }}>✕</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(slide.mobileImageUrl); updateHeroSlide(sIdx, "mobileImageUrl", ""); }}>âœ•</button>
                     </div>
                   ) : null}
                   {renderUploadBtn(`hero-${sIdx}-mobile`, () => uploadFile((url) => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl, `hero-${sIdx}-mobile`, acceptStr), slide.mobileImageUrl ? `Replace Mobile` : `Upload Mobile`)}
@@ -627,11 +610,11 @@ export default function HomepageAdminPage() {
           );
         })}
         <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 8 }}>
-          💡 Each slide supports either an Image or a Video — not both. Toggle the media type per slide to switch.
+          ðŸ’¡ Each slide supports either an Image or a Video â€” not both. Toggle the media type per slide to switch.
         </div>
       </div>
 
-      {/* ─── Shop by Category ─── */}
+      {/* â”€â”€â”€ Shop by Category â”€â”€â”€ */}
       <div className="card card-pad" style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div className="card-title" style={{ margin: 0 }}>Shop by Category</div>
@@ -673,15 +656,15 @@ export default function HomepageAdminPage() {
               {renderUploadBtn(`cat-${item.id}-vid`, () => uploadFile((url) => updateItemField(item, "video_url", url), item.video_url, `cat-${item.id}-vid`, "video/mp4,video/webm"), "Upload Video")}
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
-              <button className="btn btn-sm" onClick={() => shiftItem(categorySection.id, idx, -1)} disabled={idx === 0}>↑</button>
-              <button className="btn btn-sm" onClick={() => shiftItem(categorySection.id, idx, 1)} disabled={idx === categoryItems.length - 1}>↓</button>
+              <button className="btn btn-sm" onClick={() => shiftItem(categorySection.id, idx, -1)} disabled={idx === 0}>â†‘</button>
+              <button className="btn btn-sm" onClick={() => shiftItem(categorySection.id, idx, 1)} disabled={idx === categoryItems.length - 1}>â†“</button>
               <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>Remove</button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* ─── Product Sections (New Arrivals, Best Sellers, Featured) ─── */}
+      {/* â”€â”€â”€ Product Sections (New Arrivals, Best Sellers, Featured) â”€â”€â”€ */}
       {PRODUCT_SECTION_KEYS.map((key) => {
         const section = bySectionKey[key];
         if (!section) return null;
@@ -736,231 +719,19 @@ export default function HomepageAdminPage() {
             {sectionItems.map((item, idx) => (
               <div key={`${item.id || "new"}-${idx}`} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
                 <select className="field-input" value={item.product_id || ""} onChange={(e) => updateItemField(item, "product_id", parseInt(e.target.value, 10))}>
-                  <option value="">— Select product —</option>
+                  <option value="">â€” Select product â€”</option>
                   {groupedProducts.map((p) => <option key={p.id} value={p.id}>{p.title} ({p.id})</option>)}
                 </select>
-                <button className="btn btn-sm" onClick={() => shiftItem(section.id, idx, -1)} disabled={idx === 0}>↑</button>
-                <button className="btn btn-sm" onClick={() => shiftItem(section.id, idx, 1)} disabled={idx === sectionItems.length - 1}>↓</button>
-                <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>✕</button>
+                <button className="btn btn-sm" onClick={() => shiftItem(section.id, idx, -1)} disabled={idx === 0}>â†‘</button>
+                <button className="btn btn-sm" onClick={() => shiftItem(section.id, idx, 1)} disabled={idx === sectionItems.length - 1}>â†“</button>
+                <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>âœ•</button>
               </div>
             ))}
           </div>
         );
       })}
 
-      {/* ─── About Us Banner ─── */}
-      {!aboutUsSection ? (
-        <div className="card card-pad" style={{ marginBottom: 16 }}>
-          <div className="card-title">About Us Banner</div>
-          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
-          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
-        </div>
-      ) : (
-        <div className="card card-pad" style={{ marginBottom: 16, opacity: aboutUsSection.is_enabled === false ? 0.7 : 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div className="card-title" style={{ margin: 0 }}>About Us Banner</div>
-            <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <input type="checkbox" checked={aboutUsSection.is_enabled !== false} onChange={(e) => setSectionField(aboutUsSection.id, "is_enabled", e.target.checked)} />
-              {aboutUsSection.is_enabled !== false ? "Enabled" : "Disabled"}
-            </label>
-          </div>
-          {aboutUsSection.is_enabled === false && (
-            <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
-              This banner is hidden on the storefront.
-            </div>
-          )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <input className="field-input" value={aboutUsSection.title || ""} onChange={(e) => setSectionField(aboutUsSection.id, "title", e.target.value)} placeholder="Banner Title (e.g. Our Story)" />
-            <input className="field-input" value={aboutUsSection.subtitle || ""} onChange={(e) => setSectionField(aboutUsSection.id, "subtitle", e.target.value)} placeholder="Subtitle / Tag" />
-          </div>
-          <textarea
-            className="field-input"
-            rows={2}
-            value={rawAboutSettings.description || ""}
-            onChange={(e) => updateAboutField("description", e.target.value)}
-            placeholder="Short description shown on the banner (optional)"
-            style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
-          />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <input className="field-input" value={rawAboutSettings.ctaLabel || ""} onChange={(e) => updateAboutField("ctaLabel", e.target.value)} placeholder="CTA Button Label (e.g. Learn More)" />
-            <div>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 3 }}>CTA PAGE</label>
-              <CtaLinkSelect value={rawAboutSettings.ctaHref || ""} onChange={(v) => updateAboutField("ctaHref", v)} placeholder="Custom CTA URL" />
-            </div>
-          </div>
-
-          {/* ── Banner Design (color-based, no image needed) ── */}
-          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input
-                    type="color"
-                    value={rawAboutSettings.bgColor || "#f6f5f3"}
-                    onChange={(e) => updateAboutField("bgColor", e.target.value)}
-                    style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }}
-                  />
-                  <input
-                    className="field-input"
-                    value={rawAboutSettings.bgColor || "#f6f5f3"}
-                    onChange={(e) => updateAboutField("bgColor", e.target.value)}
-                    placeholder="#f6f5f3"
-                    style={{ flex: 1 }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
-                <select className="field-input" value={rawAboutSettings.textTheme || "dark"} onChange={(e) => updateAboutField("textTheme", e.target.value)}>
-                  <option value="dark">Dark text (black) — for light backgrounds</option>
-                  <option value="light">Light text (white) — for dark backgrounds</option>
-                </select>
-              </div>
-            </div>
-            {/* Mini live preview */}
-            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawAboutSettings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
-              {aboutUsSection.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawAboutSettings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{aboutUsSection.subtitle}</span>}
-              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawAboutSettings.textTheme === "light" ? "#fff" : "#000" }}>{aboutUsSection.title || "Banner Title"}</span>
-              {rawAboutSettings.description && <span style={{ fontSize: 9, color: rawAboutSettings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawAboutSettings.description.slice(0, 60)}{rawAboutSettings.description.length > 60 ? "…" : ""}</span>}
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
-          </div>
-
-          {/* Desktop banner image (optional) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
-              {rawAboutSettings.imageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawAboutSettings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawAboutSettings.imageUrl); updateAboutField("imageUrl", ""); }}>✕ Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("about-desktop", () => uploadFile((url) => updateAboutField("imageUrl", url), rawAboutSettings.imageUrl, "about-desktop", "image/*,video/mp4,video/webm"), rawAboutSettings.imageUrl ? "Replace" : "Upload Image/Video")}
-          </div>
-
-          {/* Mobile banner image (optional) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
-              {rawAboutSettings.mobileImageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawAboutSettings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawAboutSettings.mobileImageUrl); updateAboutField("mobileImageUrl", ""); }}>✕ Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("about-mobile", () => uploadFile((url) => updateAboutField("mobileImageUrl", url), rawAboutSettings.mobileImageUrl, "about-mobile", "image/*,video/mp4,video/webm"), rawAboutSettings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
-          </div>
-        </div>
-      )}
-
-      {/* ─── Testimonials Banner ─── */}
-      {!testimonialsSection ? (
-        <div className="card card-pad" style={{ marginBottom: 16 }}>
-          <div className="card-title">Testimonials Banner</div>
-          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
-          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
-        </div>
-      ) : (
-        <div className="card card-pad" style={{ marginBottom: 16, opacity: testimonialsSection.is_enabled === false ? 0.7 : 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div className="card-title" style={{ margin: 0 }}>Testimonials Banner</div>
-            <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <input type="checkbox" checked={testimonialsSection.is_enabled !== false} onChange={(e) => setSectionField(testimonialsSection.id, "is_enabled", e.target.checked)} />
-              {testimonialsSection.is_enabled !== false ? "Enabled" : "Disabled"}
-            </label>
-          </div>
-          {testimonialsSection.is_enabled === false && (
-            <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
-              This banner is hidden on the storefront.
-            </div>
-          )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <input className="field-input" value={testimonialsSection.title || ""} onChange={(e) => setSectionField(testimonialsSection.id, "title", e.target.value)} placeholder="Section Title (e.g. What Parents Say)" />
-            <input className="field-input" value={testimonialsSection.subtitle || ""} onChange={(e) => setSectionField(testimonialsSection.id, "subtitle", e.target.value)} placeholder="Subtitle (e.g. Reviews)" />
-          </div>
-          <textarea
-            className="field-input"
-            rows={2}
-            value={rawTestimonialsSettings.description || ""}
-            onChange={(e) => updateTestimonialsField("description", e.target.value)}
-            placeholder="Optional text shown on the banner"
-            style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
-          />
-
-          {/* ── Banner Design (color-based, no image needed) ── */}
-          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input
-                    type="color"
-                    value={rawTestimonialsSettings.bgColor || "#f6f5f3"}
-                    onChange={(e) => updateTestimonialsField("bgColor", e.target.value)}
-                    style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }}
-                  />
-                  <input
-                    className="field-input"
-                    value={rawTestimonialsSettings.bgColor || "#f6f5f3"}
-                    onChange={(e) => updateTestimonialsField("bgColor", e.target.value)}
-                    placeholder="#f6f5f3"
-                    style={{ flex: 1 }}
-                  />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
-                <select className="field-input" value={rawTestimonialsSettings.textTheme || "dark"} onChange={(e) => updateTestimonialsField("textTheme", e.target.value)}>
-                  <option value="dark">Dark text (black) — for light backgrounds</option>
-                  <option value="light">Light text (white) — for dark backgrounds</option>
-                </select>
-              </div>
-            </div>
-            {/* Mini live preview */}
-            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawTestimonialsSettings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
-              {testimonialsSection.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawTestimonialsSettings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{testimonialsSection.subtitle}</span>}
-              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawTestimonialsSettings.textTheme === "light" ? "#fff" : "#000" }}>{testimonialsSection.title || "What Parents Say"}</span>
-              {rawTestimonialsSettings.description && <span style={{ fontSize: 9, color: rawTestimonialsSettings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawTestimonialsSettings.description.slice(0, 60)}{rawTestimonialsSettings.description.length > 60 ? "…" : ""}</span>}
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
-          </div>
-
-          {/* Desktop banner image (optional) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
-              {rawTestimonialsSettings.imageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawTestimonialsSettings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.imageUrl); updateTestimonialsField("imageUrl", ""); }}>✕ Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("testimonials-desktop", () => uploadFile((url) => updateTestimonialsField("imageUrl", url), rawTestimonialsSettings.imageUrl, "testimonials-desktop", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.imageUrl ? "Replace" : "Upload Image/Video")}
-          </div>
-          {/* Mobile banner image (optional) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
-              {rawTestimonialsSettings.mobileImageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawTestimonialsSettings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawTestimonialsSettings.mobileImageUrl); updateTestimonialsField("mobileImageUrl", ""); }}>✕ Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("testimonials-mobile", () => uploadFile((url) => updateTestimonialsField("mobileImageUrl", url), rawTestimonialsSettings.mobileImageUrl, "testimonials-mobile", "image/*,video/mp4,video/webm"), rawTestimonialsSettings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
-          </div>
-        </div>
-      )}
-
-      {/* ─── Promo Banner 1 ─── */}
+      {/* â”€â”€â”€ Promo Banner 1 â”€â”€â”€ */}
       {!promoBanner1Section ? (
         <div className="card card-pad" style={{ marginBottom: 16 }}>
           <div className="card-title">Promo Banner 1</div>
@@ -981,62 +752,16 @@ export default function HomepageAdminPage() {
               This banner is hidden on the storefront.
             </div>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <input className="field-input" value={promoBanner1Section.title || ""} onChange={(e) => setSectionField(promoBanner1Section.id, "title", e.target.value)} placeholder="Banner Title" />
-            <input className="field-input" value={promoBanner1Section.subtitle || ""} onChange={(e) => setSectionField(promoBanner1Section.id, "subtitle", e.target.value)} placeholder="Subtitle / Tag" />
-          </div>
-          <textarea
-            className="field-input"
-            rows={2}
-            value={rawPromo1Settings.description || ""}
-            onChange={(e) => updatePromo1Field("description", e.target.value)}
-            placeholder="Short description shown on the banner (optional)"
-            style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
-          />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <input className="field-input" value={rawPromo1Settings.ctaLabel || ""} onChange={(e) => updatePromo1Field("ctaLabel", e.target.value)} placeholder="CTA Button Label (e.g. Shop Now)" />
-            <div>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 3 }}>CTA PAGE</label>
-              <CtaLinkSelect value={rawPromo1Settings.ctaHref || ""} onChange={(v) => updatePromo1Field("ctaHref", v)} placeholder="Custom CTA URL" />
-            </div>
-          </div>
-
-          {/* ── Banner Design ── */}
-          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input type="color" value={rawPromo1Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo1Field("bgColor", e.target.value)} style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }} />
-                  <input className="field-input" value={rawPromo1Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo1Field("bgColor", e.target.value)} placeholder="#f6f5f3" style={{ flex: 1 }} />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
-                <select className="field-input" value={rawPromo1Settings.textTheme || "dark"} onChange={(e) => updatePromo1Field("textTheme", e.target.value)}>
-                  <option value="dark">Dark text (black) — for light backgrounds</option>
-                  <option value="light">Light text (white) — for dark backgrounds</option>
-                </select>
-              </div>
-            </div>
-            {/* Mini live preview */}
-            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawPromo1Settings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
-              {promoBanner1Section.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawPromo1Settings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{promoBanner1Section.subtitle}</span>}
-              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawPromo1Settings.textTheme === "light" ? "#fff" : "#000" }}>{promoBanner1Section.title || "Promo Banner 1"}</span>
-              {rawPromo1Settings.description && <span style={{ fontSize: 9, color: rawPromo1Settings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawPromo1Settings.description.slice(0, 60)}{rawPromo1Settings.description.length > 60 ? "…" : ""}</span>}
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
-          </div>
+          <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 10 }}>Full-screen image banner (same size as hero). Upload a desktop and optional mobile image.</div>
 
           {/* Desktop banner image */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO</label>
               {rawPromo1Settings.imageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo1Settings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.imageUrl); updatePromo1Field("imageUrl", ""); }}>✕ Remove</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.imageUrl); updatePromo1Field("imageUrl", ""); }}>âœ• Remove</button>
                 </div>
               )}
             </div>
@@ -1050,7 +775,7 @@ export default function HomepageAdminPage() {
               {rawPromo1Settings.mobileImageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo1Settings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.mobileImageUrl); updatePromo1Field("mobileImageUrl", ""); }}>✕ Remove</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.mobileImageUrl); updatePromo1Field("mobileImageUrl", ""); }}>âœ• Remove</button>
                 </div>
               )}
             </div>
@@ -1059,7 +784,7 @@ export default function HomepageAdminPage() {
         </div>
       )}
 
-      {/* ─── Promo Banner 2 ─── */}
+      {/* â”€â”€â”€ Promo Banner 2 â”€â”€â”€ */}
       {!promoBanner2Section ? (
         <div className="card card-pad" style={{ marginBottom: 16 }}>
           <div className="card-title">Promo Banner 2</div>
@@ -1080,62 +805,16 @@ export default function HomepageAdminPage() {
               This banner is hidden on the storefront.
             </div>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <input className="field-input" value={promoBanner2Section.title || ""} onChange={(e) => setSectionField(promoBanner2Section.id, "title", e.target.value)} placeholder="Banner Title" />
-            <input className="field-input" value={promoBanner2Section.subtitle || ""} onChange={(e) => setSectionField(promoBanner2Section.id, "subtitle", e.target.value)} placeholder="Subtitle / Tag" />
-          </div>
-          <textarea
-            className="field-input"
-            rows={2}
-            value={rawPromo2Settings.description || ""}
-            onChange={(e) => updatePromo2Field("description", e.target.value)}
-            placeholder="Short description shown on the banner (optional)"
-            style={{ resize: "vertical", marginBottom: 12, width: "100%", boxSizing: "border-box" }}
-          />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <input className="field-input" value={rawPromo2Settings.ctaLabel || ""} onChange={(e) => updatePromo2Field("ctaLabel", e.target.value)} placeholder="CTA Button Label (e.g. Explore)" />
-            <div>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 3 }}>CTA PAGE</label>
-              <CtaLinkSelect value={rawPromo2Settings.ctaHref || ""} onChange={(v) => updatePromo2Field("ctaHref", v)} placeholder="Custom CTA URL" />
-            </div>
-          </div>
-
-          {/* ── Banner Design ── */}
-          <div style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 6, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10, color: "var(--text2)" }}>Banner Design — used when no image is uploaded</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>BACKGROUND COLOR</label>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input type="color" value={rawPromo2Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo2Field("bgColor", e.target.value)} style={{ width: 44, height: 34, border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer", padding: 2 }} />
-                  <input className="field-input" value={rawPromo2Settings.bgColor || "#f6f5f3"} onChange={(e) => updatePromo2Field("bgColor", e.target.value)} placeholder="#f6f5f3" style={{ flex: 1 }} />
-                </div>
-              </div>
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 4 }}>TEXT COLOR</label>
-                <select className="field-input" value={rawPromo2Settings.textTheme || "dark"} onChange={(e) => updatePromo2Field("textTheme", e.target.value)}>
-                  <option value="dark">Dark text (black) — for light backgrounds</option>
-                  <option value="light">Light text (white) — for dark backgrounds</option>
-                </select>
-              </div>
-            </div>
-            {/* Mini live preview */}
-            <div style={{ marginTop: 10, borderRadius: 4, overflow: "hidden", height: 80, background: rawPromo2Settings.bgColor || "#f6f5f3", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3 }}>
-              {promoBanner2Section.subtitle && <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: rawPromo2Settings.textTheme === "light" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }}>{promoBanner2Section.subtitle}</span>}
-              <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "0.05em", textTransform: "uppercase", color: rawPromo2Settings.textTheme === "light" ? "#fff" : "#000" }}>{promoBanner2Section.title || "Promo Banner 2"}</span>
-              {rawPromo2Settings.description && <span style={{ fontSize: 9, color: rawPromo2Settings.textTheme === "light" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)" }}>{rawPromo2Settings.description.slice(0, 60)}{rawPromo2Settings.description.length > 60 ? "…" : ""}</span>}
-            </div>
-            <div style={{ fontSize: 10, color: "var(--text3)", marginTop: 6 }}>↑ Live preview · Upload an image below to use it instead of this color background</div>
-          </div>
+          <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 10 }}>Full-screen image banner (same size as hero). Upload a desktop and optional mobile image.</div>
 
           {/* Desktop banner image */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional — overrides color background)</span></label>
+              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO</label>
               {rawPromo2Settings.imageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo2Settings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.imageUrl); updatePromo2Field("imageUrl", ""); }}>✕ Remove</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.imageUrl); updatePromo2Field("imageUrl", ""); }}>âœ• Remove</button>
                 </div>
               )}
             </div>
@@ -1149,7 +828,7 @@ export default function HomepageAdminPage() {
               {rawPromo2Settings.mobileImageUrl && (
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo2Settings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.mobileImageUrl); updatePromo2Field("mobileImageUrl", ""); }}>✕ Remove</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.mobileImageUrl); updatePromo2Field("mobileImageUrl", ""); }}>âœ• Remove</button>
                 </div>
               )}
             </div>
@@ -1158,26 +837,26 @@ export default function HomepageAdminPage() {
         </div>
       )}
 
-      {/* ─── Validation Errors ─── */}
+      {/* â”€â”€â”€ Validation Errors â”€â”€â”€ */}
       {validationErrors.length > 0 && (
         <div className="alert alert-red" style={{ marginBottom: 16 }}>
           <div className="alert-msg">
             <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Fix before publishing:</div>
             {validationErrors.map((err, i) => (
-              <div key={i} style={{ fontSize: 12 }}>• {err}</div>
+              <div key={i} style={{ fontSize: 12 }}>â€¢ {err}</div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ─── Version History ─── */}
+      {/* â”€â”€â”€ Version History â”€â”€â”€ */}
       <div className="card card-pad">
         <div className="card-title">Version History</div>
         {(history || []).map((h) => (
           <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
             <div style={{ fontSize: 12 }}>
-              v{h.version} · {h.title} · <strong>{h.status}</strong>
-              {h.published_at ? ` · ${new Date(h.published_at).toLocaleString()}` : ""}
+              v{h.version} Â· {h.title} Â· <strong>{h.status}</strong>
+              {h.published_at ? ` Â· ${new Date(h.published_at).toLocaleString()}` : ""}
             </div>
             <button className="btn btn-sm" onClick={() => rollback(h.id)}>Rollback as Draft</button>
           </div>
