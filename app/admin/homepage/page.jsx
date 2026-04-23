@@ -132,6 +132,15 @@ export default function HomepageAdminPage() {
   const [openSections, setOpenSections] = useState(new Set(["hero_banner"]));
   const [showHistory, setShowHistory] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (msg, type = "success") => {
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4500);
+  };
+
+  const removeToast = (id) => setToasts(prev => prev.filter(t => t.id !== id));
 
   const togglePanel = (key) => setOpenSections(prev => {
     const n = new Set(prev);
@@ -202,7 +211,7 @@ export default function HomepageAdminPage() {
 
   const addCategoryItem = (sectionId) => {
     if (!sectionId) return;
-    setItems(prev => [...prev, { section_id: sectionId, item_type: "category", display_order: getItems(sectionId).length + 1, label: "New Category", target_url: "/shop", image_url: "", settings_json: {} }]);
+    setItems(prev => [...prev, { section_id: sectionId, item_type: "category", display_order: getItems(sectionId).length + 1, label: "New Category", target_url: "/shop", image_url: "", video_url: "", settings_json: {} }]);
   };
 
   const populateDefaultCategories = (sectionId) => {
@@ -214,7 +223,7 @@ export default function HomepageAdminPage() {
       { label: "Clothing Sets", target_url: "/shop/baby-girl/clothing-sets", image_url: "/images/clothing set.png" },
     ];
     const offset = getItems(sectionId).length;
-    setItems(prev => [...prev, ...defaults.map((c, i) => ({ section_id: sectionId, item_type: "category", display_order: offset + i + 1, label: c.label, target_url: c.target_url, image_url: c.image_url, settings_json: {} }))]);
+    setItems(prev => [...prev, ...defaults.map((c, i) => ({ section_id: sectionId, item_type: "category", display_order: offset + i + 1, label: c.label, target_url: c.target_url, image_url: c.image_url, video_url: "", settings_json: {} }))]);
   };
 
   const removeItem = (target) => {
@@ -270,7 +279,7 @@ export default function HomepageAdminPage() {
     fetch(`${base}/api/upload`, { method: "DELETE", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ imageUrl: url }) }).catch(() => {});
   };
 
-  const uploadFile = async (onDone, oldUrl, progressKey, accept = "image/*,video/mp4,video/webm") => {
+  const uploadFile = async (onDone, oldUrl, progressKey, accept = "image/*,video/mp4,video/webm", label = "File") => {
     if (oldUrl?.includes(".amazonaws.com/")) deleteFromS3(oldUrl);
     const input = document.createElement("input");
     input.type = "file";
@@ -292,29 +301,36 @@ export default function HomepageAdminPage() {
         if (xhr.status === 401 || xhr.status === 403) { localStorage.removeItem("adminToken"); alert("Session expired."); setTimeout(() => { window.location.href = "/admin/login"; }, 1200); return; }
         try {
           const data = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) onDone(data.imageUrl);
-          else alert(data.error || `Upload failed (${xhr.status})`);
+          if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) {
+            onDone(data.imageUrl);
+            showToast(`${label} uploaded successfully`);
+          } else {
+            showToast(data.error || `Upload failed (${xhr.status})`, "error");
+          }
         } catch { alert(`Upload failed (${xhr.status})`); }
         if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; });
       };
-      xhr.onerror = () => { alert("Network error during upload"); if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; }); };
+      xhr.onerror = () => { showToast("Network error during upload", "error"); if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; }); };
       xhr.send(fd);
     };
     input.click();
   };
 
-  const saveDraft = async () => {
+  const saveDraft = async (silent = false) => {
     if (!config?.id) return;
     setSaving(true);
-    setSaveMsg("");
+    if (!silent) setSaveMsg("");
     try {
       const ns = sections.map(s => ({ ...s, settings_json: typeof s.settings_json === "string" ? JSON.parse(s.settings_json || "{}") : (s.settings_json || {}) }));
       const ni = items.map(i => ({ ...i, settings_json: typeof i.settings_json === "string" ? JSON.parse(i.settings_json || "{}") : (i.settings_json || {}) }));
       await safeFetch(`/api/admin/homepage-config/draft/${config.id}`, { method: "PUT", body: JSON.stringify({ sections: ns, items: ni }) });
       await load();
-      setSaveMsg("Saved");
-      setTimeout(() => setSaveMsg(""), 2500);
-    } catch (e) { alert(e.message || "Save failed"); }
+      if (!silent) {
+        setSaveMsg("Saved");
+        setTimeout(() => setSaveMsg(""), 2500);
+        showToast("Draft saved");
+      }
+    } catch (e) { showToast(e.message || "Save failed", "error"); }
     finally { setSaving(false); }
   };
 
@@ -322,12 +338,13 @@ export default function HomepageAdminPage() {
     if (!config?.id || !validateBeforePublish()) return;
     setPublishing(true);
     try {
-      await saveDraft();
+      await saveDraft(true);
       await safeFetch(`/api/admin/homepage-config/draft/${config.id}/publish`, { method: "POST", body: JSON.stringify({ publish_at: publishAt ? new Date(publishAt).toISOString() : null }) });
       await load();
-      setSaveMsg("Published!");
-      setTimeout(() => setSaveMsg(""), 3000);
-    } catch (e) { alert(e.message || "Publish failed"); }
+      setSaveMsg("Published");
+      setTimeout(() => setSaveMsg(""), 4000);
+      showToast("Homepage published successfully!", "success");
+    } catch (e) { showToast(e.message || "Publish failed", "error"); }
     finally { setPublishing(false); }
   };
 
@@ -449,10 +466,10 @@ export default function HomepageAdminPage() {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <MediaSlot label="Desktop Banner" url={rawSettings.imageUrl} progressKey={`${idPrefix}-d`} uploadProgress={uploadProgress}
-            onUpload={() => uploadFile(url => updateField("imageUrl", url), rawSettings.imageUrl, `${idPrefix}-d`, accept)}
+            onUpload={() => uploadFile(url => updateField("imageUrl", url), rawSettings.imageUrl, `${idPrefix}-d`, accept, "Desktop banner")}
             onRemove={() => { deleteFromS3(rawSettings.imageUrl); updateField("imageUrl", ""); }} />
           <MediaSlot label="Mobile Banner" optional url={rawSettings.mobileImageUrl} progressKey={`${idPrefix}-m`} uploadProgress={uploadProgress}
-            onUpload={() => uploadFile(url => updateField("mobileImageUrl", url), rawSettings.mobileImageUrl, `${idPrefix}-m`, accept)}
+            onUpload={() => uploadFile(url => updateField("mobileImageUrl", url), rawSettings.mobileImageUrl, `${idPrefix}-m`, accept, "Mobile banner")}
             onRemove={() => { deleteFromS3(rawSettings.mobileImageUrl); updateField("mobileImageUrl", ""); }} />
         </div>
       </div>
@@ -460,7 +477,18 @@ export default function HomepageAdminPage() {
   };
 
   return (
-    <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 16px 48px" }}>
+    <div style={{ padding: "0 28px 48px" }}>
+
+      {/* ── Toast Notifications ── */}
+      <div className="admin-toast-wrap">
+        {toasts.map(t => (
+          <div key={t.id} className={`admin-toast admin-toast-${t.type}`}>
+            <span className="admin-toast-icon">{t.type === "error" ? "✕" : t.type === "info" ? "ℹ" : "✓"}</span>
+            <span className="admin-toast-msg">{t.msg}</span>
+            <button className="admin-toast-close" onClick={() => removeToast(t.id)}>✕</button>
+          </div>
+        ))}
+      </div>
 
       {/* ── Sticky Action Bar ── */}
       <div style={{ position: "sticky", top: 0, zIndex: 90, display: "flex", alignItems: "center", gap: 12, padding: "12px 0 12px", marginBottom: 20, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid var(--border)" }}>
@@ -527,10 +555,10 @@ export default function HomepageAdminPage() {
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
                     <MediaSlot label="Desktop" url={slide.imageUrl} progressKey={`hero-${sIdx}-d`} uploadProgress={uploadProgress}
-                      onUpload={() => uploadFile(url => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl, `hero-${sIdx}-d`, accept)}
+                      onUpload={() => uploadFile(url => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl, `hero-${sIdx}-d`, accept, `Slide ${sIdx+1} desktop`)}
                       onRemove={() => { deleteFromS3(slide.imageUrl); updateHeroSlide(sIdx, "imageUrl", ""); }} />
                     <MediaSlot label="Mobile" optional url={slide.mobileImageUrl} progressKey={`hero-${sIdx}-m`} uploadProgress={uploadProgress}
-                      onUpload={() => uploadFile(url => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl, `hero-${sIdx}-m`, accept)}
+                      onUpload={() => uploadFile(url => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl, `hero-${sIdx}-m`, accept, `Slide ${sIdx+1} mobile`)}
                       onRemove={() => { deleteFromS3(slide.mobileImageUrl); updateHeroSlide(sIdx, "mobileImageUrl", ""); }} />
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -568,10 +596,10 @@ export default function HomepageAdminPage() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <MediaSlot label="Category Photo" url={item.image_url} progressKey={`cat-${item.id || idx}-i`} uploadProgress={uploadProgress}
-                    onUpload={() => uploadFile(url => updateItemField(item, "image_url", url), item.image_url, `cat-${item.id || idx}-i`, "image/*")}
+                    onUpload={() => uploadFile(url => updateItemField(item, "image_url", url), item.image_url, `cat-${item.id || idx}-i`, "image/*", `${item.label || "Category"} photo`)}
                     onRemove={() => { deleteFromS3(item.image_url); updateItemField(item, "image_url", ""); }} />
                   <MediaSlot label="Hover Video" optional url={item.video_url} progressKey={`cat-${item.id || idx}-v`} uploadProgress={uploadProgress}
-                    onUpload={() => uploadFile(url => updateItemField(item, "video_url", url), item.video_url, `cat-${item.id || idx}-v`, "video/mp4,video/webm")}
+                    onUpload={() => uploadFile(url => updateItemField(item, "video_url", url), item.video_url, `cat-${item.id || idx}-v`, "video/mp4,video/webm", `${item.label || "Category"} hover video`)}
                     onRemove={() => { deleteFromS3(item.video_url); updateItemField(item, "video_url", ""); }} />
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
