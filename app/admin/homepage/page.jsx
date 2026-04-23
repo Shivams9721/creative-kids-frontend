@@ -431,6 +431,42 @@ export default function HomepageAdminPage() {
   const sortedSections = [...sections].sort((a, b) => a.display_order - b.display_order);
 
   // ── Shared banner editor (About Us / Testimonials) ─────────────────────────
+  const renderPlainBannerEditor = (sec, rawSettings, updateField, idPrefix) => {
+    if (!sec) return (
+      <div style={{ padding: 20, textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
+        Section loading… <button className="btn btn-sm" onClick={load} style={{ marginLeft: 8 }}>Reload</button>
+      </div>
+    );
+    const mType = (isVideoUrl(rawSettings.imageUrl) || isVideoUrl(rawSettings.mobileImageUrl)) ? "video" : (rawSettings.mediaType || "image");
+    const accept = mType === "video" ? "video/mp4,video/webm" : "image/*";
+    const switchMedia = (newType) => {
+      if (mType === newType) return;
+      if ((rawSettings.imageUrl || rawSettings.mobileImageUrl) && !confirm(`Switch to ${newType}? Media will be cleared.`)) return;
+      updateField("imageUrl", ""); updateField("mobileImageUrl", "");
+      setTimeout(() => updateField("mediaType", newType), 0);
+    };
+    return (
+      <div>
+        <div style={{ padding: "10px 12px", background: "var(--bg3)", borderRadius: 8, marginBottom: 16, fontSize: 11, color: "var(--text3)", lineHeight: 1.5 }}>
+          This is a plain banner — only the image/video is shown on the homepage. Title, subtitle, description, and CTA are not displayed.
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "8px 12px", background: "var(--bg3)", borderRadius: 8, marginBottom: 16 }}>
+          <span style={{ fontSize: 11, color: "var(--text3)", flex: 1 }}>Media Type</span>
+          <button className={`btn btn-sm${mType === "image" ? " btn-accent" : ""}`} onClick={() => switchMedia("image")}>Image</button>
+          <button className={`btn btn-sm${mType === "video" ? " btn-accent" : ""}`} onClick={() => switchMedia("video")}>Video</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <MediaSlot label="Desktop Banner" url={rawSettings.imageUrl} progressKey={`${idPrefix}-d`} uploadProgress={uploadProgress}
+            onUpload={() => uploadFile(url => updateField("imageUrl", url), rawSettings.imageUrl, `${idPrefix}-d`, accept, "Desktop banner")}
+            onRemove={() => { deleteFromS3(rawSettings.imageUrl); updateField("imageUrl", ""); }} />
+          <MediaSlot label="Mobile Banner" optional url={rawSettings.mobileImageUrl} progressKey={`${idPrefix}-m`} uploadProgress={uploadProgress}
+            onUpload={() => uploadFile(url => updateField("mobileImageUrl", url), rawSettings.mobileImageUrl, `${idPrefix}-m`, accept, "Mobile banner")}
+            onRemove={() => { deleteFromS3(rawSettings.mobileImageUrl); updateField("mobileImageUrl", ""); }} />
+        </div>
+      </div>
+    );
+  };
+
   const renderBannerEditor = (sec, rawSettings, updateField, idPrefix) => {
     if (!sec) return (
       <div style={{ padding: 20, textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
@@ -648,14 +684,14 @@ export default function HomepageAdminPage() {
         // ── About Us Banner ──────────────────────────────────────────────────
         if (key === "about_us_banner") return (
           <Panel key={key} label="About Us Banner" badge="BANNER" summary={rawAbout.imageUrl || rawAbout.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
-            {renderBannerEditor(aboutUsSection, rawAbout, updateAbout, "about")}
+            {renderPlainBannerEditor(aboutUsSection, rawAbout, updateAbout, "about")}
           </Panel>
         );
 
         // ── Testimonials Banner ──────────────────────────────────────────────
         if (key === "testimonials") return (
           <Panel key={key} label="Testimonials Banner" badge="BANNER" summary={rawTestimonials.imageUrl || rawTestimonials.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
-            {renderBannerEditor(testimonialsSection, rawTestimonials, updateTestimonials, "test")}
+            {renderPlainBannerEditor(testimonialsSection, rawTestimonials, updateTestimonials, "test")}
           </Panel>
         );
 

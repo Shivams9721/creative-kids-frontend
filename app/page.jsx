@@ -487,14 +487,42 @@ export default function Home() {
     );
   };
 
+  const renderPlainBanner = (key) => {
+    if (!isEnabled(key)) return null;
+    const data = banners[key];
+    if (!data) return null;
+    const { imageUrl, mobileImageUrl, title } = data;
+    if (!imageUrl && !mobileImageUrl) return null;
+    return (
+      <section key={key} className="relative w-full overflow-hidden bg-[#f6f5f3]">
+        {mobileImageUrl && (
+          <div className="block md:hidden">
+            {checkIsVideo(mobileImageUrl)
+              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+              : <img src={mobileImageUrl} alt={title || "Banner"} className="w-full h-auto block" />
+            }
+          </div>
+        )}
+        {imageUrl && (
+          <div className={mobileImageUrl ? "hidden md:block" : "block"}>
+            {checkIsVideo(imageUrl)
+              ? <video src={imageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+              : <img src={imageUrl} alt={title || "Banner"} className="w-full h-auto block" />
+            }
+          </div>
+        )}
+      </section>
+    );
+  };
+
   const SECTION_RENDERERS = {
     hero_banner: renderHeroBanner,
     shop_by_category: renderShopByCategory,
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
-    about_us_banner: () => renderEditorialBanner("about_us_banner"),
-    testimonials: () => renderEditorialBanner("testimonials"),
+    about_us_banner: () => renderPlainBanner("about_us_banner"),
+    testimonials: () => renderPlainBanner("testimonials"),
   };
 
   // Fallback order when API hasn't loaded yet or section meta is empty
