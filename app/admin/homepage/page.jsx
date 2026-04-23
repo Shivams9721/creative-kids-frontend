@@ -6,7 +6,7 @@ import { safeFetch } from "../api";
 const PRODUCT_SECTION_KEYS = ["girls_new_arrivals", "season_bestsellers", "featured_collection"];
 
 const CTA_OPTIONS = [
-  { label: "â€” Select a page â€”", value: "" },
+  { label: "— Select a page —", value: "" },
   { label: "Shop All", value: "/shop" },
   { label: "Kids Girls", value: "/shop/kids-girl" },
   { label: "Kids Boys", value: "/shop/kids-boy" },
@@ -23,35 +23,98 @@ const CTA_OPTIONS = [
 
 const isVideoUrl = (url) => url && /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
 
-// Smart CTA link selector: dropdown of preset routes + optional custom input
-function CtaLinkSelect({ value, onChange, placeholder }) {
+function CtaLinkSelect({ value, onChange }) {
   const presetValues = CTA_OPTIONS.filter(o => o.value && o.value !== "__custom__").map(o => o.value);
-  const isPreset = presetValues.includes(value);
-  const [useCustom, setUseCustom] = useState(!!value && !isPreset);
-
+  const [useCustom, setUseCustom] = useState(!!value && !presetValues.includes(value));
   const handleSelect = (v) => {
     if (v === "__custom__") { setUseCustom(true); }
     else { setUseCustom(false); onChange(v); }
   };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <select className="field-input" value={useCustom ? "__custom__" : (value || "")} onChange={(e) => handleSelect(e.target.value)}>
+      <select className="field-input" value={useCustom ? "__custom__" : (value || "")} onChange={e => handleSelect(e.target.value)}>
         {CTA_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
       {useCustom && (
-        <input
-          className="field-input"
-          value={value || ""}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder || "Custom URL (e.g. /shop/sale)"}
-          style={{ borderColor: "var(--blue)", fontSize: 12 }}
-        />
+        <input className="field-input" value={value || ""} onChange={e => onChange(e.target.value)} placeholder="e.g. /shop/sale" style={{ fontSize: 12, borderColor: "var(--blue)" }} />
       )}
     </div>
   );
 }
 
+function MediaSlot({ label, url, progressKey, uploadProgress, onUpload, onRemove, optional }) {
+  const p = uploadProgress[progressKey];
+  const filename = url ? url.split("/").pop() : null;
+  const isVid = isVideoUrl(url);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div className="field-label">
+        {label}
+        {optional && <span style={{ fontWeight: 400, opacity: 0.5, marginLeft: 4 }}>(optional)</span>}
+      </div>
+      {filename && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 10px", background: "var(--bg4)", borderRadius: 8, border: "1px solid var(--border)" }}>
+          {!isVid
+            ? <img src={url} alt="" style={{ width: 38, height: 38, objectFit: "cover", borderRadius: 6, flexShrink: 0, background: "var(--bg5)" }} onError={e => { e.target.style.display = "none"; }} />
+            : <div style={{ width: 38, height: 38, borderRadius: 6, background: "var(--bg5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>▶</div>
+          }
+          <span style={{ flex: 1, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text2)" }}>{filename}</span>
+          <button className="btn btn-sm btn-danger" onClick={onRemove} style={{ flexShrink: 0, padding: "3px 9px" }}>✕</button>
+        </div>
+      )}
+      {p !== undefined ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "var(--bg3)", borderRadius: 8, border: "1px solid var(--border)" }}>
+          <div style={{ flex: 1, height: 3, background: "var(--bg5)", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ width: `${p}%`, height: "100%", background: "var(--blue)", borderRadius: 2, transition: "width 0.15s" }} />
+          </div>
+          <span style={{ fontSize: 11, color: "var(--blue)", fontWeight: 700, minWidth: 34, textAlign: "right" }}>{p}%</span>
+        </div>
+      ) : (
+        <button className="btn btn-sm" onClick={onUpload} style={{ alignSelf: "flex-start" }}>
+          {filename ? "Replace" : "Upload"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Panel({ label, badge, section, isOpen, onToggle, onShiftUp, onShiftDown, canMoveUp, canMoveDown, setSectionField, children }) {
+  const enabled = !section || section.is_enabled !== false;
+  return (
+    <div style={{ marginBottom: 8, borderRadius: 14, border: `1px solid ${isOpen ? "var(--border2)" : "var(--border)"}`, overflow: "hidden", background: "var(--bg2)", transition: "box-shadow 0.2s", boxShadow: isOpen ? "0 6px 32px rgba(0,0,0,0.4)" : "none" }}>
+      <div onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(255,255,255,0.03)" : "transparent" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }} onClick={e => e.stopPropagation()}>
+          <button className="btn btn-sm" disabled={!canMoveUp} onClick={onShiftUp} style={{ padding: "1px 7px", fontSize: 9, lineHeight: "14px" }}>▲</button>
+          <button className="btn btn-sm" disabled={!canMoveDown} onClick={onShiftDown} style={{ padding: "1px 7px", fontSize: 9, lineHeight: "14px" }}>▼</button>
+        </div>
+        <span style={{ flex: 1, fontWeight: 600, fontSize: 13 }}>{label}</span>
+        {badge && (
+          <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, background: "var(--blue2)", color: "var(--blue)", fontWeight: 700, letterSpacing: "0.06em" }}>{badge}</span>
+        )}
+        {section && (
+          <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, fontWeight: 700, letterSpacing: "0.05em", background: enabled ? "var(--green2)" : "var(--bg4)", color: enabled ? "var(--green)" : "var(--text3)" }}>
+            {enabled ? "LIVE" : "OFF"}
+          </span>
+        )}
+        {section && (
+          <div onClick={e => e.stopPropagation()}>
+            <label className="toggle" title={enabled ? "Disable" : "Enable"}>
+              <input type="checkbox" checked={enabled} onChange={e => setSectionField(section.id, "is_enabled", e.target.checked)} />
+              <div className="toggle-track" />
+              <div className="toggle-thumb" />
+            </label>
+          </div>
+        )}
+        <span style={{ fontSize: 11, color: "var(--text3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", marginLeft: 4 }}>▾</span>
+      </div>
+      {isOpen && (
+        <div style={{ padding: "20px 20px 24px", borderTop: "1px solid var(--border)" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function HomepageAdminPage() {
   const [loading, setLoading] = useState(true);
@@ -66,14 +129,17 @@ export default function HomepageAdminPage() {
   const [publishAt, setPublishAt] = useState("");
   const [validationErrors, setValidationErrors] = useState([]);
   const [uploadProgress, setUploadProgress] = useState({});
+  const [openSections, setOpenSections] = useState(new Set(["hero_banner"]));
+  const [showHistory, setShowHistory] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
 
-  const groupedProducts = useMemo(() => {
-    return (Array.isArray(products) ? products : []).map((p) => ({
-      id: p.id,
-      title: p.title || `Product #${p.id}`,
-      sku: p.base_sku || "",
-    }));
-  }, [products]);
+  const togglePanel = (key) => setOpenSections(prev => {
+    const n = new Set(prev);
+    n.has(key) ? n.delete(key) : n.add(key);
+    return n;
+  });
+
+  const groupedProducts = useMemo(() => (Array.isArray(products) ? products : []).map(p => ({ id: p.id, title: p.title || `Product #${p.id}` })), [products]);
 
   const bySectionKey = useMemo(() => {
     const map = {};
@@ -81,17 +147,13 @@ export default function HomepageAdminPage() {
     return map;
   }, [sections]);
 
-  const getItems = (sectionId) =>
-    items.filter((i) => i.section_id === sectionId).sort((a, b) => a.display_order - b.display_order);
+  const getItems = (sectionId) => items.filter(i => i.section_id === sectionId).sort((a, b) => a.display_order - b.display_order);
 
   const load = async () => {
     setLoading(true);
     setError("");
     try {
-      const [cfg, prod] = await Promise.all([
-        safeFetch("/api/admin/homepage-config/current"),
-        safeFetch("/api/admin/products"),
-      ]);
+      const [cfg, prod] = await Promise.all([safeFetch("/api/admin/homepage-config/current"), safeFetch("/api/admin/products")]);
       const h = await safeFetch("/api/admin/homepage-config/history");
       setConfig(cfg.config);
       setSections(cfg.sections || []);
@@ -108,339 +170,232 @@ export default function HomepageAdminPage() {
 
   useEffect(() => { load(); }, []);
 
-  const createDraft = async () => {
-    try {
-      await safeFetch("/api/admin/homepage-config/draft", { method: "POST", body: JSON.stringify({ title: "Homepage Draft" }) });
-      await load();
-    } catch (e) {
-      alert(e.message || "Failed to create draft");
-    }
-  };
-
-  const setSectionField = (id, key, value) => {
-    setSections((prev) => prev.map((s) => (s.id === id ? { ...s, [key]: value } : s)));
-  };
+  const setSectionField = (id, key, value) => setSections(prev => prev.map(s => s.id === id ? { ...s, [key]: value } : s));
 
   const shiftSection = (index, direction) => {
     const sorted = [...sections].sort((a, b) => a.display_order - b.display_order);
     const to = index + direction;
     if (to < 0 || to >= sorted.length) return;
-    const left = sorted[index];
-    const right = sorted[to];
-    setSections((prev) =>
-      prev.map((s) => {
-        if (s.id === left.id) return { ...s, display_order: right.display_order };
-        if (s.id === right.id) return { ...s, display_order: left.display_order };
-        return s;
-      })
-    );
+    const [left, right] = [sorted[index], sorted[to]];
+    setSections(prev => prev.map(s => {
+      if (s.id === left.id) return { ...s, display_order: right.display_order };
+      if (s.id === right.id) return { ...s, display_order: left.display_order };
+      return s;
+    }));
   };
 
   const shiftItem = (sectionId, index, direction) => {
-    const sectionItems = getItems(sectionId);
+    const si = getItems(sectionId);
     const to = index + direction;
-    if (to < 0 || to >= sectionItems.length) return;
-    const left = sectionItems[index];
-    const right = sectionItems[to];
-    setItems((prev) =>
-      prev.map((it) => {
-        if (it.id === left.id) return { ...it, display_order: right.display_order };
-        if (it.id === right.id) return { ...it, display_order: left.display_order };
-        return it;
-      })
-    );
+    if (to < 0 || to >= si.length) return;
+    const [left, right] = [si[index], si[to]];
+    setItems(prev => prev.map(it => {
+      if (it.id === left.id) return { ...it, display_order: right.display_order };
+      if (it.id === right.id) return { ...it, display_order: left.display_order };
+      return it;
+    }));
   };
 
   const addProductItem = (sectionId, productId) => {
-    const sectionItems = getItems(sectionId);
-    setItems((prev) => [
-      ...prev,
-      { section_id: sectionId, item_type: "product", display_order: sectionItems.length + 1, product_id: parseInt(productId, 10), label: "", target_url: "", image_url: "", settings_json: {} },
-    ]);
+    setItems(prev => [...prev, { section_id: sectionId, item_type: "product", display_order: getItems(sectionId).length + 1, product_id: parseInt(productId, 10), label: "", target_url: "", image_url: "", settings_json: {} }]);
   };
 
   const addCategoryItem = (sectionId) => {
     if (!sectionId) return;
-    const sectionItems = getItems(sectionId);
-    setItems((prev) => [
-      ...prev,
-      { section_id: sectionId, item_type: "category", display_order: sectionItems.length + 1, label: "New Category", target_url: "/shop", image_url: "", settings_json: {} },
-    ]);
+    setItems(prev => [...prev, { section_id: sectionId, item_type: "category", display_order: getItems(sectionId).length + 1, label: "New Category", target_url: "/shop", image_url: "", settings_json: {} }]);
   };
-
 
   const populateDefaultCategories = (sectionId) => {
     if (!sectionId) return;
-    const defaultCats = [
-      { label: "Dress", targetUrl: "/shop/kids-girl/dresses", imageUrl: "/images/Dress.png" },
-      { label: "Shorts", targetUrl: "/shop/kids-girl/shorts-skirts-skorts", imageUrl: "/images/shorts.jpg" },
-      { label: "Infants", targetUrl: "/shop/baby-boy/onesies-rompers", imageUrl: "/images/infant.png" },
-      { label: "Clothing Sets", targetUrl: "/shop/baby-girl/clothing-sets", imageUrl: "/images/clothing set.png" },
+    const defaults = [
+      { label: "Dress", target_url: "/shop/kids-girl/dresses", image_url: "/images/Dress.png" },
+      { label: "Shorts", target_url: "/shop/kids-girl/shorts-skirts-skorts", image_url: "/images/shorts.jpg" },
+      { label: "Infants", target_url: "/shop/baby-boy/onesies-rompers", image_url: "/images/infant.png" },
+      { label: "Clothing Sets", target_url: "/shop/baby-girl/clothing-sets", image_url: "/images/clothing set.png" },
     ];
-    let offset = getItems(sectionId).length;
-    const newItems = defaultCats.map((c, i) => ({
-      section_id: sectionId, item_type: "category", display_order: offset + i + 1,
-      label: c.label, target_url: c.targetUrl, image_url: c.imageUrl, settings_json: {},
-    }));
-    setItems((prev) => [...prev, ...newItems]);
+    const offset = getItems(sectionId).length;
+    setItems(prev => [...prev, ...defaults.map((c, i) => ({ section_id: sectionId, item_type: "category", display_order: offset + i + 1, label: c.label, target_url: c.target_url, image_url: c.image_url, settings_json: {} }))]);
   };
 
   const removeItem = (target) => {
-    const sectionItems = getItems(target.section_id);
-    const filtered = items.filter((it) =>
-      !(it.id && target.id ? it.id === target.id : it.section_id === target.section_id && it.display_order === target.display_order)
-    );
-    const remapped = filtered.map((it) => {
+    const si = getItems(target.section_id);
+    const filtered = items.filter(it => !(it.id && target.id ? it.id === target.id : it.section_id === target.section_id && it.display_order === target.display_order));
+    const remapped = filtered.map(it => {
       if (it.section_id !== target.section_id) return it;
-      const order = sectionItems
-        .filter((x) => !(x.id && target.id ? x.id === target.id : x.display_order === target.display_order))
-        .findIndex((x) => (x.id && it.id ? x.id === it.id : x.display_order === it.display_order));
+      const order = si.filter(x => !(x.id && target.id ? x.id === target.id : x.display_order === target.display_order)).findIndex(x => (x.id && it.id ? x.id === it.id : x.display_order === it.display_order));
       return { ...it, display_order: order + 1 };
     });
     setItems(remapped);
   };
 
-  const updateItemField = (target, key, value) => {
-    setItems((prev) =>
-      prev.map((it) =>
-        (target.id && it.id === target.id) || (!target.id && it.section_id === target.section_id && it.display_order === target.display_order)
-          ? { ...it, [key]: value }
-          : it
-      )
-    );
-  };
-
+  const updateItemField = (target, key, value) => setItems(prev => prev.map(it => (target.id && it.id === target.id) || (!target.id && it.section_id === target.section_id && it.display_order === target.display_order) ? { ...it, [key]: value } : it));
 
   const validateBeforePublish = () => {
     const errs = [];
-    const sectionMap = {};
-    sections.forEach((s) => { sectionMap[s.section_key] = s; });
-
-    // Hero banner validation
-    const hero = sectionMap.hero_banner;
-    const heroSettings = typeof hero?.settings_json === "string" ? JSON.parse(hero.settings_json || "{}") : (hero?.settings_json || {});
+    const sm = {};
+    sections.forEach(s => { sm[s.section_key] = s; });
+    const hero = sm.hero_banner;
+    const hs = typeof hero?.settings_json === "string" ? JSON.parse(hero.settings_json || "{}") : (hero?.settings_json || {});
     if (hero?.is_enabled !== false) {
-      const slides = heroSettings?.slides || [];
-      if (slides.length === 0) errs.push("Hero Banner: Add at least one slide.");
-      slides.forEach((slide, i) => {
-        if (!slide.imageUrl && !slide.mobileImageUrl) errs.push(`Hero Slide #${i + 1}: Upload an image or video.`);
-      });
+      const slides = hs?.slides || [];
+      if (!slides.length) errs.push("Hero Banner: Add at least one slide.");
+      slides.forEach((sl, i) => { if (!sl.imageUrl && !sl.mobileImageUrl) errs.push(`Hero Slide #${i + 1}: Upload an image or video.`); });
     }
-
-    // Shop by category validation
-    const cat = sectionMap.shop_by_category;
+    const cat = sm.shop_by_category;
     if (cat?.is_enabled !== false) {
-      const catItems = getItems(cat?.id || -1);
-      if (catItems.length === 0) errs.push("Shop by Category: Add at least one category card.");
-      catItems.forEach((item, idx) => {
-        if (!item.label) errs.push(`Category card #${idx + 1}: Label is required.`);
-        if (!item.target_url) errs.push(`Category card #${idx + 1}: Target URL is required.`);
-        if (!item.image_url) errs.push(`Category card #${idx + 1}: Image is required.`);
+      const ci = getItems(cat?.id || -1);
+      if (!ci.length) errs.push("Shop by Category: Add at least one category.");
+      ci.forEach((item, i) => {
+        if (!item.label) errs.push(`Category #${i + 1}: Name required.`);
+        if (!item.target_url) errs.push(`Category #${i + 1}: Link required.`);
+        if (!item.image_url) errs.push(`Category #${i + 1}: Image required.`);
       });
     }
-
-    // Product sections validation
-    PRODUCT_SECTION_KEYS.forEach((key) => {
-      const sec = sectionMap[key];
+    PRODUCT_SECTION_KEYS.forEach(key => {
+      const sec = sm[key];
       if (!sec || sec.is_enabled === false) return;
-      const secItems = getItems(sec.id);
-      if (secItems.length === 0) errs.push(`${sec.title || key}: Add at least one product.`);
-      secItems.forEach((it, idx) => {
-        if (!it.product_id) errs.push(`${sec.title || key} item #${idx + 1}: Select a product.`);
-      });
+      const si = getItems(sec.id);
+      if (!si.length) errs.push(`${sec.title || key}: Add at least one product.`);
+      si.forEach((it, i) => { if (!it.product_id) errs.push(`${sec.title || key} #${i + 1}: Select a product.`); });
     });
-
-
     setValidationErrors(errs);
     return errs.length === 0;
   };
 
-  // Fire-and-forget S3 cleanup
   const deleteFromS3 = (url) => {
     if (!url || !url.includes(".amazonaws.com/")) return;
     const token = localStorage.getItem("adminToken");
     if (!token) return;
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
-    fetch(`${apiBase}/api/upload`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ imageUrl: url }),
-    }).catch(() => {});
+    const base = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+    fetch(`${base}/api/upload`, { method: "DELETE", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ imageUrl: url }) }).catch(() => {});
   };
 
-  // Upload file with media type restriction. accept: "image/*" or "video/mp4,video/webm" or both
   const uploadFile = async (onDone, oldUrl, progressKey, accept = "image/*,video/mp4,video/webm") => {
-    if (oldUrl) deleteFromS3(oldUrl);
+    if (oldUrl?.includes(".amazonaws.com/")) deleteFromS3(oldUrl);
     const input = document.createElement("input");
     input.type = "file";
     input.accept = accept;
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      if (progressKey) setUploadProgress((prev) => ({ ...prev, [progressKey]: 0 }));
+      if (progressKey) setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
       const fd = new FormData();
       fd.append("image", file);
       const token = localStorage.getItem("adminToken");
-      if (!token) {
-        alert("Not logged in. Please login again.");
-        if (progressKey) setUploadProgress((prev) => { const n = { ...prev }; delete n[progressKey]; return n; });
-        return;
-      }
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+      if (!token) { alert("Not logged in."); if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; }); return; }
+      const base = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${apiBase}/api/upload`);
+      xhr.open("POST", `${base}/api/upload`);
       xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable && progressKey)
-          setUploadProgress((prev) => ({ ...prev, [progressKey]: Math.round((e.loaded * 100) / e.total) }));
-      };
+      xhr.upload.onprogress = e => { if (e.lengthComputable && progressKey) setUploadProgress(prev => ({ ...prev, [progressKey]: Math.round(e.loaded * 100 / e.total) })); };
       xhr.onload = () => {
-        if (xhr.status === 401 || xhr.status === 403) {
-          localStorage.removeItem("adminToken");
-          alert("Session expired. Redirecting to login...");
-          if (progressKey) setUploadProgress((prev) => { const n = { ...prev }; delete n[progressKey]; return n; });
-          setTimeout(() => { window.location.href = "/admin/login"; }, 1500);
-          return;
-        }
+        if (xhr.status === 401 || xhr.status === 403) { localStorage.removeItem("adminToken"); alert("Session expired."); setTimeout(() => { window.location.href = "/admin/login"; }, 1200); return; }
         try {
           const data = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) { onDone(data.imageUrl); }
-          else { alert(data.error || data.message || `Upload failed (${xhr.status})`); }
-        } catch { alert(`Upload failed with status ${xhr.status}`); }
-        if (progressKey) setUploadProgress((prev) => { const n = { ...prev }; delete n[progressKey]; return n; });
+          if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) onDone(data.imageUrl);
+          else alert(data.error || `Upload failed (${xhr.status})`);
+        } catch { alert(`Upload failed (${xhr.status})`); }
+        if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; });
       };
-      xhr.onerror = () => { alert("Network error during upload"); if (progressKey) setUploadProgress((prev) => { const n = { ...prev }; delete n[progressKey]; return n; }); };
-      xhr.onabort = () => { alert("Upload cancelled"); if (progressKey) setUploadProgress((prev) => { const n = { ...prev }; delete n[progressKey]; return n; }); };
+      xhr.onerror = () => { alert("Network error during upload"); if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; }); };
       xhr.send(fd);
     };
     input.click();
   };
 
-  const renderUploadBtn = (key, onClick, text) => {
-    const p = uploadProgress[key];
-    if (p !== undefined) {
-      return (
-        <button disabled className="btn btn-sm" style={{ position: "relative", overflow: "hidden", background: "var(--bg3)", borderColor: "var(--border2)" }}>
-          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: `${p}%`, background: "var(--blue)", opacity: 0.2, transition: "width 0.2s ease-out" }} />
-          <span style={{ position: "relative", zIndex: 1, color: "var(--blue)", fontWeight: 600 }}>{p}%</span>
-        </button>
-      );
-    }
-    return <button className="btn btn-sm" onClick={onClick}>{text}</button>;
-  };
-
   const saveDraft = async () => {
     if (!config?.id) return;
     setSaving(true);
+    setSaveMsg("");
     try {
-      const normalizedSections = sections.map((s) => ({
-        ...s,
-        settings_json: typeof s.settings_json === "string" ? JSON.parse(s.settings_json || "{}") : (s.settings_json || {}),
-      }));
-      const normalizedItems = items.map((i) => ({
-        ...i,
-        settings_json: typeof i.settings_json === "string" ? JSON.parse(i.settings_json || "{}") : (i.settings_json || {}),
-      }));
-      await safeFetch(`/api/admin/homepage-config/draft/${config.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ sections: normalizedSections, items: normalizedItems }),
-      });
+      const ns = sections.map(s => ({ ...s, settings_json: typeof s.settings_json === "string" ? JSON.parse(s.settings_json || "{}") : (s.settings_json || {}) }));
+      const ni = items.map(i => ({ ...i, settings_json: typeof i.settings_json === "string" ? JSON.parse(i.settings_json || "{}") : (i.settings_json || {}) }));
+      await safeFetch(`/api/admin/homepage-config/draft/${config.id}`, { method: "PUT", body: JSON.stringify({ sections: ns, items: ni }) });
       await load();
-      alert("Draft saved");
-    } catch (e) {
-      alert(e.message || "Save failed");
-    } finally {
-      setSaving(false);
-    }
+      setSaveMsg("Saved");
+      setTimeout(() => setSaveMsg(""), 2500);
+    } catch (e) { alert(e.message || "Save failed"); }
+    finally { setSaving(false); }
   };
 
   const publish = async () => {
-    if (!config?.id) return;
-    if (!validateBeforePublish()) {
-      alert("Please fix validation errors before publishing.");
-      return;
-    }
+    if (!config?.id || !validateBeforePublish()) return;
     setPublishing(true);
     try {
       await saveDraft();
-      await safeFetch(`/api/admin/homepage-config/draft/${config.id}/publish`, {
-        method: "POST",
-        body: JSON.stringify({ publish_at: publishAt ? new Date(publishAt).toISOString() : null }),
-      });
+      await safeFetch(`/api/admin/homepage-config/draft/${config.id}/publish`, { method: "POST", body: JSON.stringify({ publish_at: publishAt ? new Date(publishAt).toISOString() : null }) });
       await load();
-      alert("Homepage published");
-    } catch (e) {
-      alert(e.message || "Publish failed");
-    } finally {
-      setPublishing(false);
-    }
+      setSaveMsg("Published!");
+      setTimeout(() => setSaveMsg(""), 3000);
+    } catch (e) { alert(e.message || "Publish failed"); }
+    finally { setPublishing(false); }
   };
 
   const rollback = async (id) => {
+    if (!confirm("Create a rollback draft from this version?")) return;
     try {
       await safeFetch(`/api/admin/homepage-config/rollback/${id}`, { method: "POST", body: JSON.stringify({}) });
       await load();
-      alert("Rollback draft created");
-    } catch (e) {
-      alert(e.message || "Rollback failed");
-    }
+    } catch (e) { alert(e.message || "Rollback failed"); }
   };
 
-  if (loading) return <div style={{ padding: 24 }}>Loading homepage editor...</div>;
+  const createDraft = async () => {
+    try {
+      await safeFetch("/api/admin/homepage-config/draft", { method: "POST", body: JSON.stringify({ title: "Homepage Draft" }) });
+      await load();
+    } catch (e) { alert(e.message || "Failed to create draft"); }
+  };
 
-  if (!config) {
-    return (
-      <div style={{ padding: 24 }}>
-        <h2 style={{ fontSize: 20, marginBottom: 8 }}>Homepage Editor</h2>
-        <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 12 }}>No draft found yet.</p>
-        <button className="btn btn-accent" onClick={createDraft}>Create Homepage Draft</button>
-        {error ? <div style={{ marginTop: 10, color: "var(--red)" }}>{error}</div> : null}
-      </div>
-    );
-  }
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280, gap: 12 }}>
+      <div style={{ width: 18, height: 18, border: "2px solid var(--border)", borderTopColor: "var(--text)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <span style={{ color: "var(--text3)", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase" }}>Loading editor…</span>
+    </div>
+  );
 
+  if (!config) return (
+    <div style={{ maxWidth: 460, margin: "80px auto", padding: 32, textAlign: "center" }}>
+      <div style={{ fontSize: 36, marginBottom: 16 }}>📄</div>
+      <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No Homepage Draft</div>
+      <div style={{ fontSize: 13, color: "var(--text3)", marginBottom: 28, lineHeight: 1.6 }}>Create a draft to start editing your homepage content and sections.</div>
+      <button className="btn btn-accent" onClick={createDraft} style={{ width: "100%", padding: "12px 0", fontSize: 14 }}>Create Homepage Draft</button>
+      {error && <div style={{ marginTop: 14, color: "var(--red)", fontSize: 12 }}>{error}</div>}
+    </div>
+  );
+
+  // ── Derived state ──────────────────────────────────────────────────────────
   const hero = bySectionKey.hero_banner;
   const rawHeroSettings = typeof hero?.settings_json === "string" ? JSON.parse(hero.settings_json || "{}") : (hero?.settings_json || {});
   let heroSlidesData = rawHeroSettings.slides || [];
-  if (heroSlidesData.length === 0 && (rawHeroSettings.imageUrl || rawHeroSettings.ctaLabel)) {
+  if (!heroSlidesData.length && (rawHeroSettings.imageUrl || rawHeroSettings.ctaLabel)) {
     heroSlidesData = [{ imageUrl: rawHeroSettings.imageUrl || "", mobileImageUrl: rawHeroSettings.mobileImageUrl || "", ctaLabel: rawHeroSettings.ctaLabel || "", ctaHref: rawHeroSettings.ctaHref || "" }];
   }
 
   const updateHeroSlide = (index, key, value) => {
-    const newSlides = [...heroSlidesData];
-    newSlides[index] = { ...newSlides[index], [key]: value };
-    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
+    const slides = [...heroSlidesData];
+    slides[index] = { ...slides[index], [key]: value };
+    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides });
   };
 
-  const addHeroSlide = () => {
-    const newSlides = [...heroSlidesData, { imageUrl: "", mobileImageUrl: "", ctaLabel: "", ctaHref: "", title: "", tag: "", mediaType: "image" }];
-    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
+  const addHeroSlide = () => setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: [...heroSlidesData, { imageUrl: "", mobileImageUrl: "", ctaLabel: "", ctaHref: "", title: "", tag: "", mediaType: "image" }] });
+
+  const removeHeroSlide = (index) => setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: heroSlidesData.filter((_, i) => i !== index) });
+
+  const moveHeroSlide = (index, dir) => {
+    const slides = [...heroSlidesData];
+    const to = index + dir;
+    if (to < 0 || to >= slides.length) return;
+    [slides[index], slides[to]] = [slides[to], slides[index]];
+    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides });
   };
 
-  const removeHeroSlide = (index) => {
-    const newSlides = heroSlidesData.filter((_, i) => i !== index);
-    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
-  };
-
-  const moveHeroSlide = (index, direction) => {
-    const newSlides = [...heroSlidesData];
-    const to = index + direction;
-    if (to < 0 || to >= newSlides.length) return;
-    [newSlides[index], newSlides[to]] = [newSlides[to], newSlides[index]];
-    setSectionField(hero.id, "settings_json", { ...rawHeroSettings, slides: newSlides });
-  };
-
-  const getSlideMediaType = (slide) => {
-    if (isVideoUrl(slide?.imageUrl) || isVideoUrl(slide?.mobileImageUrl)) return "video";
-    return slide?.mediaType || "image";
-  };
+  const getSlideMediaType = (slide) => (isVideoUrl(slide?.imageUrl) || isVideoUrl(slide?.mobileImageUrl)) ? "video" : (slide?.mediaType || "image");
 
   const switchSlideMediaType = (index, newType) => {
     const slide = heroSlidesData[index];
-    const currentType = getSlideMediaType(slide);
-    if (currentType === newType) return;
-    const hasMedia = slide.imageUrl || slide.mobileImageUrl;
-    if (hasMedia && !confirm(`Switching media type will clear the current ${currentType} URLs. Continue?`)) return;
+    const cur = getSlideMediaType(slide);
+    if (cur === newType) return;
+    if ((slide.imageUrl || slide.mobileImageUrl) && !confirm(`Switch to ${newType}? Current media will be cleared.`)) return;
     updateHeroSlide(index, "imageUrl", "");
     updateHeroSlide(index, "mobileImageUrl", "");
     setTimeout(() => updateHeroSlide(index, "mediaType", newType), 0);
@@ -449,412 +404,266 @@ export default function HomepageAdminPage() {
   const categorySection = bySectionKey.shop_by_category;
   const categoryItems = getItems(categorySection?.id || -1);
 
-  const promoBanner1Section = bySectionKey.promo_banner_1;
-  const rawPromo1Settings = typeof promoBanner1Section?.settings_json === "string"
-    ? JSON.parse(promoBanner1Section.settings_json || "{}") : (promoBanner1Section?.settings_json || {});
-  const updatePromo1Field = (key, value) => {
-    if (!promoBanner1Section?.id) return;
-    setSectionField(promoBanner1Section.id, "settings_json", { ...rawPromo1Settings, [key]: value });
-  };
+  const aboutUsSection = bySectionKey.about_us_banner;
+  const rawAbout = typeof aboutUsSection?.settings_json === "string" ? JSON.parse(aboutUsSection.settings_json || "{}") : (aboutUsSection?.settings_json || {});
+  const updateAbout = (key, value) => { if (aboutUsSection?.id) setSectionField(aboutUsSection.id, "settings_json", { ...rawAbout, [key]: value }); };
 
-  const promoBanner2Section = bySectionKey.promo_banner_2;
-  const rawPromo2Settings = typeof promoBanner2Section?.settings_json === "string"
-    ? JSON.parse(promoBanner2Section.settings_json || "{}") : (promoBanner2Section?.settings_json || {});
-  const updatePromo2Field = (key, value) => {
-    if (!promoBanner2Section?.id) return;
-    setSectionField(promoBanner2Section.id, "settings_json", { ...rawPromo2Settings, [key]: value });
-  };
+  const testimonialsSection = bySectionKey.testimonials;
+  const rawTestimonials = typeof testimonialsSection?.settings_json === "string" ? JSON.parse(testimonialsSection.settings_json || "{}") : (testimonialsSection?.settings_json || {});
+  const updateTestimonials = (key, value) => { if (testimonialsSection?.id) setSectionField(testimonialsSection.id, "settings_json", { ...rawTestimonials, [key]: value }); };
 
   const isBusy = saving || publishing || Object.keys(uploadProgress).length > 0;
-  const busyLabel = Object.keys(uploadProgress).length > 0 ? "Uploading..." : saving ? "Saving..." : publishing ? "Publishing..." : null;
+  const sortedSections = [...sections].sort((a, b) => a.display_order - b.display_order);
+
+  // ── Shared banner editor (About Us / Testimonials) ─────────────────────────
+  const renderBannerEditor = (sec, rawSettings, updateField, idPrefix) => {
+    if (!sec) return (
+      <div style={{ padding: 20, textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
+        Section loading… <button className="btn btn-sm" onClick={load} style={{ marginLeft: 8 }}>Reload</button>
+      </div>
+    );
+    const mType = (isVideoUrl(rawSettings.imageUrl) || isVideoUrl(rawSettings.mobileImageUrl)) ? "video" : (rawSettings.mediaType || "image");
+    const accept = mType === "video" ? "video/mp4,video/webm" : "image/*";
+    const switchMedia = (newType) => {
+      if (mType === newType) return;
+      if ((rawSettings.imageUrl || rawSettings.mobileImageUrl) && !confirm(`Switch to ${newType}? Media will be cleared.`)) return;
+      updateField("imageUrl", ""); updateField("mobileImageUrl", "");
+      setTimeout(() => updateField("mediaType", newType), 0);
+    };
+    return (
+      <div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid var(--border)" }}>
+          <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="e.g. Our Story" /></div>
+          <div><div className="field-label">Tag / Subtitle</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="e.g. About Us" /></div>
+          <div><div className="field-label">CTA Button Text</div><input className="field-input" value={rawSettings.ctaLabel || rawSettings.ctaText || ""} onChange={e => updateField("ctaLabel", e.target.value)} placeholder="e.g. Learn More" /></div>
+          <div><div className="field-label">CTA Link</div><CtaLinkSelect value={rawSettings.ctaHref || ""} onChange={v => updateField("ctaHref", v)} /></div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <div className="field-label">Description</div>
+          <textarea className="field-input" rows={2} value={rawSettings.description || ""} onChange={e => updateField("description", e.target.value)} placeholder="Short text shown over the banner (optional)" />
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "8px 12px", background: "var(--bg3)", borderRadius: 8, marginBottom: 16 }}>
+          <span style={{ fontSize: 11, color: "var(--text3)", flex: 1 }}>Media Type</span>
+          <button className={`btn btn-sm${mType === "image" ? " btn-accent" : ""}`} onClick={() => switchMedia("image")}>Image</button>
+          <button className={`btn btn-sm${mType === "video" ? " btn-accent" : ""}`} onClick={() => switchMedia("video")}>Video</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <MediaSlot label="Desktop Banner" url={rawSettings.imageUrl} progressKey={`${idPrefix}-d`} uploadProgress={uploadProgress}
+            onUpload={() => uploadFile(url => updateField("imageUrl", url), rawSettings.imageUrl, `${idPrefix}-d`, accept)}
+            onRemove={() => { deleteFromS3(rawSettings.imageUrl); updateField("imageUrl", ""); }} />
+          <MediaSlot label="Mobile Banner" optional url={rawSettings.mobileImageUrl} progressKey={`${idPrefix}-m`} uploadProgress={uploadProgress}
+            onUpload={() => uploadFile(url => updateField("mobileImageUrl", url), rawSettings.mobileImageUrl, `${idPrefix}-m`, accept)}
+            onRemove={() => { deleteFromS3(rawSettings.mobileImageUrl); updateField("mobileImageUrl", ""); }} />
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div style={{ padding: 24 }}>
-      {/* â”€â”€â”€ Header â”€â”€â”€ */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 600 }}>Homepage Editor</div>
-          <div style={{ fontSize: 12, color: "var(--text3)" }}>Draft v{config.version} ({config.status})</div>
+    <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 16px 48px" }}>
+
+      {/* ── Sticky Action Bar ── */}
+      <div style={{ position: "sticky", top: 0, zIndex: 90, display: "flex", alignItems: "center", gap: 12, padding: "12px 0 12px", marginBottom: 20, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em" }}>Homepage Editor</div>
+          <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 1 }}>
+            v{config.version} · <span style={{ color: config.status === "published" ? "var(--green)" : "var(--amber)", fontWeight: 500 }}>{config.status}</span>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-sm" onClick={saveDraft} disabled={isBusy}>{busyLabel || "Save Draft"}</button>
-          <button className="btn btn-accent btn-sm" onClick={publish} disabled={isBusy}>{busyLabel || "Publish"}</button>
-        </div>
+        {saveMsg && <span style={{ fontSize: 11, color: "var(--green)", fontWeight: 700, letterSpacing: "0.05em" }}>✓ {saveMsg}</span>}
+        {validationErrors.length > 0 && <span style={{ fontSize: 11, color: "var(--red)", fontWeight: 600 }}>{validationErrors.length} error{validationErrors.length > 1 ? "s" : ""}</span>}
+        <input type="datetime-local" className="field-input" value={publishAt} onChange={e => setPublishAt(e.target.value)} title="Schedule publish (optional)" style={{ width: 186, fontSize: 11, padding: "6px 10px" }} />
+        <button className="btn btn-sm" onClick={saveDraft} disabled={isBusy} style={{ minWidth: 90 }}>{saving ? "Saving…" : "Save Draft"}</button>
+        <button className="btn btn-accent btn-sm" onClick={publish} disabled={isBusy} style={{ minWidth: 80 }}>{publishing ? "Publishing…" : "Publish"}</button>
       </div>
 
-      {/* â”€â”€â”€ Publish Options â”€â”€â”€ */}
-      <div className="card card-pad" style={{ marginBottom: 16 }}>
-        <div className="card-title">Publish Options</div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <label style={{ fontSize: 12, minWidth: 130 }}>Schedule publish:</label>
-          <input className="field-input" type="datetime-local" value={publishAt} onChange={(e) => setPublishAt(e.target.value)} />
-          <button className="btn btn-sm" onClick={() => setPublishAt("")}>Clear</button>
-        </div>
-      </div>
-
-      {/* â”€â”€â”€ Section Arrangement â”€â”€â”€ */}
-      <div className="card card-pad" style={{ marginBottom: 16 }}>
-        <div className="card-title">Section Arrangement</div>
-        <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 8 }}>
-          Use â†‘ â†“ to reorder sections. The storefront respects this order. Disabled sections are hidden on the storefront.
-        </div>
-        {[...sections].sort((a, b) => a.display_order - b.display_order).map((s, idx, arr) => (
-          <div key={s.id} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6, padding: "6px 8px", background: s.is_enabled === false ? "var(--bg2)" : "var(--bg)", borderRadius: 4, border: "1px solid var(--border)" }}>
-            <div style={{ flex: 1, fontSize: 12, color: s.is_enabled === false ? "var(--text3)" : "var(--text)" }}>
-              {s.title || s.section_key}
-              {s.is_enabled === false && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--text3)", background: "var(--bg3)", padding: "1px 4px", borderRadius: 3 }}>DISABLED</span>}
-            </div>
-            <button className="btn btn-sm" onClick={() => shiftSection(idx, -1)} disabled={idx === 0}>â†‘</button>
-            <button className="btn btn-sm" onClick={() => shiftSection(idx, 1)} disabled={idx === arr.length - 1}>â†“</button>
-            <span style={{ width: 24, textAlign: "center", fontSize: 11, color: "var(--text3)" }}>{s.display_order}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* â”€â”€â”€ Hero Banner â”€â”€â”€ */}
-      <div className="card card-pad" style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div className="card-title" style={{ margin: 0 }}>Hero Banner</div>
-          <button className="btn btn-sm btn-accent" onClick={addHeroSlide}>+ Add Slide</button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, paddingBottom: 16, borderBottom: "1px dashed var(--border)", marginBottom: 12 }}>
-          <input className="field-input" value={hero?.title || ""} onChange={(e) => setSectionField(hero.id, "title", e.target.value)} placeholder="Main Title (Legacy fallback)" />
-          <input className="field-input" value={hero?.subtitle || ""} onChange={(e) => setSectionField(hero.id, "subtitle", e.target.value)} placeholder="Main Tag (Legacy fallback)" />
-        </div>
-
-        {heroSlidesData.length === 0 && (
-          <div style={{ fontSize: 12, color: "var(--text3)", padding: 8, background: "var(--bg)", borderRadius: 6, marginBottom: 8 }}>
-            No slides yet. Click "+ Add Slide" to add a banner.
-          </div>
-        )}
-
-        {heroSlidesData.map((slide, sIdx) => {
-          const mediaType = getSlideMediaType(slide);
-          const acceptStr = mediaType === "video" ? "video/mp4,video/webm" : "image/*";
-          const uploadLabel = mediaType === "video" ? "Upload Video" : "Upload Image";
-
-          return (
-            <div key={sIdx} style={{ marginBottom: 16, padding: 12, border: "1px solid var(--border)", borderRadius: 6 }}>
-              {/* Slide header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, fontSize: 12, fontWeight: 600 }}>
-                <span>Slide #{sIdx + 1}</span>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, -1)} disabled={sIdx === 0}>â†‘</button>
-                  <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, 1)} disabled={sIdx === heroSlidesData.length - 1}>â†“</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => removeHeroSlide(sIdx)}>Remove</button>
-                </div>
-              </div>
-
-              {/* Media Type Toggle â€” Image or Video, not both */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "6px 10px", background: "var(--bg2)", borderRadius: 6 }}>
-                <span style={{ fontSize: 11, color: "var(--text3)", marginRight: 4 }}>Media Type:</span>
-                <button
-                  className={`btn btn-sm${mediaType === "image" ? " btn-accent" : ""}`}
-                  onClick={() => switchSlideMediaType(sIdx, "image")}
-                  style={{ minWidth: 70 }}
-                >
-                  ðŸ“· Image
-                </button>
-                <button
-                  className={`btn btn-sm${mediaType === "video" ? " btn-accent" : ""}`}
-                  onClick={() => switchSlideMediaType(sIdx, "video")}
-                  style={{ minWidth: 70 }}
-                >
-                  ðŸŽ¬ Video
-                </button>
-                <span style={{ fontSize: 10, color: "var(--text3)" }}>
-                  {mediaType === "image" ? "Upload images only for this slide" : "Upload videos (.mp4/.webm) only"}
-                </span>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {/* CTA */}
-                <input className="field-input" value={slide.ctaLabel || ""} onChange={(e) => updateHeroSlide(sIdx, "ctaLabel", e.target.value)} placeholder="CTA Button Label (e.g. Shop Now)" />
-                <CtaLinkSelect value={slide.ctaHref || ""} onChange={(v) => updateHeroSlide(sIdx, "ctaHref", v)} placeholder="Custom CTA URL" />
-
-                {/* Desktop media */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP {mediaType.toUpperCase()}</label>
-                  {slide.imageUrl ? (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text2)" }} title={slide.imageUrl}>{slide.imageUrl.split("/").pop()}</span>
-                      <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(slide.imageUrl); updateHeroSlide(sIdx, "imageUrl", ""); }}>âœ•</button>
-                    </div>
-                  ) : null}
-                  {renderUploadBtn(`hero-${sIdx}-desktop`, () => uploadFile((url) => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl, `hero-${sIdx}-desktop`, acceptStr), slide.imageUrl ? `Replace ${mediaType}` : uploadLabel)}
-                </div>
-
-                {/* Mobile media */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE {mediaType.toUpperCase()} (optional)</label>
-                  {slide.mobileImageUrl ? (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text2)" }} title={slide.mobileImageUrl}>{slide.mobileImageUrl.split("/").pop()}</span>
-                      <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(slide.mobileImageUrl); updateHeroSlide(sIdx, "mobileImageUrl", ""); }}>âœ•</button>
-                    </div>
-                  ) : null}
-                  {renderUploadBtn(`hero-${sIdx}-mobile`, () => uploadFile((url) => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl, `hero-${sIdx}-mobile`, acceptStr), slide.mobileImageUrl ? `Replace Mobile` : `Upload Mobile`)}
-                </div>
-
-                {/* Optional title & tag */}
-                <input className="field-input" value={slide.title || ""} onChange={(e) => updateHeroSlide(sIdx, "title", e.target.value)} placeholder="Slide Title (optional)" />
-                <input className="field-input" value={slide.tag || ""} onChange={(e) => updateHeroSlide(sIdx, "tag", e.target.value)} placeholder="Slide Tag / Label (optional)" />
-              </div>
-            </div>
-          );
-        })}
-        <div style={{ fontSize: 11, color: "var(--text3)", marginTop: 8 }}>
-          ðŸ’¡ Each slide supports either an Image or a Video â€” not both. Toggle the media type per slide to switch.
-        </div>
-      </div>
-
-      {/* â”€â”€â”€ Shop by Category â”€â”€â”€ */}
-      <div className="card card-pad" style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <div className="card-title" style={{ margin: 0 }}>Shop by Category</div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <label style={{ fontSize: 12 }}>
-              <input type="checkbox" checked={categorySection?.is_enabled !== false} onChange={(e) => setSectionField(categorySection?.id, "is_enabled", e.target.checked)} /> Enabled
-            </label>
-            <button className="btn btn-sm" onClick={() => populateDefaultCategories(categorySection?.id)}>+ Load Defaults</button>
-            <button className="btn btn-sm btn-accent" onClick={() => addCategoryItem(categorySection?.id)}>+ Add Category</button>
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-          <input className="field-input" value={categorySection?.title || ""} onChange={(e) => setSectionField(categorySection?.id, "title", e.target.value)} placeholder="Section Title (e.g. Shop by Category)" />
-          <input className="field-input" value={categorySection?.subtitle || ""} onChange={(e) => setSectionField(categorySection?.id, "subtitle", e.target.value)} placeholder="Subtitle (e.g. Discover)" />
-        </div>
-        {categoryItems.length === 0 && (
-          <div style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8, padding: 8, background: "var(--bg)", borderRadius: 6 }}>
-            No categories yet. Click "Load Defaults" or "+ Add Category".
-          </div>
-        )}
-        {categoryItems.map((item, idx) => (
-          <div key={`${item.id || "new"}-${idx}`} style={{ marginBottom: 16, paddingBottom: 16, borderBottom: "1px dashed var(--border)" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-              <input className="field-input" value={item.label || ""} onChange={(e) => updateItemField(item, "label", e.target.value)} placeholder="Category Name" />
-              <div>
-                <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600, display: "block", marginBottom: 3 }}>TARGET PAGE</label>
-                <CtaLinkSelect value={item.target_url || ""} onChange={(v) => updateItemField(item, "target_url", v)} placeholder="Custom URL (/shop/...)" />
-              </div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
-              <input className="field-input" value={item.image_url || ""} onChange={(e) => updateItemField(item, "image_url", e.target.value)} placeholder="Poster Image URL" />
-              {renderUploadBtn(`cat-${item.id}-img`, () => uploadFile((url) => updateItemField(item, "image_url", url), item.image_url, `cat-${item.id}-img`, "image/*"), "Upload Photo")}
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 8, alignItems: "center" }}>
-              <input className="field-input" value={item.video_url || ""} onChange={(e) => updateItemField(item, "video_url", e.target.value)} placeholder="Hover Video URL (optional)" />
-              {item.video_url && (
-                <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(item.video_url); updateItemField(item, "video_url", ""); }}>Remove Video</button>
-              )}
-              {renderUploadBtn(`cat-${item.id}-vid`, () => uploadFile((url) => updateItemField(item, "video_url", url), item.video_url, `cat-${item.id}-vid`, "video/mp4,video/webm"), "Upload Video")}
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
-              <button className="btn btn-sm" onClick={() => shiftItem(categorySection.id, idx, -1)} disabled={idx === 0}>â†‘</button>
-              <button className="btn btn-sm" onClick={() => shiftItem(categorySection.id, idx, 1)} disabled={idx === categoryItems.length - 1}>â†“</button>
-              <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>Remove</button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* â”€â”€â”€ Product Sections (New Arrivals, Best Sellers, Featured) â”€â”€â”€ */}
-      {PRODUCT_SECTION_KEYS.map((key) => {
-        const section = bySectionKey[key];
-        if (!section) return null;
-        const sectionItems = getItems(section.id);
-        const isEnabled = section.is_enabled !== false;
-
-        return (
-          <div className="card card-pad" key={key} style={{ marginBottom: 16, opacity: isEnabled ? 1 : 0.7 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <div className="card-title" style={{ margin: 0 }}>{section.title || key}</div>
-              <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                <input
-                  type="checkbox"
-                  checked={isEnabled}
-                  onChange={(e) => setSectionField(section.id, "is_enabled", e.target.checked)}
-                />
-                {isEnabled ? "Enabled" : "Disabled"}
-              </label>
-            </div>
-
-            {!isEnabled && (
-              <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
-                This section is hidden on the storefront. Enable it to show it to customers.
-              </div>
-            )}
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: "1px dashed var(--border)" }}>
-              <input className="field-input" value={section.title || ""} onChange={(e) => setSectionField(section.id, "title", e.target.value)} placeholder="Section Title" />
-              <input className="field-input" value={section.subtitle || ""} onChange={(e) => setSectionField(section.id, "subtitle", e.target.value)} placeholder="Subtitle / Tag" />
-            </div>
-
-            <div style={{ display: "flex", gap: 8, marginBottom: 8, marginTop: 4 }}>
-              <select className="field-input" defaultValue="">
-                <option value="" disabled>Select product to add</option>
-                {groupedProducts.map((p) => <option key={p.id} value={p.id}>{p.title} ({p.id})</option>)}
-              </select>
-              <button
-                className="btn btn-sm"
-                onClick={(e) => {
-                  const sel = e.currentTarget.previousSibling;
-                  if (sel && sel.value) { addProductItem(section.id, sel.value); sel.value = ""; }
-                }}
-              >
-                Add Product
-              </button>
-            </div>
-
-            {sectionItems.length === 0 && (
-              <div style={{ fontSize: 11, color: "var(--text3)", padding: 6 }}>No products added yet.</div>
-            )}
-
-            {sectionItems.map((item, idx) => (
-              <div key={`${item.id || "new"}-${idx}`} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                <select className="field-input" value={item.product_id || ""} onChange={(e) => updateItemField(item, "product_id", parseInt(e.target.value, 10))}>
-                  <option value="">â€” Select product â€”</option>
-                  {groupedProducts.map((p) => <option key={p.id} value={p.id}>{p.title} ({p.id})</option>)}
-                </select>
-                <button className="btn btn-sm" onClick={() => shiftItem(section.id, idx, -1)} disabled={idx === 0}>â†‘</button>
-                <button className="btn btn-sm" onClick={() => shiftItem(section.id, idx, 1)} disabled={idx === sectionItems.length - 1}>â†“</button>
-                <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>âœ•</button>
-              </div>
-            ))}
-          </div>
-        );
-      })}
-
-      {/* â”€â”€â”€ Promo Banner 1 â”€â”€â”€ */}
-      {!promoBanner1Section ? (
-        <div className="card card-pad" style={{ marginBottom: 16 }}>
-          <div className="card-title">Promo Banner 1</div>
-          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
-          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
-        </div>
-      ) : (
-        <div className="card card-pad" style={{ marginBottom: 16, opacity: promoBanner1Section.is_enabled === false ? 0.7 : 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div className="card-title" style={{ margin: 0 }}>Promo Banner 1</div>
-            <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <input type="checkbox" checked={promoBanner1Section.is_enabled !== false} onChange={(e) => setSectionField(promoBanner1Section.id, "is_enabled", e.target.checked)} />
-              {promoBanner1Section.is_enabled !== false ? "Enabled" : "Disabled"}
-            </label>
-          </div>
-          {promoBanner1Section.is_enabled === false && (
-            <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
-              This banner is hidden on the storefront.
-            </div>
-          )}
-          <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 10 }}>Full-screen image banner (same size as hero). Upload a desktop and optional mobile image.</div>
-
-          {/* Desktop banner image */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO</label>
-              {rawPromo1Settings.imageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo1Settings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.imageUrl); updatePromo1Field("imageUrl", ""); }}>âœ• Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("promo1-desktop", () => uploadFile((url) => updatePromo1Field("imageUrl", url), rawPromo1Settings.imageUrl, "promo1-desktop", "image/*,video/mp4,video/webm"), rawPromo1Settings.imageUrl ? "Replace" : "Upload Image/Video")}
-          </div>
-
-          {/* Mobile banner image */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
-              {rawPromo1Settings.mobileImageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo1Settings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo1Settings.mobileImageUrl); updatePromo1Field("mobileImageUrl", ""); }}>âœ• Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("promo1-mobile", () => uploadFile((url) => updatePromo1Field("mobileImageUrl", url), rawPromo1Settings.mobileImageUrl, "promo1-mobile", "image/*,video/mp4,video/webm"), rawPromo1Settings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
-          </div>
-        </div>
-      )}
-
-      {/* â”€â”€â”€ Promo Banner 2 â”€â”€â”€ */}
-      {!promoBanner2Section ? (
-        <div className="card card-pad" style={{ marginBottom: 16 }}>
-          <div className="card-title">Promo Banner 2</div>
-          <p style={{ fontSize: 12, color: "var(--text3)", marginBottom: 8 }}>This section is being set up automatically.</p>
-          <button className="btn btn-sm" onClick={load} style={{ fontSize: 11 }}>Reload to activate</button>
-        </div>
-      ) : (
-        <div className="card card-pad" style={{ marginBottom: 16, opacity: promoBanner2Section.is_enabled === false ? 0.7 : 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div className="card-title" style={{ margin: 0 }}>Promo Banner 2</div>
-            <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <input type="checkbox" checked={promoBanner2Section.is_enabled !== false} onChange={(e) => setSectionField(promoBanner2Section.id, "is_enabled", e.target.checked)} />
-              {promoBanner2Section.is_enabled !== false ? "Enabled" : "Disabled"}
-            </label>
-          </div>
-          {promoBanner2Section.is_enabled === false && (
-            <div style={{ fontSize: 11, color: "var(--text3)", padding: "6px 8px", background: "var(--bg2)", borderRadius: 4, marginBottom: 8 }}>
-              This banner is hidden on the storefront.
-            </div>
-          )}
-          <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 10 }}>Full-screen image banner (same size as hero). Upload a desktop and optional mobile image.</div>
-
-          {/* Desktop banner image */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>DESKTOP IMAGE / VIDEO</label>
-              {rawPromo2Settings.imageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo2Settings.imageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.imageUrl); updatePromo2Field("imageUrl", ""); }}>âœ• Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("promo2-desktop", () => uploadFile((url) => updatePromo2Field("imageUrl", url), rawPromo2Settings.imageUrl, "promo2-desktop", "image/*,video/mp4,video/webm"), rawPromo2Settings.imageUrl ? "Replace" : "Upload Image/Video")}
-          </div>
-
-          {/* Mobile banner image */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <label style={{ fontSize: 10, color: "var(--text3)", fontWeight: 600 }}>MOBILE IMAGE / VIDEO <span style={{ fontWeight: 400 }}>(optional)</span></label>
-              {rawPromo2Settings.mobileImageUrl && (
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 11, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rawPromo2Settings.mobileImageUrl.split("/").pop()}</span>
-                  <button className="btn btn-sm btn-danger" onClick={() => { deleteFromS3(rawPromo2Settings.mobileImageUrl); updatePromo2Field("mobileImageUrl", ""); }}>âœ• Remove</button>
-                </div>
-              )}
-            </div>
-            {renderUploadBtn("promo2-mobile", () => uploadFile((url) => updatePromo2Field("mobileImageUrl", url), rawPromo2Settings.mobileImageUrl, "promo2-mobile", "image/*,video/mp4,video/webm"), rawPromo2Settings.mobileImageUrl ? "Replace Mobile" : "Upload Mobile")}
-          </div>
-        </div>
-      )}
-
-      {/* â”€â”€â”€ Validation Errors â”€â”€â”€ */}
+      {/* ── Validation Errors ── */}
       {validationErrors.length > 0 && (
         <div className="alert alert-red" style={{ marginBottom: 16 }}>
           <div className="alert-msg">
-            <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Fix before publishing:</div>
-            {validationErrors.map((err, i) => (
-              <div key={i} style={{ fontSize: 12 }}>â€¢ {err}</div>
-            ))}
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Fix before publishing:</div>
+            {validationErrors.map((e, i) => <div key={i} style={{ fontSize: 11 }}>• {e}</div>)}
           </div>
+          <button onClick={() => setValidationErrors([])} className="alert-close">✕</button>
         </div>
       )}
 
-      {/* â”€â”€â”€ Version History â”€â”€â”€ */}
-      <div className="card card-pad">
-        <div className="card-title">Version History</div>
-        {(history || []).map((h) => (
-          <div key={h.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
-            <div style={{ fontSize: 12 }}>
-              v{h.version} Â· {h.title} Â· <strong>{h.status}</strong>
-              {h.published_at ? ` Â· ${new Date(h.published_at).toLocaleString()}` : ""}
+      {/* ── Section Accordion Panels ── */}
+      {sortedSections.map((sec, idx) => {
+        const key = sec.section_key;
+        const isOpen = openSections.has(key);
+        const panelProps = { section: sec, isOpen, onToggle: () => togglePanel(key), onShiftUp: () => shiftSection(idx, -1), onShiftDown: () => shiftSection(idx, 1), canMoveUp: idx > 0, canMoveDown: idx < sortedSections.length - 1, setSectionField };
+
+        // ── Hero Banner ──────────────────────────────────────────────────────
+        if (key === "hero_banner") return (
+          <Panel key={key} label="Hero Banner" badge="SLIDES" {...panelProps}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
+              <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="Hero Banner" /></div>
+              <div><div className="field-label">Tag</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="Tag / subtitle" /></div>
             </div>
-            <button className="btn btn-sm" onClick={() => rollback(h.id)}>Rollback as Draft</button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <span style={{ fontSize: 12, color: "var(--text2)", fontWeight: 500 }}>{heroSlidesData.length} slide{heroSlidesData.length !== 1 ? "s" : ""}</span>
+              <button className="btn btn-sm btn-accent" onClick={addHeroSlide}>+ Add Slide</button>
+            </div>
+            {heroSlidesData.length === 0 && (
+              <div style={{ padding: 16, background: "var(--bg3)", borderRadius: 10, textAlign: "center", color: "var(--text3)", fontSize: 12 }}>No slides yet — click "+ Add Slide" to get started.</div>
+            )}
+            {heroSlidesData.map((slide, sIdx) => {
+              const mType = getSlideMediaType(slide);
+              const accept = mType === "video" ? "video/mp4,video/webm" : "image/*";
+              return (
+                <div key={sIdx} style={{ marginBottom: 14, padding: 16, border: "1px solid var(--border)", borderRadius: 12, background: "var(--bg3)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text2)" }}>Slide {sIdx + 1}</span>
+                    <div style={{ flex: 1 }} />
+                    <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, -1)} disabled={sIdx === 0}>▲</button>
+                    <button className="btn btn-sm" onClick={() => moveHeroSlide(sIdx, 1)} disabled={sIdx === heroSlidesData.length - 1}>▼</button>
+                    <button className="btn btn-sm btn-danger" onClick={() => removeHeroSlide(sIdx)}>Remove</button>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "7px 12px", background: "var(--bg4)", borderRadius: 8, marginBottom: 14 }}>
+                    <span style={{ fontSize: 11, color: "var(--text3)", flex: 1 }}>Media</span>
+                    <button className={`btn btn-sm${mType === "image" ? " btn-accent" : ""}`} onClick={() => switchSlideMediaType(sIdx, "image")}>Image</button>
+                    <button className={`btn btn-sm${mType === "video" ? " btn-accent" : ""}`} onClick={() => switchSlideMediaType(sIdx, "video")}>Video</button>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                    <MediaSlot label="Desktop" url={slide.imageUrl} progressKey={`hero-${sIdx}-d`} uploadProgress={uploadProgress}
+                      onUpload={() => uploadFile(url => updateHeroSlide(sIdx, "imageUrl", url), slide.imageUrl, `hero-${sIdx}-d`, accept)}
+                      onRemove={() => { deleteFromS3(slide.imageUrl); updateHeroSlide(sIdx, "imageUrl", ""); }} />
+                    <MediaSlot label="Mobile" optional url={slide.mobileImageUrl} progressKey={`hero-${sIdx}-m`} uploadProgress={uploadProgress}
+                      onUpload={() => uploadFile(url => updateHeroSlide(sIdx, "mobileImageUrl", url), slide.mobileImageUrl, `hero-${sIdx}-m`, accept)}
+                      onRemove={() => { deleteFromS3(slide.mobileImageUrl); updateHeroSlide(sIdx, "mobileImageUrl", ""); }} />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div><div className="field-label">Slide Title</div><input className="field-input" value={slide.title || ""} onChange={e => updateHeroSlide(sIdx, "title", e.target.value)} placeholder="e.g. Spring Collection" /></div>
+                    <div><div className="field-label">Tag / Label</div><input className="field-input" value={slide.tag || ""} onChange={e => updateHeroSlide(sIdx, "tag", e.target.value)} placeholder="e.g. New Arrivals" /></div>
+                    <div><div className="field-label">CTA Button Text</div><input className="field-input" value={slide.ctaLabel || ""} onChange={e => updateHeroSlide(sIdx, "ctaLabel", e.target.value)} placeholder="e.g. Shop Now" /></div>
+                    <div><div className="field-label">CTA Link</div><CtaLinkSelect value={slide.ctaHref || ""} onChange={v => updateHeroSlide(sIdx, "ctaHref", v)} /></div>
+                  </div>
+                </div>
+              );
+            })}
+          </Panel>
+        );
+
+        // ── Shop by Category ─────────────────────────────────────────────────
+        if (key === "shop_by_category") return (
+          <Panel key={key} label="Shop by Category" badge="CARDS" {...panelProps}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
+              <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="Shop by Category" /></div>
+              <div><div className="field-label">Subtitle</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="Discover" /></div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <span style={{ fontSize: 12, color: "var(--text2)" }}>{categoryItems.length} categor{categoryItems.length !== 1 ? "ies" : "y"}</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn btn-sm" onClick={() => populateDefaultCategories(sec.id)}>Load Defaults</button>
+                <button className="btn btn-sm btn-accent" onClick={() => addCategoryItem(sec.id)}>+ Add Category</button>
+              </div>
+            </div>
+            {categoryItems.length === 0 && <div style={{ padding: 14, background: "var(--bg3)", borderRadius: 10, textAlign: "center", color: "var(--text3)", fontSize: 12, marginBottom: 10 }}>No categories yet.</div>}
+            {categoryItems.map((item, idx) => (
+              <div key={`${item.id || idx}`} style={{ marginBottom: 12, padding: 14, border: "1px solid var(--border)", borderRadius: 12, background: "var(--bg3)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <div><div className="field-label">Name</div><input className="field-input" value={item.label || ""} onChange={e => updateItemField(item, "label", e.target.value)} placeholder="e.g. Dresses" /></div>
+                  <div><div className="field-label">Target Page</div><CtaLinkSelect value={item.target_url || ""} onChange={v => updateItemField(item, "target_url", v)} /></div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <MediaSlot label="Category Photo" url={item.image_url} progressKey={`cat-${item.id || idx}-i`} uploadProgress={uploadProgress}
+                    onUpload={() => uploadFile(url => updateItemField(item, "image_url", url), item.image_url, `cat-${item.id || idx}-i`, "image/*")}
+                    onRemove={() => { deleteFromS3(item.image_url); updateItemField(item, "image_url", ""); }} />
+                  <MediaSlot label="Hover Video" optional url={item.video_url} progressKey={`cat-${item.id || idx}-v`} uploadProgress={uploadProgress}
+                    onUpload={() => uploadFile(url => updateItemField(item, "video_url", url), item.video_url, `cat-${item.id || idx}-v`, "video/mp4,video/webm")}
+                    onRemove={() => { deleteFromS3(item.video_url); updateItemField(item, "video_url", ""); }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                  <button className="btn btn-sm" onClick={() => shiftItem(sec.id, idx, -1)} disabled={idx === 0}>▲</button>
+                  <button className="btn btn-sm" onClick={() => shiftItem(sec.id, idx, 1)} disabled={idx === categoryItems.length - 1}>▼</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>Remove</button>
+                </div>
+              </div>
+            ))}
+          </Panel>
+        );
+
+        // ── Product Sections ─────────────────────────────────────────────────
+        if (PRODUCT_SECTION_KEYS.includes(key)) {
+          const sectionItems = getItems(sec.id);
+          return (
+            <Panel key={key} label={sec.title || key} badge="PRODUCTS" {...panelProps}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
+                <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="Section title" /></div>
+                <div><div className="field-label">Subtitle</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="e.g. Discover" /></div>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                <select className="field-input" defaultValue="" style={{ flex: 1 }}>
+                  <option value="" disabled>Select a product to add…</option>
+                  {groupedProducts.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                </select>
+                <button className="btn btn-sm btn-accent" onClick={e => {
+                  const sel = e.currentTarget.previousSibling;
+                  if (sel?.value) { addProductItem(sec.id, sel.value); sel.value = ""; }
+                }}>Add</button>
+              </div>
+              {sectionItems.length === 0 && <div style={{ padding: 12, background: "var(--bg3)", borderRadius: 10, textAlign: "center", color: "var(--text3)", fontSize: 12, marginBottom: 8 }}>No products yet.</div>}
+              {sectionItems.map((item, idx) => (
+                <div key={`${item.id || idx}`} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                  <select className="field-input" value={item.product_id || ""} onChange={e => updateItemField(item, "product_id", parseInt(e.target.value, 10))} style={{ flex: 1 }}>
+                    <option value="">— Select product —</option>
+                    {groupedProducts.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                  <button className="btn btn-sm" onClick={() => shiftItem(sec.id, idx, -1)} disabled={idx === 0}>▲</button>
+                  <button className="btn btn-sm" onClick={() => shiftItem(sec.id, idx, 1)} disabled={idx === sectionItems.length - 1}>▼</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => removeItem(item)}>✕</button>
+                </div>
+              ))}
+            </Panel>
+          );
+        }
+
+        // ── About Us Banner ──────────────────────────────────────────────────
+        if (key === "about_us_banner") return (
+          <Panel key={key} label="About Us Banner" badge="BANNER" {...panelProps}>
+            {renderBannerEditor(aboutUsSection, rawAbout, updateAbout, "about")}
+          </Panel>
+        );
+
+        // ── Testimonials Banner ──────────────────────────────────────────────
+        if (key === "testimonials") return (
+          <Panel key={key} label="Testimonials Banner" badge="BANNER" {...panelProps}>
+            {renderBannerEditor(testimonialsSection, rawTestimonials, updateTestimonials, "test")}
+          </Panel>
+        );
+
+        // ── Unknown section fallback ─────────────────────────────────────────
+        return (
+          <Panel key={key} label={sec.title || key} {...panelProps}>
+            <div style={{ color: "var(--text3)", fontSize: 12, padding: 8 }}>No editor available for section type: <code>{key}</code></div>
+          </Panel>
+        );
+      })}
+
+      {/* ── Version History ── */}
+      <div style={{ marginTop: 24, borderRadius: 14, border: "1px solid var(--border)", overflow: "hidden", background: "var(--bg2)" }}>
+        <div onClick={() => setShowHistory(h => !h)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 16px", cursor: "pointer", userSelect: "none" }}>
+          <span style={{ flex: 1, fontWeight: 600, fontSize: 13 }}>Version History</span>
+          <span style={{ fontSize: 11, color: "var(--text3)" }}>{history.length} version{history.length !== 1 ? "s" : ""}</span>
+          <span style={{ fontSize: 11, color: "var(--text3)", transform: showHistory ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+        </div>
+        {showHistory && (
+          <div style={{ borderTop: "1px solid var(--border)", padding: "8px 16px" }}>
+            {history.length === 0 && <div style={{ padding: "12px 0", color: "var(--text3)", fontSize: 12 }}>No history yet.</div>}
+            {history.map(h => (
+              <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700 }}>v{h.version}</span>
+                  <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: 8 }}>{h.title}</span>
+                  {h.published_at && <span style={{ fontSize: 11, color: "var(--text3)", marginLeft: 8 }}>{new Date(h.published_at).toLocaleDateString()}</span>}
+                </div>
+                <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, fontWeight: 700, letterSpacing: "0.05em", background: h.status === "published" ? "var(--green2)" : h.status === "draft" ? "var(--amber2)" : "var(--bg4)", color: h.status === "published" ? "var(--green)" : h.status === "draft" ? "var(--amber)" : "var(--text3)" }}>{h.status.toUpperCase()}</span>
+                <button className="btn btn-sm" onClick={() => rollback(h.id)}>Rollback</button>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
