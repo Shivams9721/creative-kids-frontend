@@ -164,8 +164,6 @@ export default function Home() {
   const checkIsVideo = (url) => url && /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
   const [categoryItems, setCategoryItems] = useState([]);
   const [sectionMeta, setSectionMeta] = useState({});
-  const [promoBanner1, setPromoBanner1] = useState(null);
-  const [promoBanner2, setPromoBanner2] = useState(null);
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(new Set());
   const [quickViewId, setQuickViewId] = useState(null);
@@ -230,9 +228,6 @@ export default function Home() {
           data.sections.forEach((s) => { map[s.key] = s; });
           setSectionMeta(map);
         }
-
-        if (data.promoBanner1) setPromoBanner1(data.promoBanner1);
-        if (data.promoBanner2) setPromoBanner2(data.promoBanner2);
 
         setLoading(false);
       })
@@ -451,48 +446,16 @@ export default function Home() {
     )
   );
 
-  const renderPromoBanner = (key, bannerData) => {
-    if (!isEnabled(key) || !bannerData) return null;
-    const { imageUrl, mobileImageUrl } = bannerData;
-    if (!imageUrl && !mobileImageUrl) return null;
-
-    return (
-      <section key={key} className="relative w-full overflow-hidden bg-[#f6f5f3]">
-        {/* Mobile image/video */}
-        {mobileImageUrl && (
-          <div className="block md:hidden">
-            {checkIsVideo(mobileImageUrl)
-              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
-              : <img src={mobileImageUrl} alt="Banner" className="w-full h-auto block" />
-            }
-          </div>
-        )}
-        {/* Desktop image/video */}
-        <div className={mobileImageUrl ? "hidden md:block" : "block"}>
-          {imageUrl && (checkIsVideo(imageUrl)
-            ? <video src={imageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
-            : <img src={imageUrl} alt="Banner" className="w-full h-auto block" />
-          )}
-        </div>
-      </section>
-    );
-  };
-
-  const renderPromoBanner1 = () => renderPromoBanner("promo_banner_1", promoBanner1);
-  const renderPromoBanner2 = () => renderPromoBanner("promo_banner_2", promoBanner2);
-
   const SECTION_RENDERERS = {
     hero_banner: renderHeroBanner,
     shop_by_category: renderShopByCategory,
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
-    promo_banner_1: renderPromoBanner1,
-    promo_banner_2: renderPromoBanner2,
   };
 
   // Fallback order when API hasn't loaded yet or section meta is empty
-  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "promo_banner_1", "shop_by_category", "promo_banner_2", "season_bestsellers", "featured_collection"];
+  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "shop_by_category", "season_bestsellers", "featured_collection"];
   const renderOrder = sortedSectionKeys.length > 0 ? sortedSectionKeys : FALLBACK_ORDER;
 
   return (

@@ -78,40 +78,38 @@ function MediaSlot({ label, url, progressKey, uploadProgress, onUpload, onRemove
   );
 }
 
-function Panel({ label, badge, section, isOpen, onToggle, onShiftUp, onShiftDown, canMoveUp, canMoveDown, setSectionField, children }) {
+function Panel({ label, badge, summary, section, isOpen, onToggle, onShiftUp, onShiftDown, canMoveUp, canMoveDown, setSectionField, children }) {
   const enabled = !section || section.is_enabled !== false;
   return (
-    <div style={{ marginBottom: 8, borderRadius: 14, border: `1px solid ${isOpen ? "var(--border2)" : "var(--border)"}`, overflow: "hidden", background: "var(--bg2)", transition: "box-shadow 0.2s", boxShadow: isOpen ? "0 6px 32px rgba(0,0,0,0.4)" : "none" }}>
-      <div onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(255,255,255,0.03)" : "transparent" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }} onClick={e => e.stopPropagation()}>
-          <button className="btn btn-sm" disabled={!canMoveUp} onClick={onShiftUp} style={{ padding: "1px 7px", fontSize: 9, lineHeight: "14px" }}>▲</button>
-          <button className="btn btn-sm" disabled={!canMoveDown} onClick={onShiftDown} style={{ padding: "1px 7px", fontSize: 9, lineHeight: "14px" }}>▼</button>
+    <div className={`hp-panel${isOpen ? " is-open" : ""}${section && !enabled ? " is-off" : ""}`}>
+      <div className="hp-panel-header" onClick={onToggle}>
+        <div className="hp-reorder" onClick={e => e.stopPropagation()}>
+          <button className="hp-reorder-btn" disabled={!canMoveUp} onClick={onShiftUp} title="Move section up" aria-label="Move up">▲</button>
+          <button className="hp-reorder-btn" disabled={!canMoveDown} onClick={onShiftDown} title="Move section down" aria-label="Move down">▼</button>
         </div>
-        <span style={{ flex: 1, fontWeight: 600, fontSize: 13 }}>{label}</span>
-        {badge && (
-          <span style={{ fontSize: 9, padding: "2px 7px", borderRadius: 20, background: "var(--blue2)", color: "var(--blue)", fontWeight: 700, letterSpacing: "0.06em" }}>{badge}</span>
-        )}
+        <div className="hp-panel-info">
+          {badge && <span className="hp-panel-type">{badge}</span>}
+          <span className="hp-panel-title">{label}</span>
+          {summary && <span className="hp-panel-summary">{summary}</span>}
+        </div>
         {section && (
-          <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 20, fontWeight: 700, letterSpacing: "0.05em", background: enabled ? "var(--green2)" : "var(--bg4)", color: enabled ? "var(--green)" : "var(--text3)" }}>
-            {enabled ? "LIVE" : "OFF"}
-          </span>
+          <label
+            className="hp-live"
+            onClick={e => e.stopPropagation()}
+            title={enabled ? "Click to disable this section" : "Click to make this section live"}
+          >
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={e => setSectionField(section.id, "is_enabled", e.target.checked)}
+            />
+            <span className="hp-live-track" aria-hidden />
+            <span className="hp-live-label">{enabled ? "Live" : "Off"}</span>
+          </label>
         )}
-        {section && (
-          <div onClick={e => e.stopPropagation()}>
-            <label className="toggle" title={enabled ? "Disable" : "Enable"}>
-              <input type="checkbox" checked={enabled} onChange={e => setSectionField(section.id, "is_enabled", e.target.checked)} />
-              <div className="toggle-track" />
-              <div className="toggle-thumb" />
-            </label>
-          </div>
-        )}
-        <span style={{ fontSize: 11, color: "var(--text3)", transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s", marginLeft: 4 }}>▾</span>
+        <span className={`hp-chev${isOpen ? " is-open" : ""}`}>▾</span>
       </div>
-      {isOpen && (
-        <div style={{ padding: "20px 20px 24px", borderTop: "1px solid var(--border)" }}>
-          {children}
-        </div>
-      )}
+      {isOpen && <div className="hp-panel-body">{children}</div>}
     </div>
   );
 }
@@ -524,7 +522,7 @@ export default function HomepageAdminPage() {
 
         // ── Hero Banner ──────────────────────────────────────────────────────
         if (key === "hero_banner") return (
-          <Panel key={key} label="Hero Banner" badge="SLIDES" {...panelProps}>
+          <Panel key={key} label="Hero Banner" badge="SLIDES" summary={heroSlidesData.length ? `${heroSlidesData.length} slide${heroSlidesData.length === 1 ? "" : "s"}` : "No slides yet"} {...panelProps}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
               <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="Hero Banner" /></div>
               <div><div className="field-label">Tag</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="Tag / subtitle" /></div>
@@ -575,7 +573,7 @@ export default function HomepageAdminPage() {
 
         // ── Shop by Category ─────────────────────────────────────────────────
         if (key === "shop_by_category") return (
-          <Panel key={key} label="Shop by Category" badge="CARDS" {...panelProps}>
+          <Panel key={key} label="Shop by Category" badge="CARDS" summary={categoryItems.length ? `${categoryItems.length} categor${categoryItems.length === 1 ? "y" : "ies"}` : "No categories yet"} {...panelProps}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
               <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="Shop by Category" /></div>
               <div><div className="field-label">Subtitle</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="Discover" /></div>
@@ -616,7 +614,7 @@ export default function HomepageAdminPage() {
         if (PRODUCT_SECTION_KEYS.includes(key)) {
           const sectionItems = getItems(sec.id);
           return (
-            <Panel key={key} label={sec.title || key} badge="PRODUCTS" {...panelProps}>
+            <Panel key={key} label={sec.title || key} badge="PRODUCTS" summary={sectionItems.length ? `${sectionItems.length} product${sectionItems.length === 1 ? "" : "s"}` : "No products yet"} {...panelProps}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid var(--border)" }}>
                 <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="Section title" /></div>
                 <div><div className="field-label">Subtitle</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="e.g. Discover" /></div>
@@ -649,14 +647,14 @@ export default function HomepageAdminPage() {
 
         // ── About Us Banner ──────────────────────────────────────────────────
         if (key === "about_us_banner") return (
-          <Panel key={key} label="About Us Banner" badge="BANNER" {...panelProps}>
+          <Panel key={key} label="About Us Banner" badge="BANNER" summary={rawAbout.imageUrl || rawAbout.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
             {renderBannerEditor(aboutUsSection, rawAbout, updateAbout, "about")}
           </Panel>
         );
 
         // ── Testimonials Banner ──────────────────────────────────────────────
         if (key === "testimonials") return (
-          <Panel key={key} label="Testimonials Banner" badge="BANNER" {...panelProps}>
+          <Panel key={key} label="Testimonials Banner" badge="BANNER" summary={rawTestimonials.imageUrl || rawTestimonials.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
             {renderBannerEditor(testimonialsSection, rawTestimonials, updateTestimonials, "test")}
           </Panel>
         );
