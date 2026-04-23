@@ -164,6 +164,7 @@ export default function Home() {
   const checkIsVideo = (url) => url && /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
   const [categoryItems, setCategoryItems] = useState([]);
   const [sectionMeta, setSectionMeta] = useState({});
+  const [banners, setBanners] = useState({});
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState(new Set());
   const [quickViewId, setQuickViewId] = useState(null);
@@ -228,6 +229,8 @@ export default function Home() {
           data.sections.forEach((s) => { map[s.key] = s; });
           setSectionMeta(map);
         }
+
+        if (data.banners && typeof data.banners === 'object') setBanners(data.banners);
 
         setLoading(false);
       })
@@ -446,12 +449,52 @@ export default function Home() {
     )
   );
 
+  const renderEditorialBanner = (key) => {
+    if (!isEnabled(key)) return null;
+    const data = banners[key];
+    if (!data) return null;
+    const { imageUrl, mobileImageUrl, title, subtitle, description, ctaLabel, ctaText, ctaHref } = data;
+    if (!imageUrl && !mobileImageUrl) return null;
+    const buttonLabel = ctaLabel || ctaText;
+    return (
+      <section key={key} className="relative w-full h-[60vh] sm:h-[70vh] md:h-[80vh] overflow-hidden bg-[#f6f5f3]">
+        {mobileImageUrl && (
+          <div className="absolute inset-0 block md:hidden">
+            {checkIsVideo(mobileImageUrl)
+              ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="w-full h-full object-cover object-center" />
+              : <img src={mobileImageUrl} alt={title || "Banner"} className="w-full h-full object-cover object-center" />
+            }
+          </div>
+        )}
+        {imageUrl && (
+          <div className={`absolute inset-0 ${mobileImageUrl ? "hidden md:block" : "block"}`}>
+            {checkIsVideo(imageUrl)
+              ? <video src={imageUrl} autoPlay muted loop playsInline className="w-full h-full object-cover object-center" />
+              : <img src={imageUrl} alt={title || "Banner"} className="w-full h-full object-cover object-center" />
+            }
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 text-white text-center">
+          {subtitle && <span className="text-[9px] sm:text-[10px] tracking-[0.2em] font-medium uppercase text-white/80 mb-2">{subtitle}</span>}
+          {title && <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-medium tracking-wide uppercase mb-3 max-w-4xl leading-tight" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
+          {description && <p className="text-[12px] sm:text-[13px] text-white/80 max-w-2xl mb-5 leading-relaxed">{description}</p>}
+          {ctaHref && buttonLabel && (
+            <Link href={ctaHref} className="border border-white/80 px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-white hover:text-black transition-colors">{buttonLabel}</Link>
+          )}
+        </div>
+      </section>
+    );
+  };
+
   const SECTION_RENDERERS = {
     hero_banner: renderHeroBanner,
     shop_by_category: renderShopByCategory,
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
+    about_us_banner: () => renderEditorialBanner("about_us_banner"),
+    testimonials: () => renderEditorialBanner("testimonials"),
   };
 
   // Fallback order when API hasn't loaded yet or section meta is empty
