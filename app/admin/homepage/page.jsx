@@ -16,7 +16,6 @@ const CTA_OPTIONS = [
   { label: "Shorts / Skirts", value: "/shop/kids-girl/shorts-skirts-skorts" },
   { label: "Infants / Rompers", value: "/shop/baby-boy/onesies-rompers" },
   { label: "Clothing Sets", value: "/shop/baby-girl/clothing-sets" },
-  { label: "About Us", value: "/about" },
   { label: "Contact Us", value: "/contact" },
   { label: "Custom URL...", value: "__custom__" },
 ];
@@ -419,13 +418,13 @@ export default function HomepageAdminPage() {
   const categorySection = bySectionKey.shop_by_category;
   const categoryItems = getItems(categorySection?.id || -1);
 
-  const aboutUsSection = bySectionKey.about_us_banner;
-  const rawAbout = typeof aboutUsSection?.settings_json === "string" ? JSON.parse(aboutUsSection.settings_json || "{}") : (aboutUsSection?.settings_json || {});
-  const updateAbout = (key, value) => { if (aboutUsSection?.id) setSectionField(aboutUsSection.id, "settings_json", { ...rawAbout, [key]: value }); };
+  const simpleBanner1Section = bySectionKey.simple_banner_1;
+  const rawSimple1 = typeof simpleBanner1Section?.settings_json === "string" ? JSON.parse(simpleBanner1Section.settings_json || "{}") : (simpleBanner1Section?.settings_json || {});
+  const updateSimple1 = (key, value) => { if (simpleBanner1Section?.id) setSectionField(simpleBanner1Section.id, "settings_json", { ...rawSimple1, [key]: value }); };
 
-  const testimonialsSection = bySectionKey.testimonials;
-  const rawTestimonials = typeof testimonialsSection?.settings_json === "string" ? JSON.parse(testimonialsSection.settings_json || "{}") : (testimonialsSection?.settings_json || {});
-  const updateTestimonials = (key, value) => { if (testimonialsSection?.id) setSectionField(testimonialsSection.id, "settings_json", { ...rawTestimonials, [key]: value }); };
+  const simpleBanner2Section = bySectionKey.simple_banner_2;
+  const rawSimple2 = typeof simpleBanner2Section?.settings_json === "string" ? JSON.parse(simpleBanner2Section.settings_json || "{}") : (simpleBanner2Section?.settings_json || {});
+  const updateSimple2 = (key, value) => { if (simpleBanner2Section?.id) setSectionField(simpleBanner2Section.id, "settings_json", { ...rawSimple2, [key]: value }); };
 
   const isBusy = saving || publishing || Object.keys(uploadProgress).length > 0;
   const sortedSections = [...sections].sort((a, b) => a.display_order - b.display_order);
@@ -681,17 +680,17 @@ export default function HomepageAdminPage() {
           );
         }
 
-        // ── About Us Banner ──────────────────────────────────────────────────
-        if (key === "about_us_banner") return (
-          <Panel key={key} label="About Us Banner" badge="BANNER" summary={rawAbout.imageUrl || rawAbout.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
-            {renderPlainBannerEditor(aboutUsSection, rawAbout, updateAbout, "about")}
+        // ── Simple Banner 1 ──────────────────────────────────────────────────
+        if (key === "simple_banner_1") return (
+          <Panel key={key} label="Simple Banner 1" badge="BANNER" summary={rawSimple1.imageUrl || rawSimple1.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
+            {renderPlainBannerEditor(simpleBanner1Section, rawSimple1, updateSimple1, "simple1")}
           </Panel>
         );
 
-        // ── Testimonials Banner ──────────────────────────────────────────────
-        if (key === "testimonials") return (
-          <Panel key={key} label="Testimonials Banner" badge="BANNER" summary={rawTestimonials.imageUrl || rawTestimonials.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
-            {renderPlainBannerEditor(testimonialsSection, rawTestimonials, updateTestimonials, "test")}
+        // ── Simple Banner 2 ──────────────────────────────────────────────
+        if (key === "simple_banner_2") return (
+          <Panel key={key} label="Simple Banner 2" badge="BANNER" summary={rawSimple2.imageUrl || rawSimple2.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
+            {renderPlainBannerEditor(simpleBanner2Section, rawSimple2, updateSimple2, "simple2")}
           </Panel>
         );
 

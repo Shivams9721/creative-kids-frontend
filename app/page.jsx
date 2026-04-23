@@ -521,12 +521,12 @@ export default function Home() {
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
-    about_us_banner: () => renderPlainBanner("about_us_banner"),
-    testimonials: () => renderPlainBanner("testimonials"),
+    simple_banner_1: () => renderPlainBanner("simple_banner_1"),
+    simple_banner_2: () => renderPlainBanner("simple_banner_2"),
   };
 
   // Fallback order when API hasn't loaded yet or section meta is empty
-  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "shop_by_category", "season_bestsellers", "featured_collection"];
+  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "shop_by_category", "simple_banner_1", "season_bestsellers", "featured_collection", "simple_banner_2"];
   const renderOrder = sortedSectionKeys.length > 0 ? sortedSectionKeys : FALLBACK_ORDER;
 
   return (
