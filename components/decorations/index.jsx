@@ -215,9 +215,9 @@ export function Mascot({ className = "", size = 120, pose = "stand" }) {
   }
 
   if (pose === "peek") {
-    // Head-only peek for corners
+    // Head-only peek for corners — viewBox 120 × 110 so the full face (cheeks + mouth) fits.
     return (
-      <svg aria-hidden="true" viewBox="0 0 120 80" width={size} height={(80 * size) / 120} fill="none" className={className}>
+      <svg aria-hidden="true" viewBox="0 0 120 110" width={size} height={(110 * size) / 120} fill="none" className={className}>
         <circle cx="60" cy="70" r="30" fill={skin} stroke={stroke} strokeWidth={sw} />
         <circle cx="36" cy="50" r="12" fill={hair} stroke={stroke} strokeWidth={sw} />
         <circle cx="84" cy="50" r="12" fill={hair} stroke={stroke} strokeWidth={sw} />
@@ -228,7 +228,7 @@ export function Mascot({ className = "", size = 120, pose = "stand" }) {
         <circle cx="70" cy="70" r="2.4" fill="#222" />
         <circle cx="51" cy="69" r="0.7" fill="white" />
         <circle cx="71" cy="69" r="0.7" fill="white" />
-        <path d="M52 80 Q 60 84, 68 80" stroke="#222" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+        <path d="M52 82 Q 60 88, 68 82" stroke="#222" strokeWidth="1.6" strokeLinecap="round" fill="none" />
       </svg>
     );
   }
@@ -257,6 +257,209 @@ export function Mascot({ className = "", size = 120, pose = "stand" }) {
       <circle cx="68.8" cy="51.3" r="0.6" fill="white" />
       <path d="M54 62 Q 60 66, 66 62" stroke="#222" strokeWidth="1.4" strokeLinecap="round" fill="none" />
     </svg>
+  );
+}
+
+export function Butterfly({ className = "", size = 28, color = "#E2889D" }) {
+  const stroke = "rgba(0,0,0,0.35)";
+  return (
+    <svg aria-hidden="true" viewBox="0 0 32 28" width={size} height={(28 * size) / 32} fill="none" className={className}>
+      {/* body */}
+      <ellipse cx="16" cy="14" rx="1.2" ry="8" fill="#5D3B24" />
+      {/* wings */}
+      <path d="M15 14 Q 4 4, 2 10 Q 3 16, 15 16 Z" fill={color} stroke={stroke} strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M15 14 Q 4 22, 3 18 Q 3 14, 15 14 Z" fill={color} opacity="0.8" stroke={stroke} strokeWidth="0.8" />
+      <path d="M17 14 Q 28 4, 30 10 Q 29 16, 17 16 Z" fill={color} stroke={stroke} strokeWidth="0.8" strokeLinejoin="round" />
+      <path d="M17 14 Q 28 22, 29 18 Q 29 14, 17 14 Z" fill={color} opacity="0.8" stroke={stroke} strokeWidth="0.8" />
+      {/* wing dots */}
+      <circle cx="7" cy="9" r="1.3" fill="#F0B95B" opacity="0.8" />
+      <circle cx="25" cy="9" r="1.3" fill="#F0B95B" opacity="0.8" />
+      {/* antennae */}
+      <path d="M15.5 7 Q 14 4, 13 3" stroke="#5D3B24" strokeWidth="0.8" strokeLinecap="round" fill="none" />
+      <path d="M16.5 7 Q 18 4, 19 3" stroke="#5D3B24" strokeWidth="0.8" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+export function Rainbow({ className = "", size = 64 }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 64 36" width={size} height={(36 * size) / 64} fill="none" className={className}>
+      <path d="M4 32 A 28 28 0 0 1 60 32" stroke="#E2889D" strokeWidth="4" strokeLinecap="round" fill="none" />
+      <path d="M10 32 A 22 22 0 0 1 54 32" stroke="#F0B95B" strokeWidth="4" strokeLinecap="round" fill="none" />
+      <path d="M16 32 A 16 16 0 0 1 48 32" stroke="#B8C9A8" strokeWidth="4" strokeLinecap="round" fill="none" />
+      <path d="M22 32 A 10 10 0 0 1 42 32" stroke="#BDD9E8" strokeWidth="4" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+export function Bunny({ className = "", size = 40 }) {
+  const skin = "#FBF7F0";
+  const stroke = "rgba(0,0,0,0.35)";
+  const cheek = "#F4A7B9";
+  return (
+    <svg aria-hidden="true" viewBox="0 0 48 56" width={size} height={(56 * size) / 48} fill="none" className={className}>
+      {/* ears */}
+      <ellipse cx="17" cy="12" rx="4" ry="11" fill={skin} stroke={stroke} strokeWidth="1" />
+      <ellipse cx="31" cy="12" rx="4" ry="11" fill={skin} stroke={stroke} strokeWidth="1" />
+      <ellipse cx="17" cy="13" rx="2" ry="8" fill={cheek} opacity="0.5" />
+      <ellipse cx="31" cy="13" rx="2" ry="8" fill={cheek} opacity="0.5" />
+      {/* head */}
+      <circle cx="24" cy="34" r="16" fill={skin} stroke={stroke} strokeWidth="1" />
+      {/* cheeks */}
+      <circle cx="16" cy="38" r="2.8" fill={cheek} opacity="0.7" />
+      <circle cx="32" cy="38" r="2.8" fill={cheek} opacity="0.7" />
+      {/* eyes */}
+      <circle cx="19" cy="32" r="1.6" fill="#222" />
+      <circle cx="29" cy="32" r="1.6" fill="#222" />
+      <circle cx="19.4" cy="31.4" r="0.5" fill="white" />
+      <circle cx="29.4" cy="31.4" r="0.5" fill="white" />
+      {/* nose + mouth */}
+      <path d="M23 37 L 25 37 L 24 38.5 Z" fill="#E2889D" />
+      <path d="M24 38.5 Q 22 40, 21 39" stroke="#222" strokeWidth="0.9" strokeLinecap="round" fill="none" />
+      <path d="M24 38.5 Q 26 40, 27 39" stroke="#222" strokeWidth="0.9" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+// Floating wrapper: makes any decoration drift up-and-down gently.
+export function Floating({ children, amplitude = 6, duration = 3.4, delay = 0, className = "" }) {
+  const reduced = useReducedMotion();
+  if (reduced) return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      className={className}
+      animate={{ y: [0, -amplitude, 0] }}
+      transition={{ duration, repeat: Infinity, ease: "easeInOut", delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Simple cat face peeking — used as a hide-and-seek variant.
+export function CatPeek({ className = "", size = 60, color = "#F7D6BE" }) {
+  const stroke = "rgba(0,0,0,0.4)";
+  const sw = 1.2;
+  return (
+    <svg aria-hidden="true" viewBox="0 0 120 80" width={size} height={(80 * size) / 120} fill="none" className={className}>
+      {/* ears */}
+      <path d="M32 40 L 40 18 L 52 42 Z" fill={color} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+      <path d="M88 40 L 80 18 L 68 42 Z" fill={color} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />
+      <path d="M36 36 L 40 25 L 47 38 Z" fill="#F4A7B9" opacity="0.7" />
+      <path d="M84 36 L 80 25 L 73 38 Z" fill="#F4A7B9" opacity="0.7" />
+      {/* head */}
+      <circle cx="60" cy="55" r="28" fill={color} stroke={stroke} strokeWidth={sw} />
+      {/* cheeks */}
+      <circle cx="45" cy="62" r="4" fill="#F4A7B9" opacity="0.7" />
+      <circle cx="75" cy="62" r="4" fill="#F4A7B9" opacity="0.7" />
+      {/* eyes (closed, happy) */}
+      <path d="M46 52 Q 50 55, 54 52" stroke="#222" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      <path d="M66 52 Q 70 55, 74 52" stroke="#222" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+      {/* nose */}
+      <path d="M58 60 L 62 60 L 60 63 Z" fill="#E2889D" />
+      {/* mouth */}
+      <path d="M60 63 Q 57 66, 54 65" stroke="#222" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      <path d="M60 63 Q 63 66, 66 65" stroke="#222" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+      {/* whiskers */}
+      <path d="M36 60 L 28 58 M 36 62 L 28 63 M 84 60 L 92 58 M 84 62 L 92 63" stroke="#222" strokeWidth="0.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Hide-and-seek wrapper: peeks in from a direction, pauses, hides, repeats.
+// direction: "top" | "left" | "right" | "bottom"
+// peekDepth: 0..1 — how far the child reveals. 1 = fully in view, 0.6 = only 60% comes out (peek-over-wall).
+export function HideAndSeek({ children, direction = "top", delay = 0, showSec = 1.8, hideSec = 2.4, peekDepth = 1, className = "" }) {
+  const reduced = useReducedMotion();
+  if (reduced) return <div className={className}>{children}</div>;
+
+  const hiddenPct = "-110%";
+  const peekPct = `${(1 - peekDepth) * -100}%`; // e.g. peekDepth 0.6 -> "-40%" (still 40% hidden)
+
+  const hiddenMap = {
+    top: { y: hiddenPct, x: 0 },
+    bottom: { y: hiddenPct.replace("-", ""), x: 0 },
+    left: { x: hiddenPct, y: 0 },
+    right: { x: hiddenPct.replace("-", ""), y: 0 },
+  };
+  const peekMap = {
+    top: { y: peekPct, x: 0 },
+    bottom: { y: peekPct.replace("-", ""), x: 0 },
+    left: { x: peekPct, y: 0 },
+    right: { x: peekPct.replace("-", ""), y: 0 },
+  };
+  const hidden = hiddenMap[direction] || hiddenMap.top;
+  const peek = peekMap[direction] || peekMap.top;
+
+  const total = showSec + hideSec;
+  return (
+    <motion.div
+      className={className}
+      initial={hidden}
+      animate={{ x: [hidden.x, peek.x, peek.x, hidden.x, hidden.x], y: [hidden.y, peek.y, peek.y, hidden.y, hidden.y] }}
+      transition={{
+        duration: total,
+        times: [0, 0.25, 0.25 + showSec / total * 0.7, 0.95, 1],
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay,
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Minimalist flying-bird silhouette with animated flapping wings.
+// The wings are drawn as a single "M" curve whose `d` attribute morphs between
+// wings-up and wings-down keyframes to create a real flap.
+function FlappingBirdSvg({ size = 28, color = "#111" }) {
+  const reduced = useReducedMotion();
+  const wingsUp = "M4 16 Q 12 2, 20 12 Q 28 2, 36 16";
+  const wingsDown = "M4 12 Q 12 22, 20 14 Q 28 22, 36 12";
+  return (
+    <svg aria-hidden="true" viewBox="0 0 40 24" width={size} height={(24 * size) / 40} fill="none">
+      {reduced ? (
+        <path d={wingsUp} stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      ) : (
+        <motion.path
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          animate={{ d: [wingsUp, wingsDown, wingsUp] }}
+          transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+    </svg>
+  );
+}
+
+// Bird that flies across a container left-to-right in a loop.
+// Gentle bob on Y axis, wings flap while flying.
+// Container must have `overflow-hidden` and fixed height.
+export function FlyingBird({ className = "", size = 28, color = "#111", duration = 10, delay = 0 }) {
+  const reduced = useReducedMotion();
+  if (reduced) {
+    return (
+      <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${className}`}>
+        <FlappingBirdSvg size={size} color={color} />
+      </div>
+    );
+  }
+  return (
+    <motion.div
+      className={`absolute top-1/2 -translate-y-1/2 ${className}`}
+      initial={{ left: "-10%" }}
+      animate={{ left: ["-10%", "110%"], y: [0, -6, 0, 6, 0] }}
+      transition={{
+        left: { duration, repeat: Infinity, ease: "linear", delay },
+        y: { duration: duration / 4, repeat: Infinity, ease: "easeInOut", delay },
+      }}
+    >
+      <FlappingBirdSvg size={size} color={color} />
+    </motion.div>
   );
 }
 

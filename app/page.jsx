@@ -12,7 +12,7 @@ import { useCart } from "@/context/CartContext";
 import { memo } from "react";
 import QuickViewModal from "@/components/QuickViewModal";
 import TrustBadges from "@/components/TrustBadges";
-import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird, Mascot } from "@/components/decorations";
+import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, Heart as DecoHeart, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird, Mascot, CatPeek, HideAndSeek, Butterfly, Rainbow, Bunny, Floating, FlyingBird } from "@/components/decorations";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
@@ -390,7 +390,10 @@ export default function Home() {
 
   const renderShopByCategory = () => (
     !loading && isEnabled("shop_by_category") && categoryItems.length > 0 && (
-      <section key="shop_by_category" className="pt-5 sm:pt-6 md:pt-8 pb-12 sm:pb-16 md:pb-20 bg-white relative">
+      <section key="shop_by_category" className="pt-5 sm:pt-6 md:pt-8 pb-12 sm:pb-16 md:pb-20 bg-white relative overflow-hidden">
+        <div aria-hidden="true" className="pointer-events-none absolute top-0 left-0 right-0 h-16 sm:h-20 md:h-24 z-10">
+          <FlyingBird size={26} duration={11} />
+        </div>
         <div className="max-w-[1600px] mx-auto">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.shop_by_category?.subtitle || "Discover"}</span>
@@ -417,6 +420,24 @@ export default function Home() {
             })}
           </div>
         </div>
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-3 h-14 sm:h-20 md:h-24 pointer-events-none overflow-hidden">
+          <Floating duration={3.6} className="absolute left-[12%] bottom-4" amplitude={8}>
+            <Butterfly size={28} color="#E2889D" />
+          </Floating>
+          <Floating duration={4.2} delay={0.6} className="absolute left-[42%] bottom-8" amplitude={10}>
+            <Butterfly size={22} color="#F0B95B" />
+          </Floating>
+          <Floating duration={3.8} delay={1.1} className="absolute right-[14%] bottom-5" amplitude={9}>
+            <Butterfly size={26} color="#BDD9E8" />
+          </Floating>
+          <div className="absolute left-[28%] bottom-10"><AnimatedSparkle size={10} color="#F0B95B" /></div>
+          <div className="absolute right-[30%] bottom-12"><AnimatedSparkle size={12} color="#E2889D" /></div>
+          <div className="absolute right-[6%] bottom-0 overflow-hidden w-[38px] h-[44px]">
+            <HideAndSeek direction="bottom" showSec={2} hideSec={3} delay={1.5} peekDepth={0.7}>
+              <Bunny size={40} />
+            </HideAndSeek>
+          </div>
+        </div>
         <WavyDivider className="absolute bottom-0 left-0" />
       </section>
     )
@@ -426,9 +447,18 @@ export default function Home() {
     isEnabled("girls_new_arrivals") && (
       <section key="girls_new_arrivals" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
         <div className="absolute top-3 left-3 opacity-70 md:hidden"><AnimatedCloud size={38} /></div>
-        <div className="absolute -top-2 right-2 md:hidden pointer-events-none z-10"><Mascot pose="peek" size={60} /></div>
+        <div className="absolute top-0 right-2 md:hidden pointer-events-none z-10 overflow-hidden w-[60px] h-[60px]">
+          <HideAndSeek direction="bottom" showSec={1.8} hideSec={2.6} delay={0.5}>
+            <Mascot pose="peek" size={60} />
+          </HideAndSeek>
+        </div>
         <div className="hidden md:block absolute top-4 left-8 opacity-70"><AnimatedCloud size={56} /></div>
-        <div className="hidden md:block absolute top-6 right-10 opacity-70"><AnimatedStar size={16} color="#E2889D" /></div>
+        <div className="hidden md:block absolute top-20 left-24 opacity-70"><AnimatedStar size={16} color="#E2889D" /></div>
+        <div className="hidden md:block absolute top-0 right-8 pointer-events-none z-10 overflow-hidden w-[110px] h-[110px]">
+          <HideAndSeek direction="bottom" showSec={2.2} hideSec={3} delay={0.5}>
+            <Mascot pose="peek" size={110} />
+          </HideAndSeek>
+        </div>
         <div className="w-full relative">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-[#E2889D] mb-1">{sectionMeta.girls_new_arrivals?.subtitle || "Discover"}</span>
@@ -462,10 +492,19 @@ export default function Home() {
   const renderBestsellers = () => (
     isEnabled("season_bestsellers") && (
       <section key="season_bestsellers" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
-        <div className="absolute top-3 left-3 opacity-70 md:hidden"><AnimatedStar size={14} color="#F0B95B" /></div>
-        <div className="absolute top-4 right-3 md:hidden"><AnimatedSparkle size={10} color="#F0B95B" /></div>
-        <div className="hidden md:block absolute top-4 left-12 opacity-70"><AnimatedStar size={18} color="#F0B95B" /></div>
+        <div className="absolute top-3 right-3 opacity-70 md:hidden"><AnimatedStar size={14} color="#F0B95B" /></div>
+        <div className="absolute -top-1 left-2 md:hidden pointer-events-none z-10 overflow-hidden w-[54px] h-[40px]">
+          <HideAndSeek direction="top" showSec={2} hideSec={2.8} delay={1.2} peekDepth={0.75}>
+            <CatPeek size={54} />
+          </HideAndSeek>
+        </div>
+        <div className="hidden md:block absolute top-6 left-28 opacity-70"><AnimatedStar size={18} color="#F0B95B" /></div>
         <div className="hidden md:block absolute top-8 right-16"><AnimatedSparkle size={12} color="#F0B95B" /></div>
+        <div className="hidden md:block absolute -top-2 left-8 pointer-events-none z-10 overflow-hidden w-[100px] h-[70px]">
+          <HideAndSeek direction="top" showSec={2.4} hideSec={3.2} delay={1.4} peekDepth={0.75}>
+            <CatPeek size={100} />
+          </HideAndSeek>
+        </div>
         <div className="w-full relative">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.season_bestsellers?.subtitle || "Favorites"}</span>
@@ -490,6 +529,9 @@ export default function Home() {
               <AnimatedSparkle color="#F0B95B" size={12} />
             </div>
           </div>
+          <div className="flex justify-center mt-3">
+            <Floating duration={3.6} amplitude={5}><Rainbow size={44} /></Floating>
+          </div>
         </div>
         <WavyDivider className="absolute bottom-0 left-0" />
       </section>
@@ -500,9 +542,18 @@ export default function Home() {
     isEnabled("featured_collection") && (
       <section key="featured_collection" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
         <div className="absolute top-3 right-3 opacity-70 md:hidden"><AnimatedCloud size={36} /></div>
-        <div className="absolute top-4 left-3 opacity-80 md:hidden"><AnimatedFlower size={16} /></div>
+        <div className="absolute top-2 left-1 md:hidden pointer-events-none z-10 overflow-hidden w-[48px] h-[34px]">
+          <HideAndSeek direction="left" showSec={2} hideSec={2.8} delay={0.8}>
+            <Bird size={42} color="#BDD9E8" />
+          </HideAndSeek>
+        </div>
         <div className="hidden md:block absolute top-4 right-12 opacity-70"><AnimatedCloud size={48} /></div>
-        <div className="hidden md:block absolute top-6 left-10 opacity-80"><AnimatedFlower size={22} /></div>
+        <div className="hidden md:block absolute top-6 left-28 opacity-80"><AnimatedFlower size={22} /></div>
+        <div className="hidden md:block absolute top-4 left-2 pointer-events-none z-10 overflow-hidden w-[90px] h-[60px]">
+          <HideAndSeek direction="left" showSec={2.4} hideSec={3.2} delay={0.9}>
+            <Bird size={80} color="#BDD9E8" />
+          </HideAndSeek>
+        </div>
         <div className="w-full relative">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.featured_collection?.subtitle || "Trending Now"}</span>
@@ -526,6 +577,10 @@ export default function Home() {
               <Link href="/shop" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">Discover All</Link>
               <AnimatedLeaf color="#BDD9E8" size={14} className="scale-x-[-1]" />
             </div>
+          </div>
+          <div className="flex justify-center mt-3 gap-3">
+            <Floating duration={3.4} amplitude={4}><DecoHeart size={12} color="#BDD9E8" /></Floating>
+            <Floating duration={4.2} delay={0.4} amplitude={6}><Butterfly size={22} color="#BDD9E8" /></Floating>
           </div>
         </div>
         <WavyDivider className="absolute bottom-0 left-0" />
@@ -607,7 +662,14 @@ export default function Home() {
     if (!imageUrl && !mobileImageUrl) return null;
     const displayTitle = overrideTitle ?? title;
     return (
-      <section key={key} className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
+      <section key={key} className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5 relative overflow-hidden">
+        {/* Mobile corner decorations */}
+        <div className="absolute top-3 left-3 opacity-70 md:hidden"><AnimatedFlower size={18} petal={squiggleColor || "#E2889D"} /></div>
+        <div className="absolute top-3 right-3 md:hidden"><AnimatedSparkle size={12} color={squiggleColor || "#E2889D"} /></div>
+        {/* Desktop corner decorations */}
+        <div className="hidden md:block absolute top-5 left-10 opacity-70"><AnimatedFlower size={26} petal={squiggleColor || "#E2889D"} /></div>
+        <div className="hidden md:block absolute top-6 right-14 opacity-70"><AnimatedStar size={18} color={squiggleColor || "#E2889D"} /></div>
+        <div className="hidden md:block absolute top-16 right-32"><AnimatedSparkle size={14} color={squiggleColor || "#E2889D"} /></div>
         <div className="w-full relative max-w-[1600px] mx-auto">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             {!overrideTitle && subtitle && <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{subtitle}</span>}

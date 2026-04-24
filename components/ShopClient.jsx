@@ -10,7 +10,7 @@ import { ChevronDown, SlidersHorizontal, Heart, X, Eye } from "lucide-react";
 import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
 import { useCart } from "@/context/CartContext";
 import QuickViewModal from "@/components/QuickViewModal";
-import { Mascot, SquiggleUnderline, AnimatedSparkle } from "@/components/decorations";
+import { Mascot, SquiggleUnderline, AnimatedSparkle, Star, Heart as DecoHeart, Flower, Floating } from "@/components/decorations";
 
 // Filter Constants — sizes match exactly what's stored in DB (admin form format)
 const SIZE_GROUPS = {
@@ -181,6 +181,12 @@ export default function ShopClient({ initialProducts }) {
                 {index < arr.length - 1 && <span>/</span>}
               </div>
             ))}
+            <div aria-hidden="true" className="ml-2 sm:ml-4 flex items-center gap-3 sm:gap-4">
+              <Floating duration={3.2} amplitude={3}><AnimatedSparkle size={11} color="#E2889D" /></Floating>
+              <Floating duration={3.6} delay={0.3} amplitude={4}><Star size={12} color="#F0B95B" stroke="rgba(0,0,0,0.25)" /></Floating>
+              <Floating duration={3.4} delay={0.6} amplitude={3}><DecoHeart size={12} color="#BDD9E8" /></Floating>
+              <Floating duration={3.8} delay={0.9} amplitude={4}><Flower size={14} petal="#B8C9A8" /></Floating>
+            </div>
           </div>
 
           {/* Title + Results */}
