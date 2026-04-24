@@ -648,26 +648,17 @@ export default function Home() {
     featured_collection: renderFeaturedCollection,
     simple_banner_1: () => renderCardBanner("simple_banner_1"),
     simple_banner_2: () => renderPlainBanner("simple_banner_2"),
+    trust_badges: () => <TrustBadges key="trust_badges" />,
   };
 
   // Fallback order when API hasn't loaded yet or section meta is empty
-  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "shop_by_category", "simple_banner_1", "season_bestsellers", "featured_collection", "simple_banner_2"];
+  const FALLBACK_ORDER = ["hero_banner", "girls_new_arrivals", "shop_by_category", "simple_banner_1", "trust_badges", "season_bestsellers", "featured_collection", "simple_banner_2"];
   const renderOrder = sortedSectionKeys.length > 0 ? sortedSectionKeys : FALLBACK_ORDER;
 
   return (
     <main className="min-h-screen bg-white">
       {renderOrder.map(key => {
         const renderer = SECTION_RENDERERS[key];
-        
-        if (key === "simple_banner_2") {
-          return (
-            <div key={`wrapper_${key}`} className="w-full flex flex-col">
-              <TrustBadges />
-              {renderer ? renderer() : null}
-            </div>
-          );
-        }
-        
         return renderer ? renderer() : null;
       })}
 
