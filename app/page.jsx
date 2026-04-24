@@ -127,9 +127,10 @@ function ProductCarousel({ products, loading, wishlist, toggleWishlist, setQuick
       ref.current.scrollBy({ left: dir * (window.innerWidth > 1024 ? window.innerWidth * 0.22 : window.innerWidth * 0.5), behavior: "smooth" });
     }
   };
+
   if (loading) {
     return (
-      <div className="flex gap-4 md:gap-0 px-4 md:px-0 overflow-x-auto [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+      <div className="flex gap-4 md:gap-0 px-[12.5vw] sm:px-[27.5vw] md:px-0 overflow-x-auto [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
         {Array.from({ length: skeletonCount }).map((_, i) => <GridCardSkeleton key={i} />)}
       </div>
     );
@@ -142,9 +143,9 @@ function ProductCarousel({ products, loading, wishlist, toggleWishlist, setQuick
       <button onClick={() => scrollBy(1)} className="hidden md:flex absolute right-8 lg:right-12 top-[40%] -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur-sm border border-black/10 rounded-full items-center justify-center text-black hover:bg-black hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-xl">
         <ChevronRight size={20} strokeWidth={1} />
       </button>
-      <div ref={ref} className="flex gap-4 md:gap-1 px-4 md:px-0 overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+      <div ref={ref} className="flex gap-4 md:gap-1 px-[12.5vw] sm:px-[27.5vw] md:px-0 overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
         {products.map((product, index) => (
-          <div key={product ? `prod-${product.id}-${index}` : `empty-${index}`} className="snap-start">
+          <div key={product ? `prod-${product.id}-${index}` : `empty-${index}`} className="snap-center md:snap-start">
             <GridCard product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} onQuickView={setQuickViewId} />
           </div>
         ))}
