@@ -214,10 +214,15 @@ export default function Navbar() {
 
             <Link
               href="/"
-              className={`text-[16px] sm:text-lg md:text-2xl font-bold tracking-[0.05em] sm:tracking-[0.1em] md:tracking-[0.15em] uppercase whitespace-nowrap hover:opacity-50 transition-all duration-300 ${isTransparent ? 'text-white' : 'text-black'}`}
-              style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}
+              aria-label="Creative Kids"
+              className="flex items-center hover:opacity-50 transition-opacity duration-300"
             >
-              Creative Kids
+              <img
+                src="/images/text-1777028358325.png"
+                alt="Creative Kids"
+                className={`h-7 sm:h-8 md:h-10 w-auto object-contain ${isTransparent ? 'invert brightness-0 contrast-200' : ''}`}
+                style={isTransparent ? { filter: 'brightness(0) invert(1)' } : undefined}
+              />
             </Link>
 
             <div className="hidden lg:flex items-center gap-8 h-full">
@@ -407,10 +412,14 @@ export default function Navbar() {
                 </button>
                 <Link
                   href="/"
-                  className="text-[15px] sm:text-lg font-bold tracking-[0.05em] uppercase text-black md:hidden whitespace-nowrap hover:opacity-50 transition-opacity duration-300"
-                  style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}
+                  aria-label="Creative Kids"
+                  className="md:hidden flex items-center hover:opacity-50 transition-opacity duration-300"
                 >
-                  Creative Kids
+                  <img
+                    src="/images/text-1777028358325.png"
+                    alt="Creative Kids"
+                    className="h-7 sm:h-8 w-auto object-contain"
+                  />
                 </Link>
 
                 <Link href={isLoggedIn ? "/profile" : "/login"} className="md:hidden text-black hover:opacity-50">

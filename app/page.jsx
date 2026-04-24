@@ -12,7 +12,7 @@ import { useCart } from "@/context/CartContext";
 import { memo } from "react";
 import QuickViewModal from "@/components/QuickViewModal";
 import TrustBadges from "@/components/TrustBadges";
-import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird } from "@/components/decorations";
+import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird, Mascot } from "@/components/decorations";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
@@ -414,6 +414,8 @@ export default function Home() {
   const renderNewArrivals = () => (
     isEnabled("girls_new_arrivals") && (
       <section key="girls_new_arrivals" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
+        <div className="absolute top-3 left-3 opacity-70 md:hidden"><AnimatedCloud size={38} /></div>
+        <div className="absolute -top-2 right-2 md:hidden pointer-events-none z-10"><Mascot pose="peek" size={60} /></div>
         <div className="hidden md:block absolute top-4 left-8 opacity-70"><AnimatedCloud size={56} /></div>
         <div className="hidden md:block absolute top-6 right-10 opacity-70"><AnimatedStar size={16} color="#E2889D" /></div>
         <div className="w-full relative">
@@ -449,6 +451,8 @@ export default function Home() {
   const renderBestsellers = () => (
     isEnabled("season_bestsellers") && (
       <section key="season_bestsellers" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
+        <div className="absolute top-3 left-3 opacity-70 md:hidden"><AnimatedStar size={14} color="#F0B95B" /></div>
+        <div className="absolute top-4 right-3 md:hidden"><AnimatedSparkle size={10} color="#F0B95B" /></div>
         <div className="hidden md:block absolute top-4 left-12 opacity-70"><AnimatedStar size={18} color="#F0B95B" /></div>
         <div className="hidden md:block absolute top-8 right-16"><AnimatedSparkle size={12} color="#F0B95B" /></div>
         <div className="w-full relative">
@@ -484,6 +488,8 @@ export default function Home() {
   const renderFeaturedCollection = () => (
     isEnabled("featured_collection") && (
       <section key="featured_collection" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
+        <div className="absolute top-3 right-3 opacity-70 md:hidden"><AnimatedCloud size={36} /></div>
+        <div className="absolute top-4 left-3 opacity-80 md:hidden"><AnimatedFlower size={16} /></div>
         <div className="hidden md:block absolute top-4 right-12 opacity-70"><AnimatedCloud size={48} /></div>
         <div className="hidden md:block absolute top-6 left-10 opacity-80"><AnimatedFlower size={22} /></div>
         <div className="w-full relative">
@@ -582,18 +588,20 @@ export default function Home() {
     );
   };
 
-  const renderCardBanner = (key) => {
+  const renderCardBanner = (key, overrideTitle = null, squiggleColor = null) => {
     if (!isEnabled(key)) return null;
     const data = banners[key];
     if (!data) return null;
     const { imageUrl, mobileImageUrl, title, subtitle, ctaHref } = data;
     if (!imageUrl && !mobileImageUrl) return null;
+    const displayTitle = overrideTitle ?? title;
     return (
       <section key={key} className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
         <div className="w-full relative max-w-[1600px] mx-auto">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
-            {subtitle && <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{subtitle}</span>}
-            {title && <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
+            {!overrideTitle && subtitle && <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{subtitle}</span>}
+            {displayTitle && <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{displayTitle}</h2>}
+            {squiggleColor && <SquiggleUnderline className="mt-2" color={squiggleColor} />}
           </div>
           <div className="px-4 md:px-8">
             {ctaHref ? (
@@ -647,8 +655,8 @@ export default function Home() {
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
-    simple_banner_1: () => renderCardBanner("simple_banner_1"),
-    simple_banner_2: () => renderPlainBanner("simple_banner_2"),
+    simple_banner_1: () => renderCardBanner("simple_banner_1", "About Us", "#E2889D"),
+    simple_banner_2: () => renderCardBanner("simple_banner_2", "Testimonials", "#BDD9E8"),
     trust_badges: () => <TrustBadges key="trust_badges" />,
   };
 

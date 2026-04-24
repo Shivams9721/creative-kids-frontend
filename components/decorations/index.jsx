@@ -1,5 +1,6 @@
 "use client";
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 // Hand-coded SVG decorations for Creative Kids.
 // Palette: pink #E2889D, sage #B8C9A8, amber #F0B95B, sky #BDD9E8, cream #FBF7F0, brown #8B6F4E
@@ -286,6 +287,14 @@ export function EmptyCartScene({ className = "" }) {
 
 export function FooterScene({ className = "" }) {
   const reduced = useReducedMotion();
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const drift = reduced ? {} : { animate: { x: [0, 8, 0] }, transition: { duration: 9, repeat: Infinity, ease: "easeInOut" } };
   const drift2 = reduced ? {} : { animate: { x: [0, -6, 0] }, transition: { duration: 11, repeat: Infinity, ease: "easeInOut" } };
   const flap = reduced ? {} : { animate: { y: [0, -4, 0] }, transition: { duration: 2.2, repeat: Infinity, ease: "easeInOut" } };
@@ -293,39 +302,51 @@ export function FooterScene({ className = "" }) {
   const swayFlower = (dur, delay = 0) => reduced ? {} : ({ animate: { rotate: [-6, 6, -6] }, transition: { duration: dur, repeat: Infinity, ease: "easeInOut", delay } });
   const swayGrass = (dur, delay = 0) => reduced ? {} : ({ animate: { rotate: [-3, 3, -3] }, transition: { duration: dur, repeat: Infinity, ease: "easeInOut", delay } });
 
+  const treeSize = isMobile ? 64 : 110;
+  const treeRightSize = isMobile ? 56 : 96;
+  const mascotSize = isMobile ? 74 : 120;
+  const mascotLeft = isMobile ? "25%" : "8rem";
+  const grassSizes = isMobile ? [28, 24, 30, 26, 28] : [46, 38, 50, 40, 44, 36, 42];
+  const grassLefts = isMobile ? [4, 24, 48, 70, 92] : [4, 16, 34, 52, 68, 82, 93];
+  const flowerSpots = isMobile ? [14, 36, 58, 80] : [8, 22, 48, 62, 76, 84, 94];
   const flowerColors = ["#E2889D", "#F0B95B", "#BDD9E8", "#E2889D", "#F0B95B", "#BDD9E8", "#E2889D"];
-  const flowerSpots = [8, 22, 48, 62, 76, 84, 94];
+  const cloudBig = isMobile ? 32 : 48;
+  const cloudSmall = isMobile ? 24 : 34;
+  const birdSize = isMobile ? 18 : 26;
 
   return (
-    <div className={`relative w-full h-40 sm:h-44 overflow-hidden ${className}`}>
+    <div className={`relative w-full h-32 sm:h-40 md:h-44 overflow-hidden ${className}`}>
       {/* Sky */}
-      <motion.div className="absolute top-4 left-1/3" {...drift}><Cloud size={48} /></motion.div>
-      <motion.div className="absolute top-8 right-1/4" {...drift2}><Cloud size={34} /></motion.div>
-      <motion.div className="absolute top-6 left-1/2" {...flap}><Bird size={26} /></motion.div>
+      <motion.div className="absolute top-2 sm:top-4 left-1/3" {...drift}><Cloud size={cloudBig} /></motion.div>
+      <motion.div className="absolute top-5 sm:top-8 right-1/4" {...drift2}><Cloud size={cloudSmall} /></motion.div>
+      <motion.div className="absolute top-4 sm:top-6 left-1/2" {...flap}><Bird size={birdSize} /></motion.div>
 
       {/* Trees & mascot */}
-      <motion.div className="absolute left-4 bottom-4 origin-bottom" {...sway}><Tree size={110} /></motion.div>
-      <div className="absolute left-32 bottom-4"><Mascot pose="stand" size={120} /></div>
-      <motion.div className="absolute right-4 bottom-4 origin-bottom" {...sway}><Tree size={96} /></motion.div>
+      <motion.div className="absolute left-2 sm:left-4 bottom-3 sm:bottom-4 origin-bottom" {...sway}><Tree size={treeSize} /></motion.div>
+      <div className="absolute bottom-3 sm:bottom-4" style={{ left: mascotLeft }}><Mascot pose="stand" size={mascotSize} /></div>
+      <motion.div className="absolute right-2 sm:right-4 bottom-3 sm:bottom-4 origin-bottom" {...sway}><Tree size={treeRightSize} /></motion.div>
 
-      {/* Ground: grass tufts spread across */}
-      <motion.div className="absolute bottom-0 left-[4%] origin-bottom" {...swayGrass(3.4, 0)}><Grass size={46} /></motion.div>
-      <motion.div className="absolute bottom-0 left-[16%] origin-bottom" {...swayGrass(3.8, 0.4)}><Grass size={38} color="#9FB695" /></motion.div>
-      <motion.div className="absolute bottom-0 left-[34%] origin-bottom" {...swayGrass(4.1, 0.8)}><Grass size={50} /></motion.div>
-      <motion.div className="absolute bottom-0 left-[52%] origin-bottom" {...swayGrass(3.2, 0.2)}><Grass size={40} color="#9FB695" /></motion.div>
-      <motion.div className="absolute bottom-0 left-[68%] origin-bottom" {...swayGrass(3.7, 0.6)}><Grass size={44} /></motion.div>
-      <motion.div className="absolute bottom-0 left-[82%] origin-bottom" {...swayGrass(4, 1)}><Grass size={36} color="#9FB695" /></motion.div>
-      <motion.div className="absolute bottom-0 left-[93%] origin-bottom" {...swayGrass(3.5, 0.3)}><Grass size={42} /></motion.div>
+      {/* Ground grass */}
+      {grassLefts.map((left, i) => (
+        <motion.div
+          key={`g-${i}`}
+          className="absolute bottom-0 origin-bottom"
+          style={{ left: `${left}%` }}
+          {...swayGrass(3.4 + (i % 3) * 0.3, (i % 4) * 0.25)}
+        >
+          <Grass size={grassSizes[i % grassSizes.length]} color={i % 2 ? "#9FB695" : "#B8C9A8"} />
+        </motion.div>
+      ))}
 
-      {/* Flowers dotted along the ground */}
+      {/* Flowers */}
       {flowerSpots.map((left, i) => (
         <motion.div
-          key={i}
+          key={`f-${i}`}
           className="absolute bottom-1 origin-bottom"
           style={{ left: `${left}%` }}
           {...swayFlower(3 + (i % 3) * 0.5, (i % 4) * 0.3)}
         >
-          <Flower size={16 + (i % 2) * 4} petal={flowerColors[i]} />
+          <Flower size={isMobile ? 12 : 16 + (i % 2) * 4} petal={flowerColors[i]} />
         </motion.div>
       ))}
     </div>

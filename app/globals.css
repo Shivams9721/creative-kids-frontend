@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Brittany Signature — commercial font. Drop the file at /public/fonts/BrittanySignature.woff2
+   (or .ttf) for it to render. Until then it falls back to cursive. */
+@font-face {
+  font-family: 'Brittany Signature';
+  src: url('/fonts/BrittanySignature.woff2') format('woff2'),
+       url('/fonts/BrittanySignature.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #000000;
