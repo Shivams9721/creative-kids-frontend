@@ -428,7 +428,9 @@ export default function HomepageAdminPage() {
   const updateSimple2 = (key, value) => { if (simpleBanner2Section?.id) setSectionField(simpleBanner2Section.id, "settings_json", { ...rawSimple2, [key]: value }); };
 
   const isBusy = saving || publishing || Object.keys(uploadProgress).length > 0;
-  const sortedSections = [...sections].sort((a, b) => a.display_order - b.display_order);
+  const sortedSections = [...sections]
+    .filter(s => s.section_key !== "about_us_banner" && s.section_key !== "testimonials")
+    .sort((a, b) => a.display_order - b.display_order);
 
   // ── Shared banner editor (About Us / Testimonials) ─────────────────────────
   const renderPlainBannerEditor = (sec, rawSettings, updateField, idPrefix) => {
@@ -734,6 +736,15 @@ export default function HomepageAdminPage() {
         if (key === "simple_banner_2") return (
           <Panel key={key} label="Simple Banner 2" badge="BANNER" summary={rawSimple2.imageUrl || rawSimple2.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
             {renderPlainBannerEditor(simpleBanner2Section, rawSimple2, updateSimple2, "simple2")}
+          </Panel>
+        );
+
+        // ── Trust Badges ──────────────────────────────────────────────
+        if (key === "trust_badges") return (
+          <Panel key={key} label="Trust Badges" badge="STATIC" summary="Free Delivery, Secure Payment, etc." {...panelProps}>
+            <div style={{ padding: "10px 12px", background: "var(--bg3)", borderRadius: 8, fontSize: 11, color: "var(--text3)", lineHeight: 1.5 }}>
+              This section displays four trust badges (Free Delivery, Secure Payment, Easy Returns, Customer Service) along with Visa, Mastercard, PayPal, and UPI logos. It is automatically placed before Simple Banner 2. Use the toggle switch above to show or hide it on the live site.
+            </div>
           </Panel>
         );
 
