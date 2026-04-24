@@ -16,6 +16,7 @@ const CTA_OPTIONS = [
   { label: "Shorts / Skirts", value: "/shop/kids-girl/shorts-skirts-skorts" },
   { label: "Infants / Rompers", value: "/shop/baby-boy/onesies-rompers" },
   { label: "Clothing Sets", value: "/shop/baby-girl/clothing-sets" },
+  { label: "About Us", value: "/about" },
   { label: "Contact Us", value: "/contact" },
   { label: "Custom URL...", value: "__custom__" },
 ];
@@ -466,6 +467,48 @@ export default function HomepageAdminPage() {
     );
   };
 
+  // ── Card banner editor (Simple Banner 1) ───────────────────────────────────
+  const renderCardBannerEditor = (sec, rawSettings, updateField, idPrefix) => {
+    if (!sec) return (
+      <div style={{ padding: 20, textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
+        Section loading… <button className="btn btn-sm" onClick={load} style={{ marginLeft: 8 }}>Reload</button>
+      </div>
+    );
+    const mType = (isVideoUrl(rawSettings.imageUrl) || isVideoUrl(rawSettings.mobileImageUrl)) ? "video" : (rawSettings.mediaType || "image");
+    const accept = mType === "video" ? "video/mp4,video/webm" : "image/*";
+    const switchMedia = (newType) => {
+      if (mType === newType) return;
+      if ((rawSettings.imageUrl || rawSettings.mobileImageUrl) && !confirm(`Switch to ${newType}? Media will be cleared.`)) return;
+      updateField("imageUrl", ""); updateField("mobileImageUrl", "");
+      setTimeout(() => updateField("mediaType", newType), 0);
+    };
+    return (
+      <div>
+        <div style={{ padding: "10px 12px", background: "var(--bg3)", borderRadius: 8, marginBottom: 16, fontSize: 11, color: "var(--text3)", lineHeight: 1.5 }}>
+          This is a card banner — it displays a section title and subtitle above the image/video, and acts as a clickable card.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid var(--border)" }}>
+          <div><div className="field-label">Title</div><input className="field-input" value={sec.title || ""} onChange={e => setSectionField(sec.id, "title", e.target.value)} placeholder="e.g. About Us" /></div>
+          <div><div className="field-label">Subtitle</div><input className="field-input" value={sec.subtitle || ""} onChange={e => setSectionField(sec.id, "subtitle", e.target.value)} placeholder="e.g. Our Story" /></div>
+          <div><div className="field-label">CTA Link</div><CtaLinkSelect value={rawSettings.ctaHref || ""} onChange={v => updateField("ctaHref", v)} /></div>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", padding: "8px 12px", background: "var(--bg3)", borderRadius: 8, marginBottom: 16 }}>
+          <span style={{ fontSize: 11, color: "var(--text3)", flex: 1 }}>Media Type</span>
+          <button className={`btn btn-sm${mType === "image" ? " btn-accent" : ""}`} onClick={() => switchMedia("image")}>Image</button>
+          <button className={`btn btn-sm${mType === "video" ? " btn-accent" : ""}`} onClick={() => switchMedia("video")}>Video</button>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <MediaSlot label="Desktop Banner" url={rawSettings.imageUrl} progressKey={`${idPrefix}-d`} uploadProgress={uploadProgress}
+            onUpload={() => uploadFile(url => updateField("imageUrl", url), rawSettings.imageUrl, `${idPrefix}-d`, accept, "Desktop banner")}
+            onRemove={() => { deleteFromS3(rawSettings.imageUrl); updateField("imageUrl", ""); }} />
+          <MediaSlot label="Mobile Banner" optional url={rawSettings.mobileImageUrl} progressKey={`${idPrefix}-m`} uploadProgress={uploadProgress}
+            onUpload={() => uploadFile(url => updateField("mobileImageUrl", url), rawSettings.mobileImageUrl, `${idPrefix}-m`, accept, "Mobile banner")}
+            onRemove={() => { deleteFromS3(rawSettings.mobileImageUrl); updateField("mobileImageUrl", ""); }} />
+        </div>
+      </div>
+    );
+  };
+
   const renderBannerEditor = (sec, rawSettings, updateField, idPrefix) => {
     if (!sec) return (
       <div style={{ padding: 20, textAlign: "center", color: "var(--text3)", fontSize: 12 }}>
@@ -682,8 +725,8 @@ export default function HomepageAdminPage() {
 
         // ── Simple Banner 1 ──────────────────────────────────────────────────
         if (key === "simple_banner_1") return (
-          <Panel key={key} label="Simple Banner 1" badge="BANNER" summary={rawSimple1.imageUrl || rawSimple1.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
-            {renderPlainBannerEditor(simpleBanner1Section, rawSimple1, updateSimple1, "simple1")}
+          <Panel key={key} label="Simple Banner 1" badge="CARD BANNER" summary={rawSimple1.imageUrl || rawSimple1.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
+            {renderCardBannerEditor(simpleBanner1Section, rawSimple1, updateSimple1, "simple1")}
           </Panel>
         );
 

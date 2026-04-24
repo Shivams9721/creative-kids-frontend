@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -11,6 +11,7 @@ import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
 import { useCart } from "@/context/CartContext";
 import { memo } from "react";
 import QuickViewModal from "@/components/QuickViewModal";
+import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird } from "@/components/decorations";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
@@ -151,6 +152,44 @@ function ProductCarousel({ products, loading, wishlist, toggleWishlist, setQuick
   );
 }
 
+function ShopByCategoryMeadow() {
+  const reduced = useReducedMotion();
+  const drift = reduced ? {} : { animate: { x: [0, 12, 0] }, transition: { duration: 10, repeat: Infinity, ease: "easeInOut" } };
+  const drift2 = reduced ? {} : { animate: { x: [0, -10, 0] }, transition: { duration: 12, repeat: Infinity, ease: "easeInOut" } };
+  const flap = reduced ? {} : { animate: { y: [0, -5, 0] }, transition: { duration: 2.4, repeat: Infinity, ease: "easeInOut" } };
+  const swayFlower = (d, dl = 0) => reduced ? {} : ({ animate: { rotate: [-6, 6, -6] }, transition: { duration: d, repeat: Infinity, ease: "easeInOut", delay: dl } });
+  const swayGrass = (d, dl = 0) => reduced ? {} : ({ animate: { rotate: [-3, 3, -3] }, transition: { duration: d, repeat: Infinity, ease: "easeInOut", delay: dl } });
+  const flowerSpots = [6, 18, 30, 44, 56, 70, 82, 94];
+  const flowerColors = ["#E2889D", "#F0B95B", "#BDD9E8", "#E2889D", "#F0B95B", "#BDD9E8", "#E2889D", "#F0B95B"];
+  return (
+    <div aria-hidden="true" className="absolute inset-x-0 bottom-3 h-16 sm:h-20 md:h-24 pointer-events-none overflow-hidden">
+      <motion.div className="absolute top-1 left-[15%]" {...drift}><Cloud size={40} /></motion.div>
+      <motion.div className="absolute top-3 right-[20%]" {...drift2}><Cloud size={30} /></motion.div>
+      <motion.div className="absolute top-2 left-[50%]" {...flap}><Bird size={22} color="#BDD9E8" /></motion.div>
+
+      <motion.div className="absolute bottom-0 left-[3%] origin-bottom" {...swayGrass(3.4, 0)}><Grass size={36} /></motion.div>
+      <motion.div className="absolute bottom-0 left-[14%] origin-bottom" {...swayGrass(3.8, 0.3)}><Grass size={30} color="#9FB695" /></motion.div>
+      <motion.div className="absolute bottom-0 left-[26%] origin-bottom" {...swayGrass(4, 0.6)}><Grass size={40} /></motion.div>
+      <motion.div className="absolute bottom-0 left-[40%] origin-bottom" {...swayGrass(3.2, 0.2)}><Grass size={32} color="#9FB695" /></motion.div>
+      <motion.div className="absolute bottom-0 left-[55%] origin-bottom" {...swayGrass(3.7, 0.5)}><Grass size={38} /></motion.div>
+      <motion.div className="absolute bottom-0 left-[70%] origin-bottom" {...swayGrass(3.9, 0.8)}><Grass size={34} color="#9FB695" /></motion.div>
+      <motion.div className="absolute bottom-0 left-[84%] origin-bottom" {...swayGrass(3.5, 0.4)}><Grass size={38} /></motion.div>
+      <motion.div className="absolute bottom-0 left-[95%] origin-bottom" {...swayGrass(3.6, 0.1)}><Grass size={30} /></motion.div>
+
+      {flowerSpots.map((left, i) => (
+        <motion.div
+          key={i}
+          className="absolute bottom-1 origin-bottom"
+          style={{ left: `${left}%` }}
+          {...swayFlower(3 + (i % 3) * 0.4, (i % 4) * 0.25)}
+        >
+          <Flower size={14 + (i % 2) * 4} petal={flowerColors[i]} />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 export default function Home() {
   const [girlsProducts, setGirlsProducts] = useState([]);
   const [bestsellerProducts, setBestsellerProducts] = useState([]);
@@ -275,7 +314,7 @@ export default function Home() {
       >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[11px] tracking-widest uppercase text-black/40 animate-pulse">Loading Banner...</span>
+            <BouncingBalloonLoader label="Loading Banner" />
           </div>
         ) : (
           <>
@@ -338,11 +377,12 @@ export default function Home() {
 
   const renderShopByCategory = () => (
     !loading && isEnabled("shop_by_category") && categoryItems.length > 0 && (
-      <section key="shop_by_category" className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
+      <section key="shop_by_category" className="pt-5 sm:pt-6 md:pt-8 pb-12 sm:pb-16 md:pb-20 bg-white relative">
         <div className="max-w-[1600px] mx-auto">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.shop_by_category?.subtitle || "Discover"}</span>
             <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.shop_by_category?.title || "Shop by Category"}</h2>
+            <SquiggleUnderline className="mt-2" color="#B8C9A8" />
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 pb-3 sm:pb-4 md:pb-0">
             {categoryItems.map((item, index) => {
@@ -364,17 +404,21 @@ export default function Home() {
             })}
           </div>
         </div>
+        <WavyDivider className="absolute bottom-0 left-0" />
       </section>
     )
   );
 
   const renderNewArrivals = () => (
     isEnabled("girls_new_arrivals") && (
-      <section key="girls_new_arrivals" className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
+      <section key="girls_new_arrivals" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
+        <div className="hidden md:block absolute top-4 left-8 opacity-70"><AnimatedCloud size={56} /></div>
+        <div className="hidden md:block absolute top-6 right-10 opacity-70"><AnimatedStar size={16} color="#E2889D" /></div>
         <div className="w-full relative">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-[#E2889D] mb-1">{sectionMeta.girls_new_arrivals?.subtitle || "Discover"}</span>
             <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.girls_new_arrivals?.title || "New Arrivals"}</h2>
+            <SquiggleUnderline className="mt-2" color="#E2889D" />
           </div>
           {loading ? (
             <div className="flex gap-4 px-4 overflow-x-auto [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
@@ -388,20 +432,28 @@ export default function Home() {
             <ProductCarousel products={girlsProducts} loading={false} wishlist={wishlist} toggleWishlist={toggleWishlist} setQuickViewId={setQuickViewId} />
           )}
           <div className="flex justify-center mt-5 sm:mt-6 px-4">
-            <Link href="/shop/kids-girl" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">View Collection</Link>
+            <div className="flex items-center gap-3">
+              <AnimatedLeaf color="#E2889D" size={14} />
+              <Link href="/shop/kids-girl" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">View Collection</Link>
+              <AnimatedLeaf color="#E2889D" size={14} className="scale-x-[-1]" />
+            </div>
           </div>
         </div>
+        <WavyDivider className="absolute bottom-0 left-0" />
       </section>
     )
   );
 
   const renderBestsellers = () => (
     isEnabled("season_bestsellers") && (
-      <section key="season_bestsellers" className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
+      <section key="season_bestsellers" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
+        <div className="hidden md:block absolute top-4 left-12 opacity-70"><AnimatedStar size={18} color="#F0B95B" /></div>
+        <div className="hidden md:block absolute top-8 right-16"><AnimatedSparkle size={12} color="#F0B95B" /></div>
         <div className="w-full relative">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.season_bestsellers?.subtitle || "Favorites"}</span>
             <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.season_bestsellers?.title || "Season Bestsellers"}</h2>
+            <SquiggleUnderline className="mt-2" color="#F0B95B" />
           </div>
           {loading ? (
             <div className="flex gap-4 px-4 overflow-x-auto [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
@@ -415,20 +467,28 @@ export default function Home() {
             <ProductCarousel products={bestsellerProducts} loading={false} wishlist={wishlist} toggleWishlist={toggleWishlist} setQuickViewId={setQuickViewId} />
           )}
           <div className="flex justify-center mt-5 sm:mt-6 px-4">
-            <Link href="/shop" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">View All</Link>
+            <div className="flex items-center gap-3">
+              <AnimatedSparkle color="#F0B95B" size={12} />
+              <Link href="/shop" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">View All</Link>
+              <AnimatedSparkle color="#F0B95B" size={12} />
+            </div>
           </div>
         </div>
+        <WavyDivider className="absolute bottom-0 left-0" />
       </section>
     )
   );
 
   const renderFeaturedCollection = () => (
     isEnabled("featured_collection") && (
-      <section key="featured_collection" className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
+      <section key="featured_collection" className="py-5 sm:py-6 md:py-8 bg-white relative overflow-hidden">
+        <div className="hidden md:block absolute top-4 right-12 opacity-70"><AnimatedCloud size={48} /></div>
+        <div className="hidden md:block absolute top-6 left-10 opacity-80"><AnimatedFlower size={22} /></div>
         <div className="w-full relative">
           <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.featured_collection?.subtitle || "Trending Now"}</span>
             <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.featured_collection?.title || "Featured Collection"}</h2>
+            <SquiggleUnderline className="mt-2" color="#BDD9E8" />
           </div>
           {loading ? (
             <div className="flex gap-4 px-4 overflow-x-auto [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
@@ -442,9 +502,14 @@ export default function Home() {
             <ProductCarousel products={featuredProducts} loading={false} wishlist={wishlist} toggleWishlist={toggleWishlist} setQuickViewId={setQuickViewId} />
           )}
           <div className="flex justify-center mt-5 sm:mt-6 px-4">
-            <Link href="/shop" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">Discover All</Link>
+            <div className="flex items-center gap-3">
+              <AnimatedLeaf color="#BDD9E8" size={14} />
+              <Link href="/shop" className="border border-black px-6 sm:px-8 py-2.5 sm:py-3 text-[10px] sm:text-[11px] font-bold tracking-wide uppercase text-black hover:bg-black hover:text-white transition-colors">Discover All</Link>
+              <AnimatedLeaf color="#BDD9E8" size={14} className="scale-x-[-1]" />
+            </div>
           </div>
         </div>
+        <WavyDivider className="absolute bottom-0 left-0" />
       </section>
     )
   );
@@ -515,13 +580,72 @@ export default function Home() {
     );
   };
 
+  const renderCardBanner = (key) => {
+    if (!isEnabled(key)) return null;
+    const data = banners[key];
+    if (!data) return null;
+    const { imageUrl, mobileImageUrl, title, subtitle, ctaHref } = data;
+    if (!imageUrl && !mobileImageUrl) return null;
+    return (
+      <section key={key} className="py-5 sm:py-6 md:py-8 bg-white border-b border-black/5">
+        <div className="w-full relative max-w-[1600px] mx-auto">
+          <div className="flex flex-col items-center mb-4 sm:mb-6 px-3 sm:px-4 md:px-8">
+            {subtitle && <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{subtitle}</span>}
+            {title && <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{title}</h2>}
+          </div>
+          <div className="px-4 md:px-8">
+            {ctaHref ? (
+              <Link href={ctaHref} className="block w-full relative overflow-hidden bg-[#f6f5f3] rounded-xl group">
+                {mobileImageUrl && (
+                  <div className="block md:hidden">
+                    {checkIsVideo(mobileImageUrl)
+                      ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+                      : <img src={mobileImageUrl} alt={title || "Banner"} className="w-full h-auto block group-hover:scale-105 transition-transform duration-1000" />
+                    }
+                  </div>
+                )}
+                {imageUrl && (
+                  <div className={mobileImageUrl ? "hidden md:block" : "block"}>
+                    {checkIsVideo(imageUrl)
+                      ? <video src={imageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+                      : <img src={imageUrl} alt={title || "Banner"} className="w-full h-auto block group-hover:scale-105 transition-transform duration-1000" />
+                    }
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <div className="block w-full relative overflow-hidden bg-[#f6f5f3] rounded-xl">
+                {mobileImageUrl && (
+                  <div className="block md:hidden">
+                    {checkIsVideo(mobileImageUrl)
+                      ? <video src={mobileImageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+                      : <img src={mobileImageUrl} alt={title || "Banner"} className="w-full h-auto block" />
+                    }
+                  </div>
+                )}
+                {imageUrl && (
+                  <div className={mobileImageUrl ? "hidden md:block" : "block"}>
+                    {checkIsVideo(imageUrl)
+                      ? <video src={imageUrl} autoPlay muted loop playsInline className="w-full h-auto block" />
+                      : <img src={imageUrl} alt={title || "Banner"} className="w-full h-auto block" />
+                    }
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  };
+
   const SECTION_RENDERERS = {
     hero_banner: renderHeroBanner,
     shop_by_category: renderShopByCategory,
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
-    simple_banner_1: () => renderPlainBanner("simple_banner_1"),
+    simple_banner_1: () => renderCardBanner("simple_banner_1"),
     simple_banner_2: () => renderPlainBanner("simple_banner_2"),
   };
 

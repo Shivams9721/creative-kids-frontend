@@ -10,6 +10,7 @@ import { ChevronDown, SlidersHorizontal, Heart, X, Eye } from "lucide-react";
 import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
 import { useCart } from "@/context/CartContext";
 import QuickViewModal from "@/components/QuickViewModal";
+import { Mascot, SquiggleUnderline, AnimatedSparkle } from "@/components/decorations";
 
 // Filter Constants — sizes match exactly what's stored in DB (admin form format)
 const SIZE_GROUPS = {
@@ -439,8 +440,13 @@ export default function ShopClient({ initialProducts }) {
         {/* PRODUCT GRID (GAPLESS, SYMMETRIC) */}
         <main className="flex-1">
           {products.length === 0 ? (
-            <div className="w-full py-32 flex flex-col items-center justify-center text-center px-4 bg-[#fcfcfc] border-b border-black/10">
-              <h2 className="text-xl md:text-2xl font-light tracking-widest uppercase text-black mb-4">No Results Found</h2>
+            <div className="w-full py-20 flex flex-col items-center justify-center text-center px-4 bg-[#fcfcfc] border-b border-black/10">
+              <div className="relative mb-4">
+                <Mascot pose="read" size={140} />
+                <div className="absolute -top-2 right-0"><AnimatedSparkle size={14} color="#F0B95B" /></div>
+              </div>
+              <h2 className="text-xl md:text-2xl font-light tracking-widest uppercase text-black mb-2">No Results Found</h2>
+              <SquiggleUnderline color="#E2889D" className="mb-4" />
               <p className="text-[11px] tracking-widest uppercase text-black/50 mb-10 max-w-md">Try adjusting your filters or browse another category.</p>
               <button onClick={clearFilters} className="border border-black rounded-full px-8 py-3.5 text-[11px] font-medium tracking-widest uppercase text-black hover:bg-black hover:text-white transition-colors">Clear All Filters</button>
             </div>

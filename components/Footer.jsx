@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Instagram, Facebook } from "lucide-react";
+import { FooterScene, AnimatedSparkle, SquiggleUnderline } from "@/components/decorations";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -43,7 +44,11 @@ export default function Footer() {
           
           {/* LEFT: Newsletter Sign Up */}
           <div className="w-full md:w-1/2 lg:w-1/3">
-            <h3 className="text-[12px] font-bold tracking-widest uppercase text-black mb-6">Be the First to Know</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-[12px] font-bold tracking-widest uppercase text-black">Be the First to Know</h3>
+              <AnimatedSparkle size={12} color="#E2889D" />
+            </div>
+            <SquiggleUnderline color="#E2889D" className="mb-5" />
             <p className="text-[11px] tracking-wider text-black/60 uppercase mb-8 leading-loose max-w-sm">
               Discover new arrivals, exclusive offers, and the latest from Creative Kids.
             </p>
@@ -64,7 +69,7 @@ export default function Footer() {
 
           {/* MIDDLE: Legal Links */}
           <div className="w-full md:w-auto flex flex-col gap-4">
-            <h3 className="text-[12px] font-bold tracking-widest uppercase text-black mb-2">Legal</h3>
+            <h3 className="text-[12px] font-bold tracking-widest uppercase text-black mb-2">About Us</h3>
             {[
               { label: "Track My Order", href: "/track-order" },
               { label: "My Wishlist", href: "/wishlist" },
@@ -103,7 +108,9 @@ export default function Footer() {
 
         </div>
 
-        <div className="mt-10 md:mt-16 pt-6 md:pt-8 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4">
+        <FooterScene className="mt-10 md:mt-12" />
+
+        <div className="pt-6 md:pt-8 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4">
           <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/30">© {new Date().getFullYear()} Creative Kids. All rights reserved.</p>
           <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/30">Made in India 🇮🇳</p>
         </div>

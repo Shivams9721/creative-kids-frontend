@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { safeFetch } from "@/lib/safeFetch";
 import { csrfHeaders } from "@/lib/csrf";
 import { useRouter } from "next/navigation";
+import { Mascot, Heart as DecoHeart, AnimatedSparkle } from "@/components/decorations";
 
 export default function WishlistPage() {
   const [items, setItems] = useState([]);
@@ -82,7 +83,11 @@ export default function WishlistPage() {
 
         {items.length === 0 ? (
           <div className="text-center py-20">
-            <Heart size={48} className="mx-auto text-black/10 mb-6" />
+            <div className="relative inline-block mb-6">
+              <Mascot pose="stand" size={150} />
+              <div className="absolute -top-2 -right-6"><DecoHeart size={28} color="#E2889D" /></div>
+              <div className="absolute top-4 -left-6"><AnimatedSparkle size={14} color="#F0B95B" /></div>
+            </div>
             <h2 className="text-xl font-light text-black mb-2">Your wishlist is empty</h2>
             <p className="text-[13px] text-black/50 mb-8">Save items you love by tapping the heart icon on any product.</p>
             <Link href="/shop" className="bg-black text-white px-8 py-3 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors">

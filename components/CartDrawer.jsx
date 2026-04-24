@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
+import { Mascot, Heart, Sparkle } from "@/components/decorations";
 
 const FREE_SHIPPING_THRESHOLD = 599;
 
@@ -68,6 +69,11 @@ export default function CartDrawer() {
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
               {cart.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center">
+                  <div className="relative mb-3">
+                    <Mascot pose="read" size={140} />
+                    <Sparkle className="absolute top-2 -right-1" size={14} color="#F0B95B" />
+                    <Heart className="absolute top-6 -left-3" size={14} color="#E2889D" />
+                  </div>
                   <p className="text-xs tracking-widest uppercase text-black/50 mb-4">Your cart is empty</p>
                   <button onClick={() => setIsCartOpen(false)} className="border border-black px-6 py-3 text-xs tracking-widest uppercase hover:bg-black hover:text-white transition-colors rounded-full">
                     Continue Shopping
