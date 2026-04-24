@@ -181,6 +181,36 @@ export default function ListProductInner() {
      }));
   }
 
+  // Reorder a specific image within a colour block by ±1. First image = cover/front.
+  const moveImageInBlock = (blockId, index, delta) => {
+    setForm(f => ({
+      ...f,
+      color_blocks: f.color_blocks.map(b => {
+        if (b.id !== blockId) return b;
+        const imgs = [...b.images];
+        const newIndex = index + delta;
+        if (newIndex < 0 || newIndex >= imgs.length) return b;
+        [imgs[index], imgs[newIndex]] = [imgs[newIndex], imgs[index]];
+        return { ...b, images: imgs };
+      })
+    }));
+  }
+
+  // Promote a specific image to position 0 (cover / front image).
+  const setFrontImageInBlock = (blockId, index) => {
+    setForm(f => ({
+      ...f,
+      color_blocks: f.color_blocks.map(b => {
+        if (b.id !== blockId) return b;
+        if (index <= 0 || index >= b.images.length) return b;
+        const imgs = [...b.images];
+        const [picked] = imgs.splice(index, 1);
+        imgs.unshift(picked);
+        return { ...b, images: imgs };
+      })
+    }));
+  }
+
   const handleSubmit = async (isDraft = false) => {
     setSaving(true);
     try {
@@ -398,16 +428,27 @@ export default function ListProductInner() {
                         </div>
 
                         <div style={{ background: "var(--bg)", padding: 12, borderRadius: 8, border: "1px solid var(--border)" }}>
-                          <div className="field-label" style={{ marginBottom: 8 }}>Images</div>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          <div className="field-label" style={{ marginBottom: 4 }}>Images</div>
+                          <div style={{ fontSize: 10, color: "var(--text3)", marginBottom: 8 }}>First image is the <b>front</b> shown on product cards. Use ← → to reorder, or click ★ to set any image as the front.</div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                             {block.images.map((url, i) => (
-                              <div key={i} style={{ position: "relative", width: 60, height: 72 }}>
-                                <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
-                                <button onClick={() => removeImageFromBlock(block.id, url)} style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer" }}>✕</button>
+                              <div key={i} style={{ position: "relative", width: 72, display: "flex", flexDirection: "column", alignItems: "stretch", gap: 4 }}>
+                                <div style={{ position: "relative", width: 72, height: 86, borderRadius: 6, overflow: "hidden", border: i === 0 ? "2px solid var(--accent, #4a90e2)" : "1px solid var(--border)" }}>
+                                  <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  {i === 0 && (
+                                    <span style={{ position: "absolute", top: 2, left: 2, background: "rgba(0,0,0,0.75)", color: "#fff", fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", padding: "2px 5px", borderRadius: 3 }}>FRONT</span>
+                                  )}
+                                  <button onClick={() => removeImageFromBlock(block.id, url)} title="Remove" style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", background: "var(--red)", border: "none", color: "#fff", fontSize: 10, cursor: "pointer", lineHeight: 1 }}>✕</button>
+                                </div>
+                                <div style={{ display: "flex", gap: 2 }}>
+                                  <button onClick={() => moveImageInBlock(block.id, i, -1)} disabled={i === 0} title="Move left" style={{ flex: 1, padding: "2px 0", fontSize: 11, border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg4)", color: i === 0 ? "var(--text3)" : "var(--text2)", cursor: i === 0 ? "default" : "pointer" }}>←</button>
+                                  <button onClick={() => setFrontImageInBlock(block.id, i)} disabled={i === 0} title="Make front" style={{ flex: 1, padding: "2px 0", fontSize: 11, border: "1px solid var(--border)", borderRadius: 4, background: i === 0 ? "var(--bg5)" : "var(--bg4)", color: i === 0 ? "var(--text3)" : "var(--amber, #d4a017)", cursor: i === 0 ? "default" : "pointer" }}>★</button>
+                                  <button onClick={() => moveImageInBlock(block.id, i, 1)} disabled={i === block.images.length - 1} title="Move right" style={{ flex: 1, padding: "2px 0", fontSize: 11, border: "1px solid var(--border)", borderRadius: 4, background: "var(--bg4)", color: i === block.images.length - 1 ? "var(--text3)" : "var(--text2)", cursor: i === block.images.length - 1 ? "default" : "pointer" }}>→</button>
+                                </div>
                               </div>
                             ))}
                             <button onClick={() => { fileRef.current._blockId = block.id; fileRef.current.click(); }}
-                              style={{ width: 60, height: 72, border: "1px dashed var(--border2)", borderRadius: 6, background: "var(--bg4)", color: "var(--text3)", fontSize: 20, cursor: "pointer", padding: 0 }}>
+                              style={{ width: 72, height: 86, border: "1px dashed var(--border2)", borderRadius: 6, background: "var(--bg4)", color: "var(--text3)", fontSize: 20, cursor: "pointer", padding: 0, alignSelf: "flex-start" }}>
                               {uploadingImgHash === block.id ? "…" : "+"}
                             </button>
                           </div>

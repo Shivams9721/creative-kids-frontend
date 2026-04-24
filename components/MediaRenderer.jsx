@@ -9,19 +9,20 @@ export function isVideo(url) {
   return /\.(mp4|webm|ogg)(\?.*)?$/i.test(url);
 }
 
-export default function MediaRenderer({ 
-  src, 
-  alt = "", 
-  fill = false, 
-  priority = false, 
-  sizes = "", 
-  className = "", 
+export default function MediaRenderer({
+  src,
+  alt = "",
+  fill = false,
+  priority = false,
+  sizes = "",
+  className = "",
   hideVolume = false,
   hoverPlay = false,
   poster = "",
   width,
   height,
-  ...props 
+  quality = 95,
+  ...props
 }) {
   const [isMuted, setIsMuted] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
@@ -153,6 +154,7 @@ export default function MediaRenderer({
       className={className}
       width={!fill ? width || 800 : undefined}
       height={!fill ? height || 1000 : undefined}
+      quality={quality}
       {...props}
     />
   );

@@ -21,8 +21,11 @@ const nextConfig: NextConfig = {
       { protocol: "http", hostname: "**" },
     ],
 
-    // Cache optimised images for 60 seconds minimum on the CDN
-    minimumCacheTTL: 60,
+    // Allowed quality values the optimizer will accept (Next 15+). 95 = near-lossless HD.
+    qualities: [60, 75, 85, 95],
+
+    // Cache optimised images on the CDN — 7 days.
+    minimumCacheTTL: 60 * 60 * 24 * 7,
   },
 
   // Strict mode helps catch bugs early in development
