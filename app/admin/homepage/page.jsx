@@ -727,14 +727,14 @@ export default function HomepageAdminPage() {
 
         // ── Simple Banner 1 ──────────────────────────────────────────────────
         if (key === "simple_banner_1") return (
-          <Panel key={key} label="Simple Banner 1" badge="CARD BANNER" summary={rawSimple1.imageUrl || rawSimple1.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
+          <Panel key={key} label={simpleBanner1Section?.title || "About Us Banner"} badge="CARD BANNER" summary={rawSimple1.imageUrl || rawSimple1.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
             {renderCardBannerEditor(simpleBanner1Section, rawSimple1, updateSimple1, "simple1")}
           </Panel>
         );
 
         // ── Simple Banner 2 ──────────────────────────────────────────────
         if (key === "simple_banner_2") return (
-          <Panel key={key} label="Simple Banner 2" badge="BANNER" summary={rawSimple2.imageUrl || rawSimple2.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
+          <Panel key={key} label={simpleBanner2Section?.title || "Simple Banner 2"} badge="BANNER" summary={rawSimple2.imageUrl || rawSimple2.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
             {renderPlainBannerEditor(simpleBanner2Section, rawSimple2, updateSimple2, "simple2")}
           </Panel>
         );
