@@ -40,10 +40,10 @@ export default function Footer() {
     <footer className="w-full bg-white border-t border-black/10 py-10 md:py-24 mt-auto">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-12">
         
-        <div className="flex flex-col md:flex-row justify-between items-start gap-10 md:gap-8">
+        <div className="flex flex-col md:flex-row items-start gap-10 md:gap-10">
           
           {/* LEFT: Newsletter Sign Up */}
-          <div className="w-full md:w-1/2 lg:w-1/3">
+          <div className="w-full md:flex-1">
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-[12px] font-bold tracking-widest uppercase text-black">Be the First to Know</h3>
               <AnimatedSparkle size={12} color="#E2889D" />
@@ -68,7 +68,7 @@ export default function Footer() {
           </div>
 
           {/* MIDDLE: Legal Links */}
-          <div className="w-full md:w-auto flex flex-col gap-4">
+          <div className="w-full md:flex-1 flex flex-col gap-4">
             <h3 className="text-[12px] font-bold tracking-widest uppercase text-black mb-2">About Us</h3>
             {[
               { label: "Track My Order", href: "/track-order" },
@@ -85,8 +85,41 @@ export default function Footer() {
             ))}
           </div>
 
+          {/* MIDDLE-RIGHT: Shop Girls */}
+          <div className="w-full md:flex-1 flex flex-col">
+            <h3 className="text-[12px] font-bold tracking-widest uppercase text-black mb-4">Explores</h3>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              <div className="flex flex-col gap-4">
+                <p className="text-[10px] tracking-widest uppercase text-black/40">Baby</p>
+                {[
+                  { label: "Onesies & Rompers", slug: "onesies-rompers" },
+                  { label: "Tops & Tees", slug: "tops-tees" },
+                  { label: "Dresses", slug: "dresses" },
+                  { label: "Co-ords & Jumpsuits", slug: "co-ords-jumpsuits" },
+                ].map(c => (
+                  <Link key={`baby-${c.slug}`} href={`/shop/baby-girl/${c.slug}`} className="text-[11px] tracking-widest uppercase text-black/60 hover:text-black transition-colors">
+                    {c.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="flex flex-col gap-4">
+                <p className="text-[10px] tracking-widest uppercase text-black/40">Kids</p>
+                {[
+                  { label: "Onesies & Rompers", slug: "onesies-rompers" },
+                  { label: "Tops & Tees", slug: "tops-tees" },
+                  { label: "Dresses", slug: "dresses" },
+                  { label: "Co-ords & Jumpsuits", slug: "co-ords-jumpsuits" },
+                ].map(c => (
+                  <Link key={`kids-${c.slug}`} href={`/shop/kids-girl/${c.slug}`} className="text-[11px] tracking-widest uppercase text-black/60 hover:text-black transition-colors">
+                    {c.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* RIGHT: Corporate Details */}
-          <div className="w-full md:w-1/2 lg:w-1/3 flex flex-col md:items-end md:text-right">
+          <div className="w-full md:flex-1 flex flex-col md:items-end md:text-right">
             <h3 className="text-[12px] font-bold tracking-widest uppercase text-black mb-6">Creative Impression</h3>
             <p className="text-[11px] tracking-wider text-black/60 uppercase leading-loose mb-6">
               Plot NO.-550A, Sector-37<br />

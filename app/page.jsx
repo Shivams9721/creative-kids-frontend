@@ -11,6 +11,7 @@ import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
 import { useCart } from "@/context/CartContext";
 import { memo } from "react";
 import QuickViewModal from "@/components/QuickViewModal";
+import TrustBadges from "@/components/TrustBadges";
 import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird } from "@/components/decorations";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
@@ -657,6 +658,16 @@ export default function Home() {
     <main className="min-h-screen bg-white">
       {renderOrder.map(key => {
         const renderer = SECTION_RENDERERS[key];
+        
+        if (key === "simple_banner_2") {
+          return (
+            <div key={`wrapper_${key}`} className="w-full flex flex-col">
+              <TrustBadges />
+              {renderer ? renderer() : null}
+            </div>
+          );
+        }
+        
         return renderer ? renderer() : null;
       })}
 
