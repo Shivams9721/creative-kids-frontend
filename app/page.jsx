@@ -120,13 +120,24 @@ const GridCard = memo(function GridCard({ product, wishlist, toggleWishlist, onQ
 });
 
 // Swipeable horizontal product carousel (used for New Arrivals, Best Sellers, Featured Collection)
-function ProductCarousel({ products, loading, wishlist, toggleWishlist, setQuickViewId, viewAllHref, skeletonCount = 5 }) {
+function ProductCarousel({ products, loading, wishlist, toggleWishlist, setQuickViewId, viewAllHref, skeletonCount = 5, startAtMiddle = false }) {
   const ref = useRef(null);
   const scrollBy = (dir) => {
     if (ref.current) {
       ref.current.scrollBy({ left: dir * (window.innerWidth > 1024 ? window.innerWidth * 0.22 : window.innerWidth * 0.5), behavior: "smooth" });
     }
   };
+
+  useEffect(() => {
+    if (!startAtMiddle || loading || !ref.current || !products || products.length === 0) return;
+    if (typeof window === "undefined" || window.innerWidth >= 768) return;
+    const el = ref.current;
+    const midIndex = Math.floor(products.length / 2);
+    const target = el.children[midIndex];
+    if (!target) return;
+    const left = target.offsetLeft - (el.clientWidth - target.offsetWidth) / 2;
+    el.scrollTo({ left: Math.max(0, left), behavior: "auto" });
+  }, [startAtMiddle, loading, products]);
 
   if (loading) {
     return (
@@ -433,7 +444,7 @@ export default function Home() {
               <p className="text-[10px] sm:text-[11px] tracking-widest uppercase text-black/40">No arrivals configured yet.</p>
             </div>
           ) : (
-            <ProductCarousel products={girlsProducts} loading={false} wishlist={wishlist} toggleWishlist={toggleWishlist} setQuickViewId={setQuickViewId} />
+            <ProductCarousel products={girlsProducts} loading={false} wishlist={wishlist} toggleWishlist={toggleWishlist} setQuickViewId={setQuickViewId} startAtMiddle />
           )}
           <div className="flex justify-center mt-5 sm:mt-6 px-4">
             <div className="flex items-center gap-3">
