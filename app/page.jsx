@@ -140,7 +140,7 @@ function ProductCarousel({ products, loading, wishlist, toggleWishlist, setQuick
       <button onClick={() => scrollBy(1)} className="hidden md:flex absolute right-8 lg:right-12 top-[40%] -translate-y-1/2 z-20 w-10 h-10 bg-white/90 backdrop-blur-sm border border-black/10 rounded-full items-center justify-center text-black hover:bg-black hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-xl">
         <ChevronRight size={20} strokeWidth={1} />
       </button>
-      <div ref={ref} className="flex gap-4 md:gap-0 px-4 md:px-0 overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
+      <div ref={ref} className="flex gap-4 md:gap-1 px-4 md:px-0 overflow-x-auto snap-x snap-mandatory pb-3 sm:pb-4 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none" }}>
         {products.map((product, index) => (
           <div key={product ? `prod-${product.id}-${index}` : `empty-${index}`} className="snap-start">
             <GridCard product={product} wishlist={wishlist} toggleWishlist={toggleWishlist} onQuickView={setQuickViewId} />
@@ -344,7 +344,7 @@ export default function Home() {
             <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">{sectionMeta.shop_by_category?.subtitle || "Discover"}</span>
             <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>{sectionMeta.shop_by_category?.title || "Shop by Category"}</h2>
           </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 lg:gap-0 pb-3 sm:pb-4 md:pb-0">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1 pb-3 sm:pb-4 md:pb-0">
             {categoryItems.map((item, index) => {
               let finalUrl = item.targetUrl || "/shop";
               if (finalUrl.startsWith("/shop/")) {
