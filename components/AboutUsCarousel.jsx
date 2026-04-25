@@ -5,9 +5,11 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   SquiggleUnderline,
+  Floating,
+  HideAndSeek,
+  AnimatedSparkle,
   AnimatedCloud,
   AnimatedStar,
-  AnimatedSparkle,
   AnimatedFlower,
   AnimatedLeaf,
   Cloud,
@@ -19,8 +21,27 @@ import {
   Butterfly,
   Rainbow,
   Bunny,
-  Floating,
 } from "@/components/decorations";
+
+function HeaderDog({ size = 70 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 120 120" fill="none">
+      <ellipse cx="60" cy="100" rx="36" ry="8" fill="rgba(0,0,0,0.06)" />
+      <path d="M22 70 Q22 50 42 50 L78 50 Q100 50 100 72 L100 92 L22 92 Z" fill="#D9A574" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" />
+      <rect x="30" y="82" width="8" height="14" fill="#D9A574" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" />
+      <rect x="58" y="82" width="8" height="14" fill="#D9A574" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" />
+      <rect x="84" y="82" width="8" height="14" fill="#D9A574" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" />
+      <circle cx="32" cy="42" r="20" fill="#E8B987" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" />
+      <path d="M16 32 Q10 24 18 22 L24 36 Z" fill="#B8814F" stroke="rgba(0,0,0,0.3)" strokeWidth="1.2" />
+      <path d="M44 30 Q50 22 42 20 L36 34 Z" fill="#B8814F" stroke="rgba(0,0,0,0.3)" strokeWidth="1.2" />
+      <circle cx="26" cy="42" r="2" fill="#222" />
+      <circle cx="38" cy="42" r="2" fill="#222" />
+      <ellipse cx="32" cy="50" rx="3" ry="2" fill="#222" />
+      <path d="M32 52 Q32 56 28 56" stroke="#222" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+      <path d="M100 70 Q112 64 108 56" stroke="rgba(0,0,0,0.3)" strokeWidth="1.5" fill="#D9A574" />
+    </svg>
+  );
+}
 
 function Ship({ size = 96 }) {
   return (
@@ -224,7 +245,19 @@ export default function AboutUsCarousel() {
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <div className="flex-none flex flex-col items-center pt-6 sm:pt-8 md:pt-10 pb-4 sm:pb-5 bg-white">
+      <div className="flex-none relative flex flex-col items-center pt-6 sm:pt-8 md:pt-10 pb-4 sm:pb-5 bg-white">
+        <div aria-hidden="true" className="absolute left-2 sm:left-10 md:left-20 bottom-0 pointer-events-none">
+          <Floating duration={3.6} amplitude={4}>
+            <div className="block sm:hidden"><HeaderDog size={44} /></div>
+            <div className="hidden sm:block"><HeaderDog size={64} /></div>
+          </Floating>
+        </div>
+        <div aria-hidden="true" className="absolute right-4 sm:right-10 md:right-20 top-3 pointer-events-none hidden sm:block">
+          <AnimatedSparkle size={14} color={slide.accent} />
+        </div>
+        <div aria-hidden="true" className="absolute right-12 sm:right-24 md:right-40 bottom-2 pointer-events-none hidden sm:block">
+          <AnimatedSparkle size={10} color="#F0B95B" />
+        </div>
         <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">Our Story</span>
         <h2 className="text-base sm:text-lg md:text-xl font-medium text-black tracking-wide uppercase text-center" style={{ fontFamily: "'Futura', 'Helvetica Neue', sans-serif" }}>
           About Us
