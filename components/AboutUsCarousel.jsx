@@ -246,16 +246,16 @@ export default function AboutUsCarousel() {
       onTouchEnd={onTouchEnd}
     >
       <div className="flex-none relative flex flex-col items-center pt-6 sm:pt-8 md:pt-10 pb-4 sm:pb-5 bg-white">
-        <div aria-hidden="true" className="absolute left-2 sm:left-10 md:left-20 bottom-0 pointer-events-none">
+        <div aria-hidden="true" className="absolute right-2 sm:right-10 md:right-20 bottom-0 pointer-events-none">
           <Floating duration={3.6} amplitude={4}>
             <div className="block sm:hidden"><HeaderDog size={44} /></div>
             <div className="hidden sm:block"><HeaderDog size={64} /></div>
           </Floating>
         </div>
-        <div aria-hidden="true" className="absolute right-4 sm:right-10 md:right-20 top-3 pointer-events-none hidden sm:block">
+        <div aria-hidden="true" className="absolute left-4 sm:left-10 md:left-20 top-3 pointer-events-none hidden sm:block">
           <AnimatedSparkle size={14} color={slide.accent} />
         </div>
-        <div aria-hidden="true" className="absolute right-12 sm:right-24 md:right-40 bottom-2 pointer-events-none hidden sm:block">
+        <div aria-hidden="true" className="absolute left-12 sm:left-24 md:left-40 bottom-2 pointer-events-none hidden sm:block">
           <AnimatedSparkle size={10} color="#F0B95B" />
         </div>
         <span className="text-[8px] sm:text-[9px] tracking-[0.15em] uppercase text-black/40 mb-1">Our Story</span>
