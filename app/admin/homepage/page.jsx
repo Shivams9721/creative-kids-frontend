@@ -725,10 +725,12 @@ export default function HomepageAdminPage() {
           );
         }
 
-        // ── Simple Banner 1 ──────────────────────────────────────────────────
+        // ── About Us (auto-generated illustrated carousel) ──────────────────
         if (key === "simple_banner_1") return (
-          <Panel key={key} label={simpleBanner1Section?.title || "About Us Banner"} badge="CARD BANNER" summary={rawSimple1.imageUrl || rawSimple1.mobileImageUrl ? "Banner media set" : "No media yet"} {...panelProps}>
-            {renderCardBannerEditor(simpleBanner1Section, rawSimple1, updateSimple1, "simple1")}
+          <Panel key={key} label="About Us" badge="AUTO CAROUSEL" summary="Illustrated 7-slide carousel" {...panelProps}>
+            <div style={{ padding: 16, fontSize: 13, color: "var(--text-secondary, #555)", lineHeight: 1.6 }}>
+              This section now renders an auto-generated About Us carousel with cute illustrations and built-in copy — no image upload needed. Use the toggle above to enable/disable, and drag to reorder. To edit the slide copy or graphics, edit <code>components/AboutUsCarousel.jsx</code>.
+            </div>
           </Panel>
         );
 

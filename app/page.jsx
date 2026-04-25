@@ -12,6 +12,7 @@ import { useCart } from "@/context/CartContext";
 import { memo } from "react";
 import QuickViewModal from "@/components/QuickViewModal";
 import TrustBadges from "@/components/TrustBadges";
+import AboutUsCarousel from "@/components/AboutUsCarousel";
 import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, Heart as DecoHeart, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird, Mascot, CatPeek, HideAndSeek, Butterfly, Rainbow, Bunny, Floating, FlyingBird } from "@/components/decorations";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
@@ -728,7 +729,7 @@ export default function Home() {
     girls_new_arrivals: renderNewArrivals,
     season_bestsellers: renderBestsellers,
     featured_collection: renderFeaturedCollection,
-    simple_banner_1: () => renderCardBanner("simple_banner_1", "About Us", "#E2889D"),
+    simple_banner_1: () => isEnabled("simple_banner_1") ? <AboutUsCarousel key="simple_banner_1" /> : null,
     simple_banner_2: () => renderCardBanner("simple_banner_2", "Testimonials", "#BDD9E8"),
     trust_badges: () => <TrustBadges key="trust_badges" />,
   };
