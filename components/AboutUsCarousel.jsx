@@ -264,14 +264,14 @@ export default function AboutUsCarousel() {
       <button
         aria-label="Previous slide"
         onClick={() => go(-1)}
-        className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 backdrop-blur-sm border border-black/10 rounded-full flex items-center justify-center text-black hover:bg-black hover:text-white transition-all shadow-lg"
+        className="hidden md:flex absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 backdrop-blur-sm border border-black/10 rounded-full items-center justify-center text-black hover:bg-black hover:text-white transition-all shadow-lg"
       >
         <ChevronLeft size={20} strokeWidth={1.5} />
       </button>
       <button
         aria-label="Next slide"
         onClick={() => go(1)}
-        className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 backdrop-blur-sm border border-black/10 rounded-full flex items-center justify-center text-black hover:bg-black hover:text-white transition-all shadow-lg"
+        className="hidden md:flex absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-12 sm:h-12 bg-white/90 backdrop-blur-sm border border-black/10 rounded-full items-center justify-center text-black hover:bg-black hover:text-white transition-all shadow-lg"
       >
         <ChevronRight size={20} strokeWidth={1.5} />
       </button>
