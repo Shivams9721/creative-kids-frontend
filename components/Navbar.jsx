@@ -214,12 +214,12 @@ export default function Navbar() {
 
             <Link
               href="/"
-              aria-label="Creative Kids"
+              aria-label="Creative Kid's"
               className="flex items-center hover:opacity-50 transition-opacity duration-300"
             >
               <img
-                src="/images/text-1777028358325.png"
-                alt="Creative Kids"
+                src="/images/text-1777092804420.png"
+                alt="Creative Kid's"
                 className={`h-7 sm:h-8 md:h-10 w-auto object-contain ${isTransparent ? 'invert brightness-0 contrast-200' : ''}`}
                 style={isTransparent ? { filter: 'brightness(0) invert(1)' } : undefined}
               />
@@ -412,12 +412,12 @@ export default function Navbar() {
                 </button>
                 <Link
                   href="/"
-                  aria-label="Creative Kids"
+                  aria-label="Creative Kid's"
                   className="md:hidden flex items-center hover:opacity-50 transition-opacity duration-300"
                 >
                   <img
-                    src="/images/text-1777028358325.png"
-                    alt="Creative Kids"
+                    src="/images/text-1777092804420.png"
+                    alt="Creative Kid's"
                     className="h-7 sm:h-8 w-auto object-contain"
                   />
                 </Link>

@@ -6,7 +6,7 @@ const SettingsContext = createContext({
   maintenance_mode: false,
   cod_enabled: true,
   reviews_enabled: true,
-  store_name: "Creative Kids",
+  store_name: "Creative Kid's",
 });
 
 export function SettingsProvider({ children }) {
@@ -14,7 +14,7 @@ export function SettingsProvider({ children }) {
     maintenance_mode: false,
     cod_enabled: true,
     reviews_enabled: true,
-    store_name: "Creative Kids",
+    store_name: "Creative Kid's",
   });
 
   useEffect(() => {

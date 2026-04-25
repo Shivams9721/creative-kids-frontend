@@ -12,7 +12,7 @@ export default function AdminSettings() {
   const [pwSuccess, setPwSuccess] = useState(false);
 
   const [settings, setSettings] = useState({
-    store_name: "Creative Kids",
+    store_name: "Creative Kid's",
     gstin: "06AAJPM1384L1ZE",
     address: "Plot No. 667, Pace City-II, Sector 37, Gurugram, Haryana – 122001",
     support_email: "support@creativekids.co.in",
@@ -89,7 +89,7 @@ export default function AdminSettings() {
             <div className="card-title">Store details</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
-                { label: "Store name", key: "store_name", placeholder: "Creative Kids" },
+                { label: "Store name", key: "store_name", placeholder: "Creative Kid's" },
                 { label: "GSTIN", key: "gstin", placeholder: "06AAJPM1384L1ZE", mono: true },
                 { label: "Support email", key: "support_email", placeholder: "support@creativekids.co.in" },
               ].map(f => (

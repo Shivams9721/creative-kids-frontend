@@ -110,7 +110,7 @@ export default function AdminLayout({ children }) {
             <svg viewBox="0 0 16 16" fill="none" width={16} height={16}><path d="M8 2C5.2 2 3 4.2 3 7c0 2.4 1.6 4.4 3.8 5.1V13h2.4v-0.9C11.4 11.4 13 9.4 13 7c0-2.8-2.2-5-5-5z" fill="#000"/></svg>
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Creative Kids</div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>Creative Kid's</div>
             <div style={{ fontSize: 10, color: "var(--text3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Admin Console</div>
           </div>
         </div>

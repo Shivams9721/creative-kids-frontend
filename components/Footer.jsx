@@ -50,7 +50,7 @@ export default function Footer() {
             </div>
             <SquiggleUnderline color="#E2889D" className="mb-5" />
             <p className="text-[11px] tracking-wider text-black/60 uppercase mb-8 leading-loose max-w-sm">
-              Discover new arrivals, exclusive offers, and the latest from Creative Kids.
+              Discover new arrivals, exclusive offers, and the latest from Creative Kid's.
             </p>
             <form onSubmit={subscribe} className="flex items-center justify-between border-b border-black pb-2 group">
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="EMAIL ADDRESS" required className="w-full bg-transparent text-[11px] tracking-widest uppercase outline-none text-black placeholder:text-black/40" />
@@ -144,7 +144,7 @@ export default function Footer() {
         <FooterScene className="mt-10 md:mt-12" />
 
         <div className="pt-6 md:pt-8 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-4">
-          <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/30">© {new Date().getFullYear()} Creative Kids. All rights reserved.</p>
+          <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/30">© {new Date().getFullYear()} Creative Kid's. All rights reserved.</p>
           <p className="text-[9px] sm:text-[10px] tracking-widest uppercase text-black/30">Made in India 🇮🇳</p>
         </div>
       </div>

@@ -204,7 +204,7 @@ function LoginContent() {
           ))}
         </div>
         <div className="relative z-10">
-          <Link href="/" className="text-white text-2xl font-bold tracking-[0.2em] uppercase">Creative Kids</Link>
+          <Link href="/" className="text-white text-2xl font-bold tracking-[0.2em] uppercase">Creative Kid's</Link>
           <p className="text-white/30 text-[11px] tracking-widest uppercase mt-1">Premium Children's Clothing</p>
         </div>
         <div className="relative z-10 space-y-6">
@@ -227,7 +227,7 @@ function LoginContent() {
 
           {/* Logo mobile */}
           <div className="lg:hidden text-center mb-8">
-            <Link href="/" className="text-black text-xl font-bold tracking-[0.2em] uppercase">Creative Kids</Link>
+            <Link href="/" className="text-black text-xl font-bold tracking-[0.2em] uppercase">Creative Kid's</Link>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-8 md:p-10">

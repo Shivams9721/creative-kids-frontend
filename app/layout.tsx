@@ -9,14 +9,14 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: {
-    default: 'Creative Kids | Premium Children\'s Clothing India',
-    template: '%s | Creative Kids',
+    default: "Creative Kid's | Premium Children's Clothing India",
+    template: "%s | Creative Kid's",
   },
-  description: 'Shop premium children\'s clothing at Creative Kids. Baby, toddler & kids fashion. Free shipping above ₹599. Easy 7-day returns.',
+  description: "Shop premium children's clothing at Creative Kid's. Baby, toddler & kids fashion. Free shipping above ₹599. Easy 7-day returns.",
   keywords: ['kids clothing', 'children fashion', 'baby clothes india', 'toddler clothing', 'kids wear online'],
   metadataBase: new URL('https://www.creativekids.co.in'),
   openGraph: {
-    siteName: 'Creative Kids',
+    siteName: "Creative Kid's",
     locale: 'en_IN',
     type: 'website',
   },

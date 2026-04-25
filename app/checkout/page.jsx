@@ -358,7 +358,7 @@ export default function CheckoutPage() {
                         <CheckCircle2 size={40} className="text-black" />
                     </div>
                     <h2 className="text-2xl font-light tracking-widest uppercase text-black mb-4">Order Confirmed!</h2>
-                    <p className="text-[13px] text-black/60 mb-8">Thank you for shopping with Creative Kids. Your order has been placed successfully.</p>
+                    <p className="text-[13px] text-black/60 mb-8">Thank you for shopping with Creative Kid's. Your order has been placed successfully.</p>
                     <p className="text-[10px] tracking-widest uppercase text-black/40 animate-pulse">Redirecting to shop...</p>
                 </motion.div>
             ) : (

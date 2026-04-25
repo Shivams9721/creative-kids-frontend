@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-[#fafafa] flex items-center justify-center px-4">
       <div className="bg-white border border-black/10 rounded-2xl shadow-sm p-10 w-full max-w-sm">
-        <h1 className="text-[11px] font-bold tracking-widest uppercase text-black/50 mb-1">Creative Kids</h1>
+        <h1 className="text-[11px] font-bold tracking-widest uppercase text-black/50 mb-1">Creative Kid's</h1>
         <h2 className="text-2xl font-light text-black mb-8">Admin Login</h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>

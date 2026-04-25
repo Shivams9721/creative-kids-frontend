@@ -58,7 +58,7 @@ const SLUG_LABELS = {
 };
 
 const SEO_INTRO_COPY = {
-  "shop": "Discover premium kids clothing online in India at Creative Kids. Explore curated baby, toddler, and kids collections with soft fabrics, modern fits, and everyday comfort.",
+  "shop": "Discover premium kids clothing online in India at Creative Kid's. Explore curated baby, toddler, and kids collections with soft fabrics, modern fits, and everyday comfort.",
   "new": "Shop new arrivals in kids wear with fresh seasonal styles for baby boys, baby girls, boys, and girls. Find premium quality outfits designed for comfort and movement.",
   "offers": "Browse special offers on premium children clothing and shop stylish essentials at better prices. Limited-time deals across dresses, co-ords, tops, and everyday wear.",
   "baby": "Explore baby clothing online including rompers, onesies, and comfortable sets made with gentle fabrics suitable for everyday wear and special moments.",
@@ -147,8 +147,8 @@ export async function generateMetadata({ params }) {
   }
 
   const fallbackDescription = itemLabel
-    ? `Shop premium ${itemLabel} for ${catLabel} at Creative Kids. Free shipping above ₹599. Easy returns.`
-    : `Explore Creative Kids' ${catLabel} collection. Premium children's clothing in India. Free shipping above ₹599.`;
+    ? `Shop premium ${itemLabel} for ${catLabel} at Creative Kid's. Free shipping above ₹599. Easy returns.`
+    : `Explore Creative Kid's ${catLabel} collection. Premium children's clothing in India. Free shipping above ₹599.`;
   const description = SEO_INTRO_COPY[pathKey] || fallbackDescription;
 
   const url = `${SITE_URL}/shop${slugArray.length ? '/' + slugArray.join('/') : ''}`;
@@ -164,7 +164,7 @@ export async function generateMetadata({ params }) {
     title,
     description,
     keywords,
-    openGraph: { title, description, url, type: "website", siteName: "Creative Kids" },
+    openGraph: { title, description, url, type: "website", siteName: "Creative Kid's" },
     twitter: { card: "summary", title, description },
     alternates: { canonical: url },
   };

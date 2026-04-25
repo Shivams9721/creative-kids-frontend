@@ -44,12 +44,12 @@ async function getProductData(id) {
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const { product } = await getProductData(id);
-  if (!product) return { title: "Product Not Found — Creative Kids" };
+  if (!product) return { title: "Product Not Found — Creative Kid's" };
 
-  const title = `${product.title} | Creative Kids`;
+  const title = `${product.title} | Creative Kid's`;
   const description = product.description
     ? product.description.slice(0, 155).replace(/\n/g, " ")
-    : `Buy ${product.title} online at Creative Kids. Premium children's clothing in India.`;
+    : `Buy ${product.title} online at Creative Kid's. Premium children's clothing in India.`;
   const image = product.image_urls?.[0] || "";
 
   return {
@@ -93,7 +93,7 @@ export default async function ProductPage({ params }) {
     description: product.description || "",
     image: product.image_urls || [],
     sku: product.sku || String(product.id),
-    brand: { "@type": "Brand", name: "Creative Kids" },
+    brand: { "@type": "Brand", name: "Creative Kid's" },
     offers: {
       "@type": "Offer",
       url: `${SITE_URL}/product/${id}`,
@@ -101,7 +101,7 @@ export default async function ProductPage({ params }) {
       price: parseFloat(product.price).toFixed(2),
       priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       availability: "https://schema.org/InStock",
-      seller: { "@type": "Organization", name: "Creative Kids" },
+      seller: { "@type": "Organization", name: "Creative Kid's" },
     },
   };
   const breadcrumbJsonLd = {

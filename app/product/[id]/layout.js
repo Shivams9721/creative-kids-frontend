@@ -4,23 +4,23 @@ export async function generateMetadata({ params }) {
   try {
     const { id } = await params;
     const safeIdVal = safeId(id);
-    if (!safeIdVal) return { title: "Creative Kids" };
+    if (!safeIdVal) return { title: "Creative Kid's" };
     const res = await safeFetch(`/api/products/${safeIdVal}`, { next: { revalidate: 3600 } });
     if (!res.ok) return {};
     const product = await res.json();
     const images = (() => { try { return typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : (product.image_urls || []); } catch { return []; } })();
     const image = images[0] || "";
-    const description = `${product.title} — ₹${parseFloat(product.price).toFixed(2)}. Shop kids & baby clothing at Creative Kids.`;
+    const description = `${product.title} — ₹${parseFloat(product.price).toFixed(2)}. Shop kids & baby clothing at Creative Kid's.`;
 
     return {
-      title: `${product.title} | Creative Kids`,
+      title: `${product.title} | Creative Kid's`,
       description,
       openGraph: {
         title: product.title,
         description,
         images: image ? [{ url: image, width: 800, height: 1000, alt: product.title }] : [],
         type: "website",
-        siteName: "Creative Kids",
+        siteName: "Creative Kid's",
       },
       twitter: {
         card: "summary_large_image",
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }) {
       },
     };
   } catch {
-    return { title: "Creative Kids" };
+    return { title: "Creative Kid's" };
   }
 }
 

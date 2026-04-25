@@ -20,11 +20,11 @@ export default function TermsPage() {
           </section>
           <section>
             <h2 className="text-[12px] font-bold tracking-widest uppercase text-black mb-3">4. Intellectual Property</h2>
-            <p>All content on this website including text, graphics, logos, and images is the property of Creative Kids and is protected under Indian copyright law. Unauthorised use is strictly prohibited.</p>
+            <p>All content on this website including text, graphics, logos, and images is the property of Creative Kid's and is protected under Indian copyright law. Unauthorised use is strictly prohibited.</p>
           </section>
           <section>
             <h2 className="text-[12px] font-bold tracking-widest uppercase text-black mb-3">5. Limitation of Liability</h2>
-            <p>Creative Kids shall not be liable for any indirect, incidental, or consequential damages arising from the use of our products or website. Our maximum liability shall not exceed the value of the order placed.</p>
+            <p>Creative Kid's shall not be liable for any indirect, incidental, or consequential damages arising from the use of our products or website. Our maximum liability shall not exceed the value of the order placed.</p>
           </section>
           <section>
             <h2 className="text-[12px] font-bold tracking-widest uppercase text-black mb-3">6. Governing Law</h2>

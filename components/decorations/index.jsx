@@ -2,7 +2,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-// Hand-coded SVG decorations for Creative Kids.
+// Hand-coded SVG decorations for Creative Kid's.
 // Palette: pink #E2889D, sage #B8C9A8, amber #F0B95B, sky #BDD9E8, cream #FBF7F0, brown #8B6F4E
 // All decorative — aria-hidden. Sized by props.
 

@@ -20,7 +20,7 @@ export default function MaintenanceBanner() {
       <p className="text-[13px] text-black/50 max-w-sm leading-relaxed">
         We're making some improvements to bring you a better experience. We'll be back shortly.
       </p>
-      <p className="text-[11px] text-black/30 tracking-widest uppercase mt-6">Creative Kids</p>
+      <p className="text-[11px] text-black/30 tracking-widest uppercase mt-6">Creative Kid's</p>
     </div>
   );
 }

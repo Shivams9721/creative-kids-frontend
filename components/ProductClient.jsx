@@ -164,7 +164,7 @@ export default function ProductClient({ product, relatedProducts }) {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = `Check out ${product.title} on Creative Kids!`;
+    const text = `Check out ${product.title} on Creative Kid's!`;
     if (navigator.share) {
       try { await navigator.share({ title: product.title, text, url }); } catch {}
     } else {
