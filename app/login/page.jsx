@@ -7,6 +7,7 @@ import { ArrowRight, Mail, Lock, User as UserIcon, ArrowLeft, CheckCircle2, Eye,
 import { useRouter, useSearchParams } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
 import { safeFetch } from "@/lib/safeFetch";
+import Turnstile from "@/components/Turnstile";
 
 // Modes: otp_email | otp_verify | otp_reset_password | login | register | forgot | reset | reset_done | forgot_sent
 
@@ -26,7 +27,9 @@ function LoginContent() {
   const [showPwField, setShowPwField] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
   const otpRefs = useRef([]);
+  const captchaRequired = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -67,6 +70,7 @@ function LoginContent() {
   // Send OTP
   const sendOtp = async (purposeOverride) => {
     const p = purposeOverride || otpPurpose;
+    if (captchaRequired && !captchaToken) { setError("Please complete the captcha."); return; }
     setLoading(true);
     setError("");
     try {
@@ -74,7 +78,7 @@ function LoginContent() {
         method: "POST",
         headers: await csrfHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
-        body: JSON.stringify({ email, purpose: p }),
+        body: JSON.stringify({ email, purpose: p, turnstileToken: captchaToken }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -82,8 +86,10 @@ function LoginContent() {
         setOtpPurpose(p);
         setOtp(["", "", "", "", "", ""]);
         setCountdown(60);
+        setCaptchaToken("");
         setTimeout(() => otpRefs.current[0]?.focus(), 100);
       } else {
+        setCaptchaToken("");
         setError(data.error || "Failed to send OTP.");
       }
     } catch {
@@ -153,6 +159,7 @@ function LoginContent() {
   // Password login / register
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    if (captchaRequired && !captchaToken) { setError("Please complete the captcha."); return; }
     setLoading(true);
     setError("");
     setTouched({ email: true, password: true, name: true, confirmPassword: true });
@@ -162,7 +169,7 @@ function LoginContent() {
         method: "POST",
         headers: await csrfHeaders({ "Content-Type": "application/json" }),
         credentials: "include",
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, turnstileToken: captchaToken }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -171,6 +178,7 @@ function LoginContent() {
         router.push("/profile");
       } else {
         setError(data.message || "Something went wrong.");
+        setCaptchaToken("");
       }
     } catch {
       setError("Failed to connect to the server.");
@@ -252,7 +260,8 @@ function LoginContent() {
                           className="w-full border border-black/20 pl-11 pr-4 py-3.5 rounded-lg text-[13px] outline-none focus:border-black transition-colors" />
                       </div>
                     </div>
-                    <button disabled={loading || !emailValid} onClick={() => sendOtp("login")}
+                    <Turnstile onToken={setCaptchaToken} />
+                    <button disabled={loading || !emailValid || (captchaRequired && !captchaToken)} onClick={() => sendOtp("login")}
                       className="w-full bg-black text-white rounded-full py-4 text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors flex items-center justify-center gap-2 group disabled:opacity-40">
                       {loading ? "Sending OTP..." : "Send OTP"}
                       {!loading && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
@@ -314,10 +323,13 @@ function LoginContent() {
                     {countdown > 0 ? (
                       <p className="text-[12px] text-black/40">Resend OTP in <span className="font-bold text-black">{countdown}s</span></p>
                     ) : (
-                      <button onClick={() => sendOtp(otpPurpose)} disabled={loading}
-                        className="flex items-center gap-1.5 text-[12px] font-bold text-black hover:underline mx-auto disabled:opacity-40">
-                        <RefreshCw size={13} /> Resend OTP
-                      </button>
+                      <>
+                        <Turnstile onToken={setCaptchaToken} />
+                        <button onClick={() => sendOtp(otpPurpose)} disabled={loading || (captchaRequired && !captchaToken)}
+                          className="flex items-center gap-1.5 text-[12px] font-bold text-black hover:underline mx-auto disabled:opacity-40">
+                          <RefreshCw size={13} /> Resend OTP
+                        </button>
+                      </>
                     )}
                   </div>
                 </motion.div>
@@ -416,7 +428,8 @@ function LoginContent() {
                         </button>
                       </div>
                     </div>
-                    <button disabled={loading} type="submit"
+                    <Turnstile onToken={setCaptchaToken} />
+                    <button disabled={loading || (captchaRequired && !captchaToken)} type="submit"
                       className="w-full mt-2 bg-black text-white rounded-full py-4 text-[12px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors flex items-center justify-center gap-2 group disabled:opacity-50">
                       {loading ? "Processing..." : (mode === "login" ? "Sign In" : "Create Account")}
                       {!loading && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
