@@ -36,7 +36,9 @@ export async function safeFetch(path, options = {}) {
   const isFormData =
     typeof FormData !== "undefined" && body instanceof FormData;
 
-  if (!isFormData && !headers["Content-Type"] && body && typeof body === "object" && method !== "GET") {
+  // Set Content-Type to JSON for any non-FormData body on a write request.
+  // Without this, Express 5 leaves req.body as undefined and handlers crash on destructure.
+  if (!isFormData && !headers["Content-Type"] && body != null && method !== "GET") {
     headers["Content-Type"] = "application/json";
   }
 
