@@ -157,11 +157,7 @@ export default function ListProductInner() {
       for (const file of files) {
         const fd = new FormData();
         fd.append("image", file);
-        const token = localStorage.getItem("adminToken");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com"}/api/upload`, {
-          method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
-        });
-        const data = await res.json();
+        const data = await safeFetch("/api/upload", { method: "POST", body: fd });
         if (data.imageUrl) uploadedUrls.push(data.imageUrl);
       }
       if (uploadedUrls.length > 0) {

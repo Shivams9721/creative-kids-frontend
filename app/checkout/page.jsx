@@ -216,7 +216,10 @@ export default function CheckoutPage() {
     };
 
     const discountAmount = couponStatus?.discount_amount || 0;
-    const finalTotal = Math.max(0, cartTotal - discountAmount - loyaltyDiscount);
+    const subtotalAfterDiscount = Math.max(0, cartTotal - discountAmount - loyaltyDiscount);
+    // Shipping: free above ₹499 subtotal-after-discount, else flat ₹99. Mirrors backend.
+    const shippingFee = subtotalAfterDiscount >= 499 ? 0 : 99;
+    const finalTotal = subtotalAfterDiscount + shippingFee;
 
     const handlePlaceOrder = async () => {
         setLoading(true);
@@ -230,9 +233,12 @@ export default function CheckoutPage() {
                     alert('Failed to load payment gateway. Please try again.');
                     return;
                 }
-                // processRazorpayPayment now returns a real Promise
+                // processRazorpayPayment now returns a real Promise.
+                // Amount is computed server-side from cartItems + coupon + loyalty + shipping.
                 const paymentData = await processRazorpayPayment({
-                    amount: finalTotal,
+                    cartItems: cart.map(it => ({ id: it.id, quantity: it.quantity || 1 })),
+                    couponCode: couponStatus?.code || null,
+                    loyaltyPoints: loyaltyPointsUsed || 0,
                     currency: 'INR',
                     name: address.fullName,
                     email: JSON.parse(localStorage.getItem('user') || '{}').email,
@@ -526,8 +532,15 @@ export default function CheckoutPage() {
                                     )}
                                     <div className="flex justify-between text-black/70">
                                         <span>Delivery Charges</span>
-                                        <span className="text-black font-medium tracking-widest uppercase text-[10px] bg-black/5 px-2 py-1 rounded">Free</span>
+                                        {shippingFee === 0 ? (
+                                            <span className="text-black font-medium tracking-widest uppercase text-[10px] bg-black/5 px-2 py-1 rounded">Free</span>
+                                        ) : (
+                                            <span className="text-black">₹{shippingFee.toFixed(2)}</span>
+                                        )}
                                     </div>
+                                    <p className="text-[10px] tracking-widest uppercase text-black/40 -mt-2">
+                                        Inclusive of 5% GST · Free above ₹499
+                                    </p>
                                 </div>
                                 {/* Coupon Input */}
                                 <div className="mb-4">

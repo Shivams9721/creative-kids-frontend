@@ -123,10 +123,6 @@ export default function Footer() {
               <p className={`text-[10px] tracking-wider uppercase mt-2 ${status === "success" ? "text-green-600" : "text-red-500"}`}>{msg}</p>
             )}
             <p className="text-[9.5px] tracking-wider text-black/30 mt-2">No spam. Unsubscribe at any time.</p>
-            <div className="inline-flex items-center gap-1.5 mt-4 px-2.5 py-1 border border-black/15 rounded-full text-[9.5px] tracking-wider text-black/50">
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 1l1.2 2.4L9 4.2 7 6.1l.5 2.9L5 7.8 2.5 9 3 6.1 1 4.2l2.8-.8z" /></svg>
-              GST: 06AAJPM1384L1ZE
-            </div>
           </div>
         </div>
 

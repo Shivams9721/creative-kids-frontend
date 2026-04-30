@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import "./admin.css";
+import AdminOrderNotifier from "@/components/AdminOrderNotifier";
 
 const NAV = [
   { group: "Overview", items: [
@@ -44,39 +45,27 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     if (isLoginPage) return;
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_BASE) {
+      setAuthed(false);
+      router.replace("/admin/login");
+      return;
+    }
 
-    const getToken = () => {
-      const lsToken = localStorage.getItem("adminToken");
-      const cookieToken = document.cookie.split(';')
-        .map(c => c.trim()).find(c => c.startsWith('adminToken='))
-        ?.split('=').slice(1).join('=');
-      return lsToken || cookieToken || null;
-    };
-
-    const clearTokens = () => {
-      localStorage.removeItem("adminToken");
-      document.cookie = "adminToken=; path=/; max-age=0";
-    };
-
-    const token = getToken();
-    if (!token) { router.replace("/admin/login"); return; }
-
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://vbaumdstnz.ap-south-1.awsapprunner.com';
-    fetch(`${API_BASE}/api/admin/stats`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => {
-      if (res.status === 401 || res.status === 403) {
-        clearTokens();
-        router.replace("/admin/login");
-      } else {
-        localStorage.setItem("adminToken", token);
-        document.cookie = `adminToken=${token}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
+    fetch(`${API_BASE}/api/admin/verify`, { credentials: "include" })
+      .then((res) => {
+        if (!res.ok) {
+          setAuthed(false);
+          router.replace("/admin/login");
+          return;
+        }
         setAuthed(true);
-      }
-    }).catch(() => {
-      localStorage.setItem("adminToken", token);
-      setAuthed(true);
-    });
+      })
+      .catch(() => {
+        // Security: never grant admin access on network/API failures.
+        setAuthed(false);
+        router.replace("/admin/login");
+      });
   }, [router, isLoginPage]);
 
   if (isLoginPage) return <>{children}</>;
@@ -90,7 +79,6 @@ export default function AdminLayout({ children }) {
   );
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
     document.cookie = "adminToken=; path=/; max-age=0";
     router.replace("/admin/login");
   };
@@ -99,6 +87,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="admin-root" style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      <AdminOrderNotifier />
       
       {/* MOBILE OVERLAY */}
       <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={() => setSidebarOpen(false)} />

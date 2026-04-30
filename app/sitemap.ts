@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 const SITE_URL = "https://www.creativekids.co.in";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 const SHOP_PATHS = [
   "/shop",
@@ -24,11 +24,30 @@ const SHOP_PATHS = [
 
 async function fetchProductIds(): Promise<number[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/products`, { next: { revalidate: 3600 } });
-    if (!res.ok) return [];
-    const products = await res.json();
-    if (!Array.isArray(products)) return [];
-    return products.map((p) => Number(p.id)).filter((id) => Number.isFinite(id) && id > 0);
+    if (!API_BASE) return [];
+    const ids: number[] = [];
+    let page = 1;
+    let hasMore = true;
+    const limit = 120;
+
+    while (hasMore && page <= 50) {
+      const res = await fetch(`${API_BASE}/api/products?page=${page}&limit=${limit}`, { next: { revalidate: 3600 } });
+      if (!res.ok) break;
+      const payload = await res.json();
+
+      if (Array.isArray(payload)) {
+        ids.push(...payload.map((p: any) => Number(p?.id)));
+        hasMore = false;
+      } else {
+        const items: any[] = Array.isArray(payload?.items) ? payload.items : [];
+        ids.push(...items.map((p: any) => Number(p?.id)));
+        hasMore = !!payload?.hasMore;
+      }
+
+      page += 1;
+    }
+
+    return ids.filter((id) => Number.isFinite(id) && id > 0);
   } catch {
     return [];
   }

@@ -96,6 +96,9 @@ async function getProducts(params, searchParams) {
     necks: searchParams.necks,
     price_min: null,
     price_max: null,
+    // Pagination (backend returns {items, hasMore} when present)
+    page: null,
+    limit: null,
   };
 
   if (searchParams.price === 'Under ₹299') { queryParams.price_min = 0; queryParams.price_max = 299; }
@@ -106,13 +109,32 @@ async function getProducts(params, searchParams) {
   if (slug0 === 'offers') queryParams.offers = 'true';
   if (slug0 === 'new') queryParams.new_arrival = 'true';
 
-  const apiPath = buildApiPath(queryParams);
-
   try {
-    const res = await safeFetch(apiPath, { cache: 'no-store' });
-    if (!res.ok) throw new Error("Failed to fetch products");
-    const products = await res.json();
-    return products.map(p => ({
+    // Fetch all pages to avoid silent truncation (backend used to hard-limit at 120).
+    const all = [];
+    let pageNum = 1;
+    let hasMore = true;
+    const perPage = 120;
+
+    while (hasMore && pageNum <= 50) {
+      const apiPath = buildApiPath({ ...queryParams, page: String(pageNum), limit: String(perPage) });
+      const res = await safeFetch(apiPath, { cache: 'no-store' });
+      if (!res.ok) throw new Error("Failed to fetch products");
+      const payload = await res.json();
+
+      if (Array.isArray(payload)) {
+        // Backward compatibility: old API returned array (and was truncated).
+        all.push(...payload);
+        hasMore = false;
+      } else {
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        all.push(...items);
+        hasMore = !!payload?.hasMore;
+      }
+      pageNum += 1;
+    }
+
+    return all.map(p => ({
       ...p,
       image_urls: (() => { try { return typeof p.image_urls === 'string' ? JSON.parse(p.image_urls) : (p.image_urls || []); } catch { return []; } })(),
       variants: (() => { try { return typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || []); } catch { return []; } })(),
@@ -147,8 +169,8 @@ export async function generateMetadata({ params }) {
   }
 
   const fallbackDescription = itemLabel
-    ? `Shop premium ${itemLabel} for ${catLabel} at Creative Kid's. Free shipping above ₹599. Easy returns.`
-    : `Explore Creative Kid's ${catLabel} collection. Premium children's clothing in India. Free shipping above ₹599.`;
+    ? `Shop premium ${itemLabel} for ${catLabel} at Creative Kid's. Free shipping above ₹499. Easy returns.`
+    : `Explore Creative Kid's ${catLabel} collection. Premium children's clothing in India. Free shipping above ₹499.`;
   const description = SEO_INTRO_COPY[pathKey] || fallbackDescription;
 
   const url = `${SITE_URL}/shop${slugArray.length ? '/' + slugArray.join('/') : ''}`;

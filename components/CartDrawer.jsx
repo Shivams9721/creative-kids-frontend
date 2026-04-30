@@ -6,7 +6,8 @@ import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { Mascot, Heart, Sparkle } from "@/components/decorations";
 
-const FREE_SHIPPING_THRESHOLD = 599;
+const FREE_SHIPPING_THRESHOLD = 499;
+const SHIPPING_FEE = 99;
 
 export default function CartDrawer() {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -14,6 +15,8 @@ export default function CartDrawer() {
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
   const progress = Math.min(100, (cartTotal / FREE_SHIPPING_THRESHOLD) * 100);
   const unlocked = cartTotal >= FREE_SHIPPING_THRESHOLD;
+  const shippingFee = unlocked || cart.length === 0 ? 0 : SHIPPING_FEE;
+  const grandTotal = cartTotal + shippingFee;
 
   return (
     <AnimatePresence>
@@ -126,12 +129,26 @@ export default function CartDrawer() {
             {/* Footer */}
             {cart.length > 0 && (
               <div className="p-6 border-t border-black/10 bg-gray-50">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm tracking-widest uppercase text-black">Subtotal</span>
-                  <span className="text-lg text-black font-medium">₹{cartTotal.toFixed(2)}</span>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-sm tracking-widest uppercase text-black/70">Subtotal</span>
+                  <span className="text-sm text-black">₹{cartTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-sm tracking-widest uppercase text-black/70">Delivery</span>
+                  <span className="text-sm text-black">
+                    {shippingFee === 0 ? (
+                      <span className="text-green-600 font-medium">FREE</span>
+                    ) : (
+                      <>₹{shippingFee.toFixed(2)}</>
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mb-2 pt-2 border-t border-black/10">
+                  <span className="text-sm tracking-widest uppercase text-black font-bold">Total</span>
+                  <span className="text-lg text-black font-bold">₹{grandTotal.toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] tracking-widest uppercase text-black/40 text-center mb-4">
-                  Free shipping on orders above ₹599
+                  Inclusive of 5% GST · Free shipping above ₹499
                 </p>
                 <Link
                   href="/checkout"

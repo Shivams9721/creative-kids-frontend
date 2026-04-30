@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Wand2, Trash2, UploadCloud, CheckCircle2, Plus } from "lucide-react";
-import { safeFetch } from "@/lib/safeFetch";
+import { safeFetch } from "@/app/admin/api";
 
 const ALL_SIZES = [
   '0-3M','3-6M','6-9M','9-12M','12-18M','18-24M',
@@ -69,15 +69,9 @@ export default function VariantDrawer({ isOpen, onClose, formData, setFormData, 
   const uploadToS3 = useCallback(async (file) => {
     const fd = new FormData();
     fd.append("image", file);
-    const token = localStorage.getItem("adminToken");
-    const res = await safeFetch(`/api/upload`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: fd
-    });
-    const data = await res.json();
-    if (res.ok && data.success) return data.imageUrl;
-    throw new Error(data.error || "Upload failed");
+    const data = await safeFetch(`/api/upload`, { method: "POST", body: fd });
+    if (data?.success && data.imageUrl) return data.imageUrl;
+    throw new Error(data?.error || "Upload failed");
   }, []);
 
   // Color gallery — add multiple images per color, auto-sync first image of each color to image_urls

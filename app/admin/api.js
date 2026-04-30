@@ -1,24 +1,39 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://vbaumdstnz.ap-south-1.awsapprunner.com';
+import { csrfHeaders } from "@/lib/csrf";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export async function safeFetch(path, options = {}) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
-  };
+  const headers = { ...(options.headers || {}) };
+
+  const method = String(options.method || "GET").toUpperCase();
+  const isStateChanging = !["GET", "HEAD", "OPTIONS"].includes(method);
+
+  // For multipart uploads (FormData), do not force JSON content-type.
+  const body = options.body;
+  const isFormData =
+    typeof FormData !== "undefined" && body instanceof FormData;
+
+  if (!isFormData && !headers["Content-Type"] && body && typeof body === "object" && method !== "GET") {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (isStateChanging) {
+    Object.assign(headers, await csrfHeaders());
+  }
+
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not set");
 
   // Support both full URLs and relative paths
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
-  const response = await fetch(url, { ...options, headers });
-  
-  if (response.status === 401) {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('adminToken');
-      window.location.href = '/admin/login';
+  const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
+
+  const response = await fetch(url, { ...options, headers, credentials: "include" });
+
+  if (response.status === 401 || response.status === 403) {
+    if (typeof window !== "undefined") {
+      document.cookie = "adminToken=; path=/; max-age=0";
+      window.location.href = "/admin/login";
     }
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   if (!response.ok) throw new Error(await response.text());

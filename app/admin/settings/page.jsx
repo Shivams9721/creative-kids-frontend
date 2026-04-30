@@ -60,12 +60,10 @@ export default function AdminSettings() {
     if (pwForm.next.length < 6) { setPwError("Min 6 characters"); return; }
     setChangingPw(true); setPwError("");
     try {
-      // Use the admin email from localStorage to send OTP reset
-      const token = localStorage.getItem("adminToken");
-      // Decode JWT to get admin email
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const adminId = payload.id;
-      // Direct password update via admin endpoint
+      const me = await safeFetch("/api/admin/verify");
+      const adminId = me?.admin?.id;
+      if (!adminId) throw new Error("Admin verification failed");
+
       const res = await safeFetch(`/api/admin/change-password`, {
         method: "POST",
         body: JSON.stringify({ adminId, newPassword: pwForm.next }),

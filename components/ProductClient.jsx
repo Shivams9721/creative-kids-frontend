@@ -14,8 +14,14 @@ import { safeFetch } from "@/lib/safeFetch";
 import { recordView } from "@/components/RecentlyViewed";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { useSettings } from "@/context/SettingsContext";
-import SizeGuide from "@/components/SizeGuide";
+import dynamic from "next/dynamic";
 import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
+
+// P9: lazy-loaded — SizeGuide opens on click, RelatedProducts is below-the-fold.
+const SizeGuide = dynamic(() => import("@/components/SizeGuide"), { ssr: false });
+const RelatedProducts = dynamic(() => import("@/components/RelatedProducts"), { ssr: false, loading: () => null });
+const PincodeServiceability = dynamic(() => import("@/components/PincodeServiceability"), { ssr: false });
+const SizeRecommender = dynamic(() => import("@/components/SizeRecommender"), { ssr: false });
 
 
 
@@ -437,7 +443,10 @@ export default function ProductClient({ product, relatedProducts }) {
               <div className="mb-8">
                 <div className="flex justify-between items-end mb-3">
                   <span className="text-[11px] font-bold tracking-widest uppercase text-black">Size</span>
-                  <button onClick={() => setShowSizeGuide(true)} className="text-[10px] tracking-widest uppercase text-black/50 hover:text-black border-b border-black/20 pb-0.5">Size Guide</button>
+                  <div className="flex gap-3 items-end">
+                    <SizeRecommender availableSizes={availableSizes} onPick={setSelectedSize} />
+                    <button onClick={() => setShowSizeGuide(true)} className="text-[10px] tracking-widest uppercase text-black/50 hover:text-black border-b border-black/20 pb-0.5">Size Guide</button>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {availableSizes.map(size => {
@@ -538,6 +547,9 @@ export default function ProductClient({ product, relatedProducts }) {
                 <ShoppingBag size={18} strokeWidth={1.5} />
                 Add to Cart
               </button>
+              <div className="my-4">
+                <PincodeServiceability />
+              </div>
               <div className="flex items-center justify-center gap-3 sm:gap-6 py-3 sm:py-4 border border-black/5 rounded-lg bg-[#fafafa] flex-wrap">
                 <div className="flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold tracking-wider sm:tracking-widest uppercase text-black/70">
                   <Truck size={14} className="sm:w-4 sm:h-4" strokeWidth={1.5} /> Free Shipping
@@ -758,34 +770,8 @@ export default function ProductClient({ product, relatedProducts }) {
           </div>
         </div>
       </div>
-      {/* YOU MAY ALSO LIKE */}
-      {relatedProducts.length > 0 && (
-        <section className="border-t border-black/10 py-8 sm:py-12 px-3 sm:px-4 md:px-8">
-          <div className="max-w-[1600px] mx-auto">
-            <h2 className="text-[11px] sm:text-[12px] font-bold tracking-widest uppercase text-black mb-5 sm:mb-8">You May Also Like</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
-              {relatedProducts.map(p => (
-                <Link key={p.id} href={`/product/${p.id}`} className="group flex flex-col">
-                  <div className="relative w-full aspect-[3/4] bg-[#f6f5f3] overflow-hidden mb-2 sm:mb-3">
-                    <MediaRenderer 
-                      src={(p.hover_videos && Object.values(p.hover_videos).find(v => v)) || p.image_urls?.find(isVideo) || p.image_urls?.[0] || '/images/logo.png'} 
-                      poster={p.image_urls?.find(u => !isVideo(u))}
-                      alt={p.title} 
-                      fill 
-                      className="object-cover group-hover:scale-105 transition-transform duration-700" 
-                      sizes="(max-width: 768px) 50vw, 16vw" 
-                      hideVolume 
-                      hoverPlay
-                    />
-                  </div>
-                  <p className="text-[11px] sm:text-[12px] text-black truncate px-0.5">{p.title}</p>
-                  <p className="text-[11px] sm:text-[12px] font-bold text-black mt-0.5 px-0.5">₹{parseFloat(p.price).toFixed(2)}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* YOU MAY ALSO LIKE — lazy-loaded (P9) */}
+      <RelatedProducts relatedProducts={relatedProducts} />
     </main>
 
       {/* ── STICKY MOBILE CTA BAR ── */}

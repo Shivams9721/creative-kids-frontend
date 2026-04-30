@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+const awsRegion = process.env.NEXT_PUBLIC_AWS_REGION || process.env.AWS_REGION || "ap-south-1";
+const awsBucket =
+  process.env.NEXT_PUBLIC_S3_BUCKET_NAME ||
+  process.env.AWS_S3_BUCKET_NAME ||
+  "";
+
 const nextConfig: NextConfig = {
   // Enable HTTP compression (gzip/brotli) for all responses
   compress: true,
@@ -15,10 +21,15 @@ const nextConfig: NextConfig = {
     // Thumbnail sizes for small images (product cards, thumbnails)
     imageSizes: [64, 128, 256, 384],
 
-    // Allow images from any HTTPS/HTTP hostname (S3, CDN, etc.)
+    // SECURITY: restrict Next Image optimizer to trusted hosts only.
+    // Previously this used `hostname: "**"`, which increases SSRF surface area.
     remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
+      {
+        protocol: "https",
+        hostname: awsBucket
+          ? `${awsBucket}.s3.${awsRegion}.amazonaws.com`
+          : `**.s3.${awsRegion}.amazonaws.com`,
+      },
     ],
 
     // Allowed quality values the optimizer will accept (Next 15+). 95 = near-lossless HD.

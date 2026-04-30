@@ -64,6 +64,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [wishlistCount, setWishlistCount] = useState(0);
   
   // Announcement Bar States
   const [isAnnouncementVisible, setIsAnnouncementVisible] = useState(true);
@@ -87,6 +88,25 @@ export default function Navbar() {
     window.addEventListener('storage', checkAuth);
     return () => window.removeEventListener('storage', checkAuth);
   }, [pathname]);
+
+  // U7: keep wishlist badge count in sync with backend.
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+      if (!token) { setWishlistCount(0); return; }
+      try {
+        const { safeFetch } = await import("@/lib/safeFetch");
+        const res = await safeFetch("/api/wishlist", { headers: { Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data = await res.json();
+        setWishlistCount(Array.isArray(data) ? data.length : (data?.items?.length || 0));
+      } catch {}
+    };
+    fetchWishlistCount();
+    const onWishlistChange = () => fetchWishlistCount();
+    window.addEventListener('wishlist:changed', onWishlistChange);
+    return () => window.removeEventListener('wishlist:changed', onWishlistChange);
+  }, [pathname, isLoggedIn]);
 
   useEffect(() => {
     setIsNavOpen(false);
@@ -173,7 +193,7 @@ export default function Navbar() {
                 </button>
 
                 {/* Rotating Announcement Text (Center) */}
-                <div className="flex-1 flex justify-center items-center text-[10px] md:text-[11px] font-medium tracking-widest uppercase text-black/80 px-4 h-full relative overflow-hidden">
+                <div className="flex-1 flex justify-center items-center text-[8.5px] md:text-[11px] font-medium tracking-wider md:tracking-widest uppercase text-black/80 px-1 md:px-4 h-full relative overflow-hidden">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={announcementIndex}
@@ -181,7 +201,7 @@ export default function Navbar() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.4 }}
-                      className="absolute w-full flex justify-center items-center"
+                      className="absolute w-full flex justify-center items-center whitespace-nowrap"
                     >
                       {ANNOUNCEMENTS[announcementIndex].content}
                     </motion.div>
@@ -346,8 +366,13 @@ export default function Navbar() {
               <User strokeWidth={1.5} size={22} className={isLoggedIn ? "text-green-600" : ""} />
             </Link>
 
-            <Link href="/wishlist" className="hover:opacity-40 transition-opacity duration-300 ease-in-out hidden sm:block">
+            <Link href="/wishlist" className="hover:opacity-40 transition-opacity duration-300 ease-in-out hidden sm:block relative">
               <Heart strokeWidth={1.5} size={20} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-black text-white text-[9px] font-bold rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
 
             <button
@@ -534,6 +559,12 @@ export default function Navbar() {
                   className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity mt-4 inline-block"
                 >
                   Call: +911244130381
+                </a>
+                <a
+                  href="mailto:info@creativeimpression.in"
+                  className="text-[12px] font-bold tracking-widest uppercase text-black hover:opacity-50 transition-opacity mt-2 block break-all"
+                >
+                  Email: info@creativeimpression.in
                 </a>
               </div>
             </motion.div>

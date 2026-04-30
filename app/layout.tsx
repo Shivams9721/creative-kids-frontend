@@ -4,6 +4,7 @@ import { CartProvider } from '@/context/CartContext'
 import { SettingsProvider } from '@/context/SettingsContext'
 import ConditionalShell from '@/components/ConditionalShell'
 import RecentlyViewed from '@/components/RecentlyViewed'
+import WhatsAppWidget from '@/components/WhatsAppWidget'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -12,7 +13,7 @@ export const metadata = {
     default: "Creative Kid's | Premium Children's Clothing India",
     template: "%s | Creative Kid's",
   },
-  description: "Shop premium children's clothing at Creative Kid's. Baby, toddler & kids fashion. Free shipping above ₹599. Easy 7-day returns.",
+  description: "Shop premium children's clothing at Creative Kid's. Baby, toddler & kids fashion. Free shipping above ₹499. Easy 7-day returns.",
   keywords: ['kids clothing', 'children fashion', 'baby clothes india', 'toddler clothing', 'kids wear online'],
   metadataBase: new URL('https://www.creativekids.co.in'),
   openGraph: {
@@ -39,6 +40,7 @@ export default function RootLayout({
               {children}
             </ConditionalShell>
             <RecentlyViewed />
+            <WhatsAppWidget />
           </SettingsProvider>
         </CartProvider>
       </body>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { safeFetch } from "../api";
+import { csrfHeaders } from "@/lib/csrf";
 
 const PRODUCT_SECTION_KEYS = ["girls_new_arrivals", "season_bestsellers", "featured_collection"];
 
@@ -271,10 +272,11 @@ export default function HomepageAdminPage() {
 
   const deleteFromS3 = (url) => {
     if (!url || !url.includes(".amazonaws.com/")) return;
-    const token = localStorage.getItem("adminToken");
-    if (!token) return;
-    const base = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
-    fetch(`${base}/api/upload`, { method: "DELETE", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ imageUrl: url }) }).catch(() => {});
+    safeFetch("/api/upload", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl: url }),
+    }).catch(() => {});
   };
 
   const uploadFile = async (onDone, oldUrl, progressKey, accept = "image/*,video/mp4,video/webm", label = "File") => {
@@ -288,15 +290,19 @@ export default function HomepageAdminPage() {
       if (progressKey) setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
       const fd = new FormData();
       fd.append("image", file);
-      const token = localStorage.getItem("adminToken");
-      if (!token) { alert("Not logged in."); if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; }); return; }
-      const base = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+      const base = process.env.NEXT_PUBLIC_API_URL;
+      if (!base) { alert("API not configured."); if (progressKey) setUploadProgress(prev => { const n = { ...prev }; delete n[progressKey]; return n; }); return; }
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${base}/api/upload`);
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      const csrf = await csrfHeaders();
+      if (csrf["x-csrf-token"]) xhr.setRequestHeader("x-csrf-token", csrf["x-csrf-token"]);
       xhr.upload.onprogress = e => { if (e.lengthComputable && progressKey) setUploadProgress(prev => ({ ...prev, [progressKey]: Math.round(e.loaded * 100 / e.total) })); };
       xhr.onload = () => {
-        if (xhr.status === 401 || xhr.status === 403) { localStorage.removeItem("adminToken"); alert("Session expired."); setTimeout(() => { window.location.href = "/admin/login"; }, 1200); return; }
+        if (xhr.status === 401 || xhr.status === 403) {
+          document.cookie = "adminToken=; path=/; max-age=0";
+          window.location.href = "/admin/login";
+          return;
+        }
         try {
           const data = JSON.parse(xhr.responseText);
           if (xhr.status >= 200 && xhr.status < 300 && data.imageUrl) {

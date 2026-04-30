@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://vbaumdstnz.ap-south-1.awsapprunner.com";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,26 +13,17 @@ export default function AdminLoginPage() {
 
   const [checking, setChecking] = useState(true);
 
-  // If already logged in, redirect to admin
+  // If already logged in (cookie-based), redirect to admin.
   useEffect(() => {
-    // Check both localStorage and cookie
-    const lsToken = localStorage.getItem("adminToken");
-    const cookieToken = document.cookie.split(';')
-      .map(c => c.trim())
-      .find(c => c.startsWith('adminToken='))
-      ?.split('=').slice(1).join('=');
-    if (lsToken || cookieToken) {
-      // Sync both
-      if (lsToken && !cookieToken) {
-        document.cookie = `adminToken=${lsToken}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
-      }
-      if (!lsToken && cookieToken) {
-        localStorage.setItem("adminToken", cookieToken);
-      }
-      router.replace("/admin");
-    } else {
-      setChecking(false);
-    }
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+    if (!API_BASE) { setChecking(false); return; }
+
+    fetch(`${API_BASE}/api/admin/verify`, { credentials: "include" })
+      .then((res) => {
+        if (res.ok) router.replace("/admin");
+        else setChecking(false);
+      })
+      .catch(() => setChecking(false));
   }, [router]);
 
   if (checking) return (
@@ -49,6 +40,7 @@ export default function AdminLoginPage() {
       const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
@@ -56,10 +48,6 @@ export default function AdminLoginPage() {
         setError(data.message || "Invalid credentials");
         return;
       }
-      // Store in localStorage for API calls
-      localStorage.setItem("adminToken", data.token);
-      // Also set a cookie so middleware can protect routes
-      document.cookie = `adminToken=${data.token}; path=/; max-age=${12 * 60 * 60}; SameSite=Lax`;
       router.replace("/admin");
     } catch {
       setError("Failed to connect. Please try again.");
