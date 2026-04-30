@@ -45,14 +45,8 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     if (isLoginPage) return;
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-    if (!API_BASE) {
-      setAuthed(false);
-      router.replace("/admin/login");
-      return;
-    }
-
-    fetch(`${API_BASE}/api/admin/verify`, { credentials: "include" })
+    // Hit our own route handler — it reads the frontend-domain cookie and proxies to the backend.
+    fetch(`/api/admin/verify`)
       .then((res) => {
         if (!res.ok) {
           setAuthed(false);

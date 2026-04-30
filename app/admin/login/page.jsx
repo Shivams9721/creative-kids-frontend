@@ -14,11 +14,9 @@ export default function AdminLoginPage() {
   const [checking, setChecking] = useState(true);
 
   // If already logged in (cookie-based), redirect to admin.
+  // Hit our own /api/admin/verify route — it checks the frontend-domain cookie.
   useEffect(() => {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-    if (!API_BASE) { setChecking(false); return; }
-
-    fetch(`${API_BASE}/api/admin/verify`, { credentials: "include" })
+    fetch(`/api/admin/verify`)
       .then((res) => {
         if (res.ok) router.replace("/admin");
         else setChecking(false);
@@ -37,10 +35,10 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/login`, {
+      // Posts to our own route handler so the cookie is set on the frontend's domain.
+      const res = await fetch(`/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
