@@ -148,7 +148,7 @@ export default function CartDrawer() {
                   <span className="text-lg text-black font-bold">₹{grandTotal.toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] tracking-widest uppercase text-black/40 text-center mb-4">
-                  Inclusive of 5% GST · Free shipping above ₹499
+                   Free shipping above ₹499
                 </p>
                 <Link
                   href="/checkout"

@@ -19,6 +19,11 @@ export default function AdminSettings() {
     maintenance_mode: false,
     cod_enabled: true,
     reviews_enabled: true,
+    cod_max_value: 1999,
+    cod_first_order_max: 999,
+    cod_fee: 0,
+    cod_phone_verify_required: false,
+    cod_pincode_check_enabled: true,
   });
 
   useEffect(() => {
@@ -245,6 +250,83 @@ export default function AdminSettings() {
                 </label>
               </div>
             ))}
+          </div>
+
+          {/* COD CONFIGURATION */}
+          <div className="card card-pad">
+            <div className="card-title">Cash on delivery rules</div>
+
+            <div className="setting-row">
+              <div>
+                <div className="setting-label">COD ceiling (₹)</div>
+                <div className="setting-sub">Block COD when order total reaches this amount.</div>
+              </div>
+              <input
+                type="number" min={0} step={50}
+                style={{ width: 110, padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                value={settings.cod_max_value ?? 1999}
+                onChange={e => set("cod_max_value", Number(e.target.value) || 0)}
+                onBlur={() => saveSettings()}
+              />
+            </div>
+
+            <div className="setting-row">
+              <div>
+                <div className="setting-label">First-order COD ceiling (₹)</div>
+                <div className="setting-sub">Lower limit applied when the customer has no prior orders.</div>
+              </div>
+              <input
+                type="number" min={0} step={50}
+                style={{ width: 110, padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                value={settings.cod_first_order_max ?? 999}
+                onChange={e => set("cod_first_order_max", Number(e.target.value) || 0)}
+                onBlur={() => saveSettings()}
+              />
+            </div>
+
+            <div className="setting-row">
+              <div>
+                <div className="setting-label">COD convenience fee (₹)</div>
+                <div className="setting-sub">Added to the order total when the customer chooses COD. Set to 0 to disable.</div>
+              </div>
+              <input
+                type="number" min={0} step={5}
+                style={{ width: 110, padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                value={settings.cod_fee ?? 0}
+                onChange={e => set("cod_fee", Number(e.target.value) || 0)}
+                onBlur={() => saveSettings()}
+              />
+            </div>
+
+            <div className="setting-row">
+              <div>
+                <div className="setting-label">Pincode COD check</div>
+                <div className="setting-sub">Use Delhivery serviceability to block COD on non-supported pincodes.</div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={!!settings.cod_pincode_check_enabled}
+                  onChange={e => saveToggle("cod_pincode_check_enabled", e.target.checked)}
+                />
+                <div className="toggle-track" /><div className="toggle-thumb" />
+              </label>
+            </div>
+
+            <div className="setting-row" style={{ border: "none" }}>
+              <div>
+                <div className="setting-label">Phone OTP for COD</div>
+                <div className="setting-sub">Require buyer to verify the delivery number via SMS OTP before placing a COD order.</div>
+              </div>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={!!settings.cod_phone_verify_required}
+                  onChange={e => saveToggle("cod_phone_verify_required", e.target.checked)}
+                />
+                <div className="toggle-track" /><div className="toggle-thumb" />
+              </label>
+            </div>
           </div>
 
           {/* LIVE STATUS */}

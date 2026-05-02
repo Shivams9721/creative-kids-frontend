@@ -35,6 +35,13 @@ export default function CheckoutPage() {
     const { cod_enabled } = useSettings();
     const router = useRouter();
 
+    // Live COD eligibility from backend (refreshed when pincode changes).
+    // Shape: { codEnabled, pincodeServiceable, pincodeReason, maxAmount, isFirstOrder, codFee, phoneVerifyRequired }
+    const [codElig, setCodElig] = useState({ codEnabled: true, pincodeServiceable: true, maxAmount: 1999, isFirstOrder: false, codFee: 0, phoneVerifyRequired: false });
+
+    // Phone OTP gate for COD (only used when settings.cod_phone_verify_required is on).
+    const [phoneOtp, setPhoneOtp] = useState({ sent: false, code: "", verified: false, token: "", error: "", busy: false });
+
     // SECURITY STATE
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
@@ -219,16 +226,68 @@ export default function CheckoutPage() {
     const subtotalAfterDiscount = Math.max(0, cartTotal - discountAmount - loyaltyDiscount);
     // Shipping: free above ₹499 subtotal-after-discount, else flat ₹99. Mirrors backend.
     const shippingFee = subtotalAfterDiscount >= 499 ? 0 : 99;
-    const finalTotal = subtotalAfterDiscount + shippingFee;
+    const codFeeApplied = paymentMethod === 'COD' ? Number(codElig.codFee || 0) : 0;
+    const finalTotal = subtotalAfterDiscount + shippingFee + codFeeApplied;
 
-    // COD threshold (kept in sync with backend in index.js).
-    const COD_MAX = 1999;
-    const codAvailable = cod_enabled && finalTotal < COD_MAX;
+    // COD availability: global toggle + threshold + pincode serviceability.
+    const codAvailable = !!codElig.codEnabled
+        && codElig.pincodeServiceable
+        && (finalTotal + (paymentMethod === 'COD' ? 0 : Number(codElig.codFee || 0))) < Number(codElig.maxAmount || 1999);
 
-    // Auto-switch off COD if cart crosses the threshold (e.g. user added items).
+    // Refetch eligibility whenever pincode changes (debounced) — single source of truth from backend.
+    useEffect(() => {
+        const pin = (address.pincode || '').trim();
+        if (!/^\d{6}$/.test(pin)) return;
+        const t = setTimeout(() => {
+            const url = `/api/cod/eligibility?pincode=${encodeURIComponent(pin)}`;
+            safeFetch(url).then(r => r.json()).then(d => {
+                if (d && typeof d === 'object') setCodElig(prev => ({ ...prev, ...d }));
+            }).catch(() => {});
+        }, 350);
+        return () => clearTimeout(t);
+    }, [address.pincode]);
+
+    // Auto-switch off COD if it becomes unavailable.
     useEffect(() => {
         if (!codAvailable && paymentMethod === 'COD') setPaymentMethod('UPI');
     }, [codAvailable, paymentMethod]);
+
+    // Reset phone-OTP state if user switches away from COD or changes the delivery phone.
+    useEffect(() => {
+        setPhoneOtp({ sent: false, code: "", verified: false, token: "", error: "", busy: false });
+    }, [paymentMethod, address.phone]);
+
+    // Phone OTP handlers (used only when codElig.phoneVerifyRequired is true).
+    const sendPhoneOtp = async () => {
+        setPhoneOtp(s => ({ ...s, busy: true, error: "" }));
+        try {
+            const r = await safeFetch('/api/cod/send-phone-otp', {
+                method: 'POST',
+                headers: await csrfHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ phone: address.phone }),
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d?.error || 'Failed to send OTP');
+            setPhoneOtp(s => ({ ...s, sent: true, busy: false }));
+        } catch (e) {
+            setPhoneOtp(s => ({ ...s, busy: false, error: e.message }));
+        }
+    };
+    const verifyPhoneOtp = async () => {
+        setPhoneOtp(s => ({ ...s, busy: true, error: "" }));
+        try {
+            const r = await safeFetch('/api/cod/verify-phone-otp', {
+                method: 'POST',
+                headers: await csrfHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ phone: address.phone, code: phoneOtp.code }),
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d?.error || 'Wrong OTP');
+            setPhoneOtp(s => ({ ...s, verified: true, token: d.verifyToken, busy: false }));
+        } catch (e) {
+            setPhoneOtp(s => ({ ...s, busy: false, error: e.message }));
+        }
+    };
 
     const handlePlaceOrder = async () => {
         setLoading(true);
@@ -294,7 +353,8 @@ export default function CheckoutPage() {
                     paymentId: paymentData?.payment_id || null,
                     razorpayOrderId: paymentData?.order_id || null,
                     couponCode: couponStatus?.code || null,
-                    discountAmount
+                    discountAmount,
+                    phoneVerifyToken: paymentMethod === 'COD' && codElig.phoneVerifyRequired ? phoneOtp.token : null,
                 })
             });
 
@@ -501,20 +561,64 @@ export default function CheckoutPage() {
                                         </label>
                                         <label className={`flex items-center gap-4 p-5 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'COD' ? 'border-black bg-[#fcfcfc]' : 'border-black/10 hover:border-black/30'} ${!codAvailable ? 'opacity-40 cursor-not-allowed' : ''}`}>
                                             <input type="radio" name="payment" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} className="w-4 h-4 accent-black" disabled={!codAvailable} />
-                                            <div>
-                                                <span className="text-[14px] font-medium block text-black">Cash on Delivery</span>
-                                                {!cod_enabled
+                                            <div className="flex-1">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <span className="text-[14px] font-medium text-black">Cash on Delivery</span>
+                                                    {Number(codElig.codFee || 0) > 0 && codAvailable && (
+                                                        <span className="text-[11px] text-black/60">+ ₹{Number(codElig.codFee).toFixed(0)} fee</span>
+                                                    )}
+                                                </div>
+                                                {!codElig.codEnabled
                                                   ? <span className="text-[11px] text-red-400 mt-1 block">COD is currently unavailable.</span>
-                                                  : finalTotal >= COD_MAX
-                                                    ? <span className="text-[11px] text-red-400 mt-1 block">COD not available for orders ₹{COD_MAX} or above. Please choose UPI or Card.</span>
-                                                    : <span className="text-[11px] text-black/50 mt-1 block">Pay directly to the delivery executive when your order arrives.</span>
+                                                  : !codElig.pincodeServiceable
+                                                    ? <span className="text-[11px] text-red-400 mt-1 block">COD is not supported on this pincode. Please choose UPI or Card.</span>
+                                                    : finalTotal >= Number(codElig.maxAmount || 1999)
+                                                      ? <span className="text-[11px] text-red-400 mt-1 block">COD not available for orders ₹{Number(codElig.maxAmount).toFixed(0)} or above{codElig.isFirstOrder ? ' on your first order' : ''}.</span>
+                                                      : <span className="text-[11px] text-black/50 mt-1 block">Pay directly to the delivery executive when your order arrives.</span>
                                                 }
                                             </div>
                                         </label>
+
+                                        {/* Phone OTP gate — only when admin requires it and COD is selected. */}
+                                        {paymentMethod === 'COD' && codElig.phoneVerifyRequired && (
+                                            <div className="border border-black/10 rounded-xl p-5 bg-amber-50/40">
+                                                <div className="text-[12px] font-bold tracking-widest uppercase text-black mb-1">Verify your phone</div>
+                                                <p className="text-[12px] text-black/60 mb-3">For COD orders we send a 6-digit OTP to <span className="font-bold text-black">{address.phone || 'your number'}</span> to confirm it's reachable.</p>
+                                                {phoneOtp.error && <div className="mb-3 p-2.5 bg-red-50 text-red-600 text-[12px] rounded-lg">{phoneOtp.error}</div>}
+                                                {!phoneOtp.sent ? (
+                                                    <button type="button" disabled={phoneOtp.busy || !/^\d{10}$/.test((address.phone || '').replace(/\D/g, '').slice(-10))}
+                                                        onClick={sendPhoneOtp}
+                                                        className="text-[12px] font-bold tracking-widest uppercase bg-black text-white rounded-full px-5 py-2.5 disabled:opacity-40">
+                                                        {phoneOtp.busy ? 'Sending…' : 'Send OTP'}
+                                                    </button>
+                                                ) : phoneOtp.verified ? (
+                                                    <div className="text-[12px] font-bold text-green-700 flex items-center gap-2"><CheckCircle2 size={14} /> Phone verified</div>
+                                                ) : (
+                                                    <div className="flex gap-2 items-center">
+                                                        <input type="text" inputMode="numeric" maxLength={6} placeholder="6-digit OTP"
+                                                            value={phoneOtp.code} onChange={e => setPhoneOtp(s => ({ ...s, code: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                                                            className="border border-black/20 rounded-lg px-3 py-2 text-[14px] tracking-widest w-36 outline-none focus:border-black" />
+                                                        <button type="button" disabled={phoneOtp.busy || phoneOtp.code.length !== 6}
+                                                            onClick={verifyPhoneOtp}
+                                                            className="text-[12px] font-bold tracking-widest uppercase bg-black text-white rounded-full px-4 py-2 disabled:opacity-40">
+                                                            {phoneOtp.busy ? 'Verifying…' : 'Verify'}
+                                                        </button>
+                                                        <button type="button" onClick={sendPhoneOtp} disabled={phoneOtp.busy}
+                                                            className="text-[11px] text-black/50 hover:text-black hover:underline">Resend</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <button onClick={handlePlaceOrder} disabled={loading} className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-4 text-[12px] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 rounded-full">
-                                        {loading ? "Processing Securely..." : `Confirm & Pay ₹${finalTotal.toFixed(2)}`}
+                                    <button onClick={handlePlaceOrder}
+                                        disabled={loading || (paymentMethod === 'COD' && codElig.phoneVerifyRequired && !phoneOtp.verified)}
+                                        className="w-full bg-black hover:bg-black/80 text-white font-bold tracking-widest uppercase py-4 mt-4 text-[12px] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 rounded-full">
+                                        {loading
+                                          ? "Processing Securely..."
+                                          : (paymentMethod === 'COD' && codElig.phoneVerifyRequired && !phoneOtp.verified)
+                                            ? 'Verify phone to continue'
+                                            : `Confirm & Pay ₹${finalTotal.toFixed(2)}`}
                                     </button>
                                 </motion.div>
                             )}
@@ -549,6 +653,12 @@ export default function CheckoutPage() {
                                             <span className="text-black">₹{shippingFee.toFixed(2)}</span>
                                         )}
                                     </div>
+                                    {codFeeApplied > 0 && (
+                                        <div className="flex justify-between text-black/70">
+                                            <span>COD Fee</span>
+                                            <span className="text-black">₹{codFeeApplied.toFixed(2)}</span>
+                                        </div>
+                                    )}
                                     <p className="text-[10px] tracking-widest uppercase text-black/40 -mt-2">
                                         Inclusive of 5% GST · Free above ₹499
                                     </p>
