@@ -648,7 +648,7 @@ export default function CheckoutPage() {
                                     )}
                                     {autoDiscount > 0 && (
                                         <div className="flex justify-between text-green-600 font-medium">
-                                            <span title={activeAutoPromo?.label}>Auto offer ({activeAutoPromo?.percent}% off)</span>
+                                            <span title={activeAutoPromo?.label}>Welcome offer ({activeAutoPromo?.percent}% off)</span>
                                             <span>- ₹{autoDiscount.toFixed(2)}</span>
                                         </div>
                                     )}
@@ -673,7 +673,7 @@ export default function CheckoutPage() {
                                         </div>
                                     )}
                                     <p className="text-[10px] tracking-widest uppercase text-black/40 -mt-2">
-                                        Inclusive of 5% GST · Free above ₹499
+                                        Inclusive of all taxes · Free above ₹499
                                     </p>
                                 </div>
                                 {/* Coupon Input */}
