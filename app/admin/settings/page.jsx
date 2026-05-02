@@ -355,7 +355,8 @@ export default function AdminSettings() {
               </div>
               <input
                 type="number" min={0} step={50}
-                style={{ width: 110, padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                className="field-input"
+                style={{ width: 110, padding: "8px 12px", fontSize: 13 }}
                 value={settings.cod_max_value ?? 1999}
                 onChange={e => set("cod_max_value", Number(e.target.value) || 0)}
                 onBlur={() => saveSettings()}
@@ -369,7 +370,8 @@ export default function AdminSettings() {
               </div>
               <input
                 type="number" min={0} step={50}
-                style={{ width: 110, padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                className="field-input"
+                style={{ width: 110, padding: "8px 12px", fontSize: 13 }}
                 value={settings.cod_first_order_max ?? 999}
                 onChange={e => set("cod_first_order_max", Number(e.target.value) || 0)}
                 onBlur={() => saveSettings()}
@@ -383,7 +385,8 @@ export default function AdminSettings() {
               </div>
               <input
                 type="number" min={0} step={5}
-                style={{ width: 110, padding: "8px 10px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 }}
+                className="field-input"
+                style={{ width: 110, padding: "8px 12px", fontSize: 13 }}
                 value={settings.cod_fee ?? 0}
                 onChange={e => set("cod_fee", Number(e.target.value) || 0)}
                 onBlur={() => saveSettings()}
