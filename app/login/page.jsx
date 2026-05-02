@@ -205,7 +205,7 @@ function LoginContent() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f6f5f3] pt-[64px] md:pt-[72px] flex items-stretch">
+    <main className="min-h-screen bg-[#f6f5f3] flex items-stretch">
 
       {/* LEFT BRAND PANEL — desktop only */}
       <div className="hidden lg:flex lg:w-[42%] bg-black flex-col justify-between p-14 relative overflow-hidden flex-shrink-0">
