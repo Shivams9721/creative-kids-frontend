@@ -234,15 +234,15 @@ function LoginContent() {
       </div>
 
       {/* RIGHT FORM PANEL */}
-      <div className="flex-1 flex items-center justify-center p-6 md:p-10 min-h-[calc(100vh-72px)]">
+      <div className="flex-1 flex items-start lg:items-center justify-center px-4 py-6 md:p-10 min-h-[calc(100vh-64px)] md:min-h-[calc(100vh-72px)]">
         <div className="w-full max-w-md">
 
           {/* Logo mobile */}
-          <div className="lg:hidden text-center mb-8">
-            <Link href="/" className="text-black text-xl font-bold tracking-[0.2em] uppercase">Creative Kid's</Link>
+          <div className="lg:hidden text-center mb-4">
+            <Link href="/" className="text-black text-[13px] font-bold tracking-[0.2em] uppercase">Creative Kid's</Link>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-8 md:p-10">
+          <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-5 md:p-10">
             <AnimatePresence mode="wait">
 
               {/* ── OTP: ENTER EMAIL ── */}
