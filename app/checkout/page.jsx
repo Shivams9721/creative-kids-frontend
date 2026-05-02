@@ -70,7 +70,7 @@ export default function CheckoutPage() {
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) {
-            router.replace("/login");
+            router.replace("/login?redirect=/checkout");
             return;
         }
         setIsCheckingAuth(false);
@@ -225,7 +225,7 @@ export default function CheckoutPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem("token");
-            if (!token) { router.replace("/login"); return; }
+            if (!token) { router.replace("/login?redirect=/checkout"); return; }
 
             if (paymentMethod === 'UPI' || paymentMethod === 'Card') {
                 const razorpayLoaded = await initializeRazorpay();

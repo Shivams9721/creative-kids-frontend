@@ -32,6 +32,10 @@ function LoginContent() {
   const captchaRequired = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const redirectTo = (() => {
+    const r = searchParams.get("redirect");
+    return r && r.startsWith("/") && !r.startsWith("//") ? r : "/profile";
+  })();
 
   // Support ?token=xxx for old reset links
   useEffect(() => {
@@ -117,7 +121,7 @@ function LoginContent() {
         if (otpPurpose === "login") {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
-          router.push("/profile");
+          router.push(redirectTo);
         } else {
           setResetToken(data.resetToken);
           setMode("otp_reset_password");
@@ -175,7 +179,7 @@ function LoginContent() {
       if (res.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-        router.push("/profile");
+        router.push(redirectTo);
       } else {
         setError(data.message || "Something went wrong.");
         setCaptchaToken("");
