@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Mail, Lock, User as UserIcon, ArrowLeft, CheckCircle2, Eye, EyeOff, Sparkles, ShieldCheck, Truck, RefreshCw } from "lucide-react";
+import { ArrowRight, Mail, Lock, User as UserIcon, ArrowLeft, CheckCircle2, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
 import { safeFetch } from "@/lib/safeFetch";
@@ -198,72 +198,10 @@ function LoginContent() {
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || formData.email);
 
-  const perks = [
-    { icon: <Truck size={15} />, text: "Free shipping on orders above ₹499" },
-    { icon: <ShieldCheck size={15} />, text: "Easy 7-day returns" },
-    { icon: <Sparkles size={15} />, text: "Exclusive member-only offers" },
-  ];
-
   return (
-    <main className="min-h-screen bg-white lg:bg-[#fbf6f0] flex items-stretch">
-
-      {/* LEFT BRAND PANEL — desktop only */}
-      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-14 relative overflow-hidden flex-shrink-0"
-        style={{ background: "linear-gradient(135deg, #f9d7c4 0%, #f4b8a3 45%, #e89a87 100%)" }}>
-        {/* decorative shapes */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/15 blur-2xl" />
-          <div className="absolute -bottom-40 -left-20 w-[28rem] h-[28rem] rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute top-1/3 right-10 w-3 h-3 rounded-full bg-white/40" />
-          <div className="absolute top-2/3 left-12 w-2 h-2 rounded-full bg-white/30" />
-        </div>
-
-        <div className="relative z-10">
-          <Link href="/" className="inline-flex items-baseline gap-2">
-            <span className="text-white text-2xl font-bold tracking-[0.18em] uppercase">Creative Kid's</span>
-          </Link>
-          <p className="text-white/70 text-[11px] tracking-[0.25em] uppercase mt-2">Premium Children's Clothing</p>
-        </div>
-
-        <div className="relative z-10 space-y-8">
-          <h2 className="text-white text-[2.65rem] leading-[1.1] font-light">
-            Little stories,<br />
-            <span className="italic font-serif">beautifully</span> dressed.
-          </h2>
-          <p className="text-white/85 text-[13px] leading-relaxed max-w-sm">
-            Join thousands of parents shopping handpicked, premium-quality clothing for their little ones.
-          </p>
-          <div className="space-y-3 pt-2">
-            {perks.map((p, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">{p.icon}</span>
-                <span className="text-white/90 text-[13px]">{p.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <p className="relative z-10 text-white/60 text-[11px] tracking-[0.25em] uppercase">creativekids.co.in</p>
-      </div>
-
-      {/* RIGHT FORM PANEL */}
-      <div className="flex-1 flex flex-col lg:items-center lg:justify-center bg-white">
-
-        {/* Mobile hero strip */}
-        <div className="lg:hidden relative overflow-hidden px-6 pt-10 pb-14 text-center"
-          style={{ background: "linear-gradient(135deg, #fde8dc 0%, #f9cfbb 100%)" }}>
-          <div className="absolute -top-16 -right-12 w-48 h-48 rounded-full bg-white/40 blur-2xl" />
-          <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-white/30 blur-2xl" />
-          <div className="relative">
-            <p className="text-[10px] tracking-[0.3em] uppercase text-black/50 mb-2">Welcome to</p>
-            <h1 className="text-[1.6rem] font-light text-black tracking-[0.15em] uppercase">Creative Kid's</h1>
-            <p className="text-[12px] text-black/55 mt-2">Premium children's clothing</p>
-          </div>
-        </div>
-
-        <div className="w-full lg:max-w-md px-5 -mt-6 lg:mt-0 lg:px-0 pb-10 lg:pb-0">
-
-          <div className="bg-white rounded-2xl border border-black/10 shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-6 md:p-10">
+    <main className="min-h-screen bg-[#fbf6f0] flex items-center justify-center px-5 py-10">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl border border-black/10 shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-6 md:p-10">
             <AnimatePresence mode="wait">
 
               {/* ── OTP: ENTER EMAIL ── */}
@@ -494,7 +432,6 @@ function LoginContent() {
                 </button>
               </p>
             )}
-          </div>
         </div>
       </div>
     </main>
