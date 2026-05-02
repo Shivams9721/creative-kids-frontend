@@ -258,10 +258,11 @@ export default function CheckoutPage() {
     }, [paymentMethod, address.phone]);
 
     // Phone OTP handlers (used only when codElig.phoneVerifyRequired is true).
-    const sendPhoneOtp = async () => {
+    const sendPhoneOtp = async ({ resend = false } = {}) => {
         setPhoneOtp(s => ({ ...s, busy: true, error: "" }));
         try {
-            const r = await safeFetch('/api/cod/send-phone-otp', {
+            const url = resend ? '/api/cod/resend-phone-otp' : '/api/cod/send-phone-otp';
+            const r = await safeFetch(url, {
                 method: 'POST',
                 headers: await csrfHeaders({ 'Content-Type': 'application/json' }),
                 body: JSON.stringify({ phone: address.phone }),
@@ -603,7 +604,7 @@ export default function CheckoutPage() {
                                                             className="text-[12px] font-bold tracking-widest uppercase bg-black text-white rounded-full px-4 py-2 disabled:opacity-40">
                                                             {phoneOtp.busy ? 'Verifying…' : 'Verify'}
                                                         </button>
-                                                        <button type="button" onClick={sendPhoneOtp} disabled={phoneOtp.busy}
+                                                        <button type="button" onClick={() => sendPhoneOtp({ resend: true })} disabled={phoneOtp.busy}
                                                             className="text-[11px] text-black/50 hover:text-black hover:underline">Resend</button>
                                                     </div>
                                                 )}
