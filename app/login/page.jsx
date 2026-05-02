@@ -199,7 +199,7 @@ function LoginContent() {
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || formData.email);
 
   return (
-    <main className="min-h-screen bg-[#fbf6f0] flex items-center justify-center px-5 py-10">
+    <main className="min-h-screen bg-white flex items-center justify-center px-5 py-10">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl border border-black/10 shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-6 md:p-10">
             <AnimatePresence mode="wait">
