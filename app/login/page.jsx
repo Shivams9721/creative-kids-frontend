@@ -263,7 +263,7 @@ function LoginContent() {
 
         <div className="w-full lg:max-w-md px-5 -mt-6 lg:mt-0 lg:px-0 pb-10 lg:pb-0">
 
-          <div className="bg-white rounded-2xl border border-black/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:shadow-none lg:border-0 p-6 md:p-10">
+          <div className="bg-white rounded-2xl border border-black/10 shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-6 md:p-10">
             <AnimatePresence mode="wait">
 
               {/* ── OTP: ENTER EMAIL ── */}
