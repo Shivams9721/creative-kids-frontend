@@ -262,7 +262,7 @@ export default function AdminSettings() {
 
           {/* AUTO PROMOTIONS */}
           <div className="card card-pad">
-            <div className="card-title">Auto-applied promotions</div>
+            <div className="card-title">Welcome promotions</div>
             <p style={{ fontSize: 12, color: "var(--text3)", marginTop: -6, marginBottom: 12 }}>
               Discounts applied automatically at checkout — no coupon code needed. Coupon codes always
               take priority when present.
