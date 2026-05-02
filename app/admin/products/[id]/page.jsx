@@ -426,7 +426,6 @@ export default function AdminProductDetail() {
             {[
               ["New Arrival", product.is_new_arrival],
               ["Featured", product.is_featured],
-              ["COD Eligible", product.is_cod_eligible],
               ["Show on Homepage", product.show_on_homepage],
             ].map(([label, val]) => (
               <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>

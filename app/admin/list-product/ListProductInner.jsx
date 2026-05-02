@@ -35,7 +35,7 @@ export default function ListProductInner() {
   const [form, setForm] = useState({
     main_category: "Baby girls", sub_category: "", item_type: "", hsn_code: "",
     is_featured: false, is_new_arrival: false, show_on_homepage: false, homepage_section: "none", homepage_card_slot: null,
-    is_draft: false, is_cod_eligible: true,
+    is_draft: false,
     fabric: "", pattern: "", neck_type: "", care_instructions: [],
     color_blocks: [
       {
@@ -291,7 +291,7 @@ export default function ListProductInner() {
                   <input className="field-input" value={form.hsn_code} onChange={e => set("hsn_code", e.target.value)} placeholder="6111" />
                 </div>
                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8 }}>
-                  {[["is_new_arrival","New arrival"],["is_featured","Featured"],["is_cod_eligible","COD eligible"]].map(([k, label]) => (
+                  {[["is_new_arrival","New arrival"],["is_featured","Featured"]].map(([k, label]) => (
                     <label key={k} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13 }}>
                       <input type="checkbox" checked={form[k]} onChange={e => set(k, e.target.checked)} />{label}
                     </label>

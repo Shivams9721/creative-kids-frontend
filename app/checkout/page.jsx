@@ -221,6 +221,15 @@ export default function CheckoutPage() {
     const shippingFee = subtotalAfterDiscount >= 499 ? 0 : 99;
     const finalTotal = subtotalAfterDiscount + shippingFee;
 
+    // COD threshold (kept in sync with backend in index.js).
+    const COD_MAX = 1999;
+    const codAvailable = cod_enabled && finalTotal < COD_MAX;
+
+    // Auto-switch off COD if cart crosses the threshold (e.g. user added items).
+    useEffect(() => {
+        if (!codAvailable && paymentMethod === 'COD') setPaymentMethod('UPI');
+    }, [codAvailable, paymentMethod]);
+
     const handlePlaceOrder = async () => {
         setLoading(true);
         try {
@@ -490,13 +499,15 @@ export default function CheckoutPage() {
                                             <input type="radio" name="payment" value="Card" checked={paymentMethod === 'Card'} onChange={() => setPaymentMethod('Card')} className="w-4 h-4 accent-black" />
                                             <span className="text-[14px] font-medium text-black">Credit / Debit Card</span>
                                         </label>
-                                        <label className={`flex items-center gap-4 p-5 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'COD' ? 'border-black bg-[#fcfcfc]' : 'border-black/10 hover:border-black/30'} ${!cod_enabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
-                                            <input type="radio" name="payment" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} className="w-4 h-4 accent-black" disabled={!cod_enabled} />
+                                        <label className={`flex items-center gap-4 p-5 border rounded-xl cursor-pointer transition-colors ${paymentMethod === 'COD' ? 'border-black bg-[#fcfcfc]' : 'border-black/10 hover:border-black/30'} ${!codAvailable ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                                            <input type="radio" name="payment" value="COD" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} className="w-4 h-4 accent-black" disabled={!codAvailable} />
                                             <div>
                                                 <span className="text-[14px] font-medium block text-black">Cash on Delivery</span>
-                                                {cod_enabled
-                                                  ? <span className="text-[11px] text-black/50 mt-1 block">Pay directly to the delivery executive when your order arrives.</span>
-                                                  : <span className="text-[11px] text-red-400 mt-1 block">COD is currently unavailable.</span>
+                                                {!cod_enabled
+                                                  ? <span className="text-[11px] text-red-400 mt-1 block">COD is currently unavailable.</span>
+                                                  : finalTotal >= COD_MAX
+                                                    ? <span className="text-[11px] text-red-400 mt-1 block">COD not available for orders ₹{COD_MAX} or above. Please choose UPI or Card.</span>
+                                                    : <span className="text-[11px] text-black/50 mt-1 block">Pay directly to the delivery executive when your order arrives.</span>
                                                 }
                                             </div>
                                         </label>
