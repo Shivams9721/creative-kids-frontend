@@ -21,9 +21,17 @@ export default function AdminSettings() {
     reviews_enabled: true,
     cod_max_value: 1999,
     cod_first_order_max: 999,
-    cod_fee: 0,
+    cod_fee: 29,
     cod_phone_verify_required: false,
     cod_pincode_check_enabled: true,
+    auto_promo_enabled: true,
+    auto_promo_prepaid_tier1_min: 499,
+    auto_promo_prepaid_tier1_max: 999,
+    auto_promo_prepaid_tier1_pct: 5,
+    auto_promo_prepaid_tier2_min: 999,
+    auto_promo_prepaid_tier2_pct: 10,
+    auto_promo_cod_first_min: 499,
+    auto_promo_cod_first_pct: 5,
   });
 
   useEffect(() => {
@@ -250,6 +258,90 @@ export default function AdminSettings() {
                 </label>
               </div>
             ))}
+          </div>
+
+          {/* AUTO PROMOTIONS */}
+          <div className="card card-pad">
+            <div className="card-title">Auto-applied promotions</div>
+            <p style={{ fontSize: 12, color: "var(--text3)", marginTop: -6, marginBottom: 12 }}>
+              Discounts applied automatically at checkout — no coupon code needed. Coupon codes always
+              take priority when present.
+            </p>
+
+            <div className="setting-row">
+              <div>
+                <div className="setting-label">Auto-promotions enabled</div>
+                <div className="setting-sub">Master toggle for the rules below.</div>
+              </div>
+              <label className="toggle">
+                <input type="checkbox" checked={!!settings.auto_promo_enabled}
+                  onChange={e => saveToggle("auto_promo_enabled", e.target.checked)} />
+                <div className="toggle-track" /><div className="toggle-thumb" />
+              </label>
+            </div>
+
+            <div style={{ padding: 12, background: "var(--bg2)", borderRadius: 8, border: "1px solid var(--border)", marginTop: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Prepaid tier 1</div>
+              <div className="g3" style={{ gap: 10 }}>
+                <div>
+                  <div className="field-label">Min order (₹)</div>
+                  <input type="number" className="field-input" value={settings.auto_promo_prepaid_tier1_min ?? 499}
+                    onChange={e => set("auto_promo_prepaid_tier1_min", Number(e.target.value) || 0)}
+                    onBlur={() => saveSettings()} />
+                </div>
+                <div>
+                  <div className="field-label">Max order (₹)</div>
+                  <input type="number" className="field-input" value={settings.auto_promo_prepaid_tier1_max ?? 999}
+                    onChange={e => set("auto_promo_prepaid_tier1_max", Number(e.target.value) || 0)}
+                    onBlur={() => saveSettings()} />
+                </div>
+                <div>
+                  <div className="field-label">Discount %</div>
+                  <input type="number" className="field-input" value={settings.auto_promo_prepaid_tier1_pct ?? 5}
+                    onChange={e => set("auto_promo_prepaid_tier1_pct", Number(e.target.value) || 0)}
+                    onBlur={() => saveSettings()} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: 12, background: "var(--bg2)", borderRadius: 8, border: "1px solid var(--border)", marginTop: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Prepaid tier 2 (above)</div>
+              <div className="g2" style={{ gap: 10 }}>
+                <div>
+                  <div className="field-label">Min order (₹)</div>
+                  <input type="number" className="field-input" value={settings.auto_promo_prepaid_tier2_min ?? 999}
+                    onChange={e => set("auto_promo_prepaid_tier2_min", Number(e.target.value) || 0)}
+                    onBlur={() => saveSettings()} />
+                </div>
+                <div>
+                  <div className="field-label">Discount %</div>
+                  <input type="number" className="field-input" value={settings.auto_promo_prepaid_tier2_pct ?? 10}
+                    onChange={e => set("auto_promo_prepaid_tier2_pct", Number(e.target.value) || 0)}
+                    onBlur={() => saveSettings()} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: 12, background: "var(--bg2)", borderRadius: 8, border: "1px solid var(--border)", marginTop: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>First-order COD welcome</div>
+              <div style={{ fontSize: 11, color: "var(--text3)", marginBottom: 8 }}>
+                Applies only to a customer's very first COD order over the minimum.
+              </div>
+              <div className="g2" style={{ gap: 10 }}>
+                <div>
+                  <div className="field-label">Min order (₹)</div>
+                  <input type="number" className="field-input" value={settings.auto_promo_cod_first_min ?? 499}
+                    onChange={e => set("auto_promo_cod_first_min", Number(e.target.value) || 0)}
+                    onBlur={() => saveSettings()} />
+                </div>
+                <div>
+                  <div className="field-label">Discount %</div>
+                  <input type="number" className="field-input" value={settings.auto_promo_cod_first_pct ?? 5}
+                    onChange={e => set("auto_promo_cod_first_pct", Number(e.target.value) || 0)}
+                    onBlur={() => saveSettings()} />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* COD CONFIGURATION */}

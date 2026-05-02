@@ -9,9 +9,17 @@ const DEFAULTS = {
   store_name: "Creative Kid's",
   cod_max_value: 1999,
   cod_first_order_max: 999,
-  cod_fee: 0,
+  cod_fee: 29,
   cod_phone_verify_required: false,
   cod_pincode_check_enabled: true,
+  auto_promo_enabled: true,
+  auto_promo_prepaid_tier1_min: 499,
+  auto_promo_prepaid_tier1_max: 999,
+  auto_promo_prepaid_tier1_pct: 5,
+  auto_promo_prepaid_tier2_min: 999,
+  auto_promo_prepaid_tier2_pct: 10,
+  auto_promo_cod_first_min: 499,
+  auto_promo_cod_first_pct: 5,
 };
 
 const SettingsContext = createContext(DEFAULTS);

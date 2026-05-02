@@ -222,7 +222,13 @@ export default function CheckoutPage() {
         } catch { setLoyaltyError('Failed to apply points'); }
     };
 
-    const discountAmount = couponStatus?.discount_amount || 0;
+    const couponDiscount = couponStatus?.discount_amount || 0;
+    // Auto-promo only applies when no coupon was used (coupon takes priority).
+    const activeAutoPromo = !couponDiscount
+        ? (paymentMethod === 'COD' ? codElig.autoPromo?.cod : codElig.autoPromo?.prepaid) || null
+        : null;
+    const autoDiscount = activeAutoPromo ? Number(activeAutoPromo.amount || 0) : 0;
+    const discountAmount = couponDiscount + autoDiscount;
     const subtotalAfterDiscount = Math.max(0, cartTotal - discountAmount - loyaltyDiscount);
     // Shipping: free above ₹499 subtotal-after-discount, else flat ₹99. Mirrors backend.
     const shippingFee = subtotalAfterDiscount >= 499 ? 0 : 99;
@@ -234,18 +240,18 @@ export default function CheckoutPage() {
         && codElig.pincodeServiceable
         && (finalTotal + (paymentMethod === 'COD' ? 0 : Number(codElig.codFee || 0))) < Number(codElig.maxAmount || 1999);
 
-    // Refetch eligibility whenever pincode changes (debounced) — single source of truth from backend.
+    // Refetch eligibility whenever pincode or cart subtotal changes — single source of truth.
     useEffect(() => {
         const pin = (address.pincode || '').trim();
         if (!/^\d{6}$/.test(pin)) return;
         const t = setTimeout(() => {
-            const url = `/api/cod/eligibility?pincode=${encodeURIComponent(pin)}`;
+            const url = `/api/cod/eligibility?pincode=${encodeURIComponent(pin)}&subtotal=${encodeURIComponent(cartTotal)}`;
             safeFetch(url).then(r => r.json()).then(d => {
                 if (d && typeof d === 'object') setCodElig(prev => ({ ...prev, ...d }));
             }).catch(() => {});
         }, 350);
         return () => clearTimeout(t);
-    }, [address.pincode]);
+    }, [address.pincode, cartTotal]);
 
     // Auto-switch off COD if it becomes unavailable.
     useEffect(() => {
@@ -634,10 +640,16 @@ export default function CheckoutPage() {
                                         <span>Cart Value ({cart.length} items)</span>
                                         <span>₹{cartTotal.toFixed(2)}</span>
                                     </div>
-                                    {discountAmount > 0 && (
+                                    {couponDiscount > 0 && (
                                         <div className="flex justify-between text-green-600 font-medium">
                                             <span>Coupon ({couponStatus.code})</span>
-                                            <span>- ₹{discountAmount.toFixed(2)}</span>
+                                            <span>- ₹{couponDiscount.toFixed(2)}</span>
+                                        </div>
+                                    )}
+                                    {autoDiscount > 0 && (
+                                        <div className="flex justify-between text-green-600 font-medium">
+                                            <span title={activeAutoPromo?.label}>Auto offer ({activeAutoPromo?.percent}% off)</span>
+                                            <span>- ₹{autoDiscount.toFixed(2)}</span>
                                         </div>
                                     )}
                                     {loyaltyDiscount > 0 && (

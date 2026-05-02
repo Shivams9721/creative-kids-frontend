@@ -7,7 +7,7 @@ export default function AdminCoupons() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ code: "", discount_type: "percent", discount_value: "", min_order_amount: "", max_uses: "", expires_at: "" });
+  const [form, setForm] = useState({ code: "", discount_type: "percentage", discount_value: "", min_order_value: "", max_uses: "", expires_at: "" });
 
   useEffect(() => {
     safeFetch("/api/admin/coupons")
@@ -30,7 +30,7 @@ export default function AdminCoupons() {
       const created = await safeFetch("/api/admin/coupons", { method: "POST", body: JSON.stringify(form) });
       setCoupons(prev => [created, ...prev]);
       setShowForm(false);
-      setForm({ code: "", discount_type: "percent", discount_value: "", min_order_amount: "", max_uses: "", expires_at: "" });
+      setForm({ code: "", discount_type: "percentage", discount_value: "", min_order_value: "", max_uses: "", expires_at: "" });
     } catch { alert("Failed to create coupon"); }
     finally { setSaving(false); }
   };
@@ -56,17 +56,17 @@ export default function AdminCoupons() {
               <div>
                 <div className="field-label">Discount type</div>
                 <select className="field-input" value={form.discount_type} onChange={e => setForm(f => ({ ...f, discount_type: e.target.value }))}>
-                  <option value="percent">Percentage (%)</option>
-                  <option value="flat">Flat amount (₹)</option>
+                  <option value="percentage">Percentage (%)</option>
+                  <option value="fixed">Flat amount (₹)</option>
                 </select>
               </div>
               <div>
                 <div className="field-label">Discount value</div>
-                <input className="field-input" type="number" placeholder={form.discount_type === "percent" ? "20" : "100"} value={form.discount_value} onChange={e => setForm(f => ({ ...f, discount_value: e.target.value }))} required />
+                <input className="field-input" type="number" placeholder={form.discount_type === "percentage" ? "20" : "100"} value={form.discount_value} onChange={e => setForm(f => ({ ...f, discount_value: e.target.value }))} required />
               </div>
               <div>
                 <div className="field-label">Min order amount (₹)</div>
-                <input className="field-input" type="number" placeholder="500" value={form.min_order_amount} onChange={e => setForm(f => ({ ...f, min_order_amount: e.target.value }))} />
+                <input className="field-input" type="number" placeholder="500" value={form.min_order_value} onChange={e => setForm(f => ({ ...f, min_order_value: e.target.value }))} />
               </div>
               <div>
                 <div className="field-label">Max uses (blank = unlimited)</div>
@@ -95,7 +95,7 @@ export default function AdminCoupons() {
             </span>
             <div style={{ flex: 1, marginLeft: 8 }}>
               <div style={{ fontSize: 11, color: "var(--text3)" }}>
-                Min ₹{c.min_order_amount || 0} · {c.uses}/{c.max_uses ?? "∞"} uses
+                Min ₹{c.min_order_value || 0} · {c.uses}/{c.max_uses ?? "∞"} uses
                 {c.expires_at && ` · Expires ${new Date(c.expires_at).toLocaleDateString("en-IN")}`}
               </div>
               {usePct !== null && (
