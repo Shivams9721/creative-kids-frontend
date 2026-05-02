@@ -205,39 +205,65 @@ function LoginContent() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f6f5f3] flex items-stretch">
+    <main className="min-h-screen bg-white lg:bg-[#fbf6f0] flex items-stretch">
 
       {/* LEFT BRAND PANEL — desktop only */}
-      <div className="hidden lg:flex lg:w-[42%] bg-black flex-col justify-between p-14 relative overflow-hidden flex-shrink-0">
-        <div className="absolute inset-0 opacity-[0.04]">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="absolute rounded-full border border-white"
-              style={{ width: `${(i+1)*130}px`, height: `${(i+1)*130}px`, top:"50%", left:"50%", transform:"translate(-50%,-50%)" }} />
-          ))}
+      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-14 relative overflow-hidden flex-shrink-0"
+        style={{ background: "linear-gradient(135deg, #f9d7c4 0%, #f4b8a3 45%, #e89a87 100%)" }}>
+        {/* decorative shapes */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/15 blur-2xl" />
+          <div className="absolute -bottom-40 -left-20 w-[28rem] h-[28rem] rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute top-1/3 right-10 w-3 h-3 rounded-full bg-white/40" />
+          <div className="absolute top-2/3 left-12 w-2 h-2 rounded-full bg-white/30" />
         </div>
+
         <div className="relative z-10">
-          <Link href="/" className="text-white text-2xl font-bold tracking-[0.2em] uppercase">Creative Kid's</Link>
-          <p className="text-white/30 text-[11px] tracking-widest uppercase mt-1">Premium Children's Clothing</p>
+          <Link href="/" className="inline-flex items-baseline gap-2">
+            <span className="text-white text-2xl font-bold tracking-[0.18em] uppercase">Creative Kid's</span>
+          </Link>
+          <p className="text-white/70 text-[11px] tracking-[0.25em] uppercase mt-2">Premium Children's Clothing</p>
         </div>
-        <div className="relative z-10 space-y-6">
-          <h2 className="text-white text-4xl font-light leading-snug">Dress them<br />in their best<br />story.</h2>
-          <div className="space-y-4 pt-2">
+
+        <div className="relative z-10 space-y-8">
+          <h2 className="text-white text-[2.65rem] leading-[1.1] font-light">
+            Little stories,<br />
+            <span className="italic font-serif">beautifully</span> dressed.
+          </h2>
+          <p className="text-white/85 text-[13px] leading-relaxed max-w-sm">
+            Join thousands of parents shopping handpicked, premium-quality clothing for their little ones.
+          </p>
+          <div className="space-y-3 pt-2">
             {perks.map((p, i) => (
-              <div key={i} className="flex items-center gap-3 text-white/50">
-                <span className="text-white/30">{p.icon}</span>
-                <span className="text-[12px] tracking-wide">{p.text}</span>
+              <div key={i} className="flex items-center gap-3">
+                <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-white">{p.icon}</span>
+                <span className="text-white/90 text-[13px]">{p.text}</span>
               </div>
             ))}
           </div>
         </div>
-        <p className="relative z-10 text-white/15 text-[11px] tracking-widest uppercase">creativekids.co.in</p>
+
+        <p className="relative z-10 text-white/60 text-[11px] tracking-[0.25em] uppercase">creativekids.co.in</p>
       </div>
 
       {/* RIGHT FORM PANEL */}
-      <div className="flex-1 flex items-stretch lg:items-center justify-center p-0 md:p-10 bg-white lg:bg-transparent">
-        <div className="w-full lg:max-w-md">
+      <div className="flex-1 flex flex-col lg:items-center lg:justify-center bg-white">
 
-          <div className="bg-white shadow-none lg:shadow-xl border-0 lg:border lg:border-black/5 lg:rounded-2xl p-5 md:p-10">
+        {/* Mobile hero strip */}
+        <div className="lg:hidden relative overflow-hidden px-6 pt-10 pb-14 text-center"
+          style={{ background: "linear-gradient(135deg, #fde8dc 0%, #f9cfbb 100%)" }}>
+          <div className="absolute -top-16 -right-12 w-48 h-48 rounded-full bg-white/40 blur-2xl" />
+          <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-white/30 blur-2xl" />
+          <div className="relative">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-black/50 mb-2">Welcome to</p>
+            <h1 className="text-[1.6rem] font-light text-black tracking-[0.15em] uppercase">Creative Kid's</h1>
+            <p className="text-[12px] text-black/55 mt-2">Premium children's clothing</p>
+          </div>
+        </div>
+
+        <div className="w-full lg:max-w-md px-5 -mt-6 lg:mt-0 lg:px-0 pb-10 lg:pb-0">
+
+          <div className="bg-white rounded-2xl border border-black/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:shadow-none lg:border-0 p-6 md:p-10">
             <AnimatePresence mode="wait">
 
               {/* ── OTP: ENTER EMAIL ── */}
