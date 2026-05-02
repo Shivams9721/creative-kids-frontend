@@ -20,6 +20,7 @@ const NAV = [
   { group: "Commerce", items: [
     { id: "orders", label: "Orders", href: "/admin/orders", badge: null },
     { id: "returns", label: "Returns", href: "/admin/returns", badge: null },
+    { id: "cod-insights", label: "COD Insights", href: "/admin/cod-insights", badge: null },
     { id: "coupons", label: "Coupons", href: "/admin/coupons", badge: null },
     { id: "customers", label: "Customers", href: "/admin/customers", badge: null },
     { id: "contacts", label: "Contact Requests", href: "/admin/contacts", badge: null },
