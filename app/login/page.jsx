@@ -234,7 +234,7 @@ function LoginContent() {
       </div>
 
       {/* RIGHT FORM PANEL */}
-      <div className="flex-1 flex items-stretch lg:items-center justify-center p-0 md:p-10">
+      <div className="flex-1 flex items-stretch lg:items-center justify-center p-0 md:p-10 bg-white lg:bg-transparent">
         <div className="w-full lg:max-w-md">
 
           <div className="bg-white shadow-none lg:shadow-xl border-0 lg:border lg:border-black/5 lg:rounded-2xl p-5 md:p-10">
