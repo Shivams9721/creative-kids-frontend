@@ -24,6 +24,9 @@ const nextConfig: NextConfig = {
     // SECURITY: restrict Next Image optimizer to trusted hosts only.
     // Previously this used `hostname: "**"`, which increases SSRF surface area.
     remotePatterns: [
+      ...(process.env.NEXT_PUBLIC_CDN_HOST
+        ? [{ protocol: "https" as const, hostname: process.env.NEXT_PUBLIC_CDN_HOST }]
+        : []),
       {
         protocol: "https",
         hostname: awsBucket

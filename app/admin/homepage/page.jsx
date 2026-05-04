@@ -270,8 +270,16 @@ export default function HomepageAdminPage() {
     return errs.length === 0;
   };
 
+  const isManagedUrl = (url) => {
+    if (!url) return false;
+    if (url.includes(".amazonaws.com/")) return true;
+    const cdnHost = process.env.NEXT_PUBLIC_CDN_HOST;
+    if (cdnHost && url.startsWith(`https://${cdnHost}/`)) return true;
+    return false;
+  };
+
   const deleteFromS3 = (url) => {
-    if (!url || !url.includes(".amazonaws.com/")) return;
+    if (!isManagedUrl(url)) return;
     safeFetch("/api/upload", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -280,7 +288,7 @@ export default function HomepageAdminPage() {
   };
 
   const uploadFile = async (onDone, oldUrl, progressKey, accept = "image/*,video/mp4,video/webm", label = "File") => {
-    if (oldUrl?.includes(".amazonaws.com/")) deleteFromS3(oldUrl);
+    if (isManagedUrl(oldUrl)) deleteFromS3(oldUrl);
     const input = document.createElement("input");
     input.type = "file";
     input.accept = accept;
