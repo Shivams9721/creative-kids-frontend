@@ -2,9 +2,9 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { CartProvider } from '@/context/CartContext'
 import { SettingsProvider } from '@/context/SettingsContext'
-import ConditionalShell from '@/components/ConditionalShell'
-import RecentlyViewed from '@/components/RecentlyViewed'
-import WhatsAppWidget from '@/components/WhatsAppWidget'
+import ConditionalShell from '@/components/layout/ConditionalShell'
+import RecentlyViewed from '@/components/shop/RecentlyViewed'
+import WhatsAppWidget from '@/components/widgets/WhatsAppWidget'
 
 const inter = Inter({ subsets: ['latin'] })
 

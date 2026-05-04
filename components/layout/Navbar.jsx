@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { usePathname } from "next/navigation";
-import SmartSearch from "@/components/SmartSearch";
+import SmartSearch from "@/components/shop/SmartSearch";
 
 const menuData = {
   BABY: {

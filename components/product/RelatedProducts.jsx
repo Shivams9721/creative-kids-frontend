@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
+import MediaRenderer, { isVideo } from "@/components/product/MediaRenderer";
 
 export default function RelatedProducts({ relatedProducts }) {
   if (!relatedProducts || relatedProducts.length === 0) return null;

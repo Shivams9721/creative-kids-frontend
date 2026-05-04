@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { csrfHeaders } from "@/lib/csrf";
 import { safeFetch, safeId } from "@/lib/safeFetch";
-import AddressBook from "@/components/AddressBook";
+import AddressBook from "@/components/checkout/AddressBook";
 
 const TRACKING_STEPS = ["Processing", "Shipped", "Delivered"];
 

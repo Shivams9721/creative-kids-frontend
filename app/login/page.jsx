@@ -7,7 +7,7 @@ import { ArrowRight, Mail, Lock, User as UserIcon, ArrowLeft, CheckCircle2, Eye,
 import { useRouter, useSearchParams } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
 import { safeFetch } from "@/lib/safeFetch";
-import Turnstile from "@/components/Turnstile";
+import Turnstile from "@/components/widgets/Turnstile";
 
 // Modes: otp_email | otp_verify | otp_reset_password | login | register | forgot | reset | reset_done | forgot_sent
 

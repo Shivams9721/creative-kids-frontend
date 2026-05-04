@@ -7,12 +7,12 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Heart, ChevronLeft, ChevronRight, Volume2, VolumeX, Eye } from "lucide-react";
 import { safeFetch } from "@/lib/safeFetch";
 import { cleanTitle } from "@/lib/cleanTitle";
-import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
+import MediaRenderer, { isVideo } from "@/components/product/MediaRenderer";
 import { useCart } from "@/context/CartContext";
 import { memo } from "react";
-import QuickViewModal from "@/components/QuickViewModal";
-import TrustBadges from "@/components/TrustBadges";
-import AboutUsCarousel from "@/components/AboutUsCarousel";
+import QuickViewModal from "@/components/product/QuickViewModal";
+import TrustBadges from "@/components/trust/TrustBadges";
+import AboutUsCarousel from "@/components/trust/AboutUsCarousel";
 import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, Heart as DecoHeart, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird, Mascot, CatPeek, HideAndSeek, Butterfly, Rainbow, Bunny, Floating, FlyingBird } from "@/components/decorations";
 
 const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };

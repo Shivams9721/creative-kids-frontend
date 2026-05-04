@@ -11,17 +11,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { csrfHeaders } from "@/lib/csrf";
 
 import { safeFetch } from "@/lib/safeFetch";
-import { recordView } from "@/components/RecentlyViewed";
+import { recordView } from "@/components/shop/RecentlyViewed";
 import { cleanTitle } from "@/lib/cleanTitle";
 import { useSettings } from "@/context/SettingsContext";
 import dynamic from "next/dynamic";
-import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
+import MediaRenderer, { isVideo } from "@/components/product/MediaRenderer";
 
 // P9: lazy-loaded — SizeGuide opens on click, RelatedProducts is below-the-fold.
-const SizeGuide = dynamic(() => import("@/components/SizeGuide"), { ssr: false });
-const RelatedProducts = dynamic(() => import("@/components/RelatedProducts"), { ssr: false, loading: () => null });
-const PincodeServiceability = dynamic(() => import("@/components/PincodeServiceability"), { ssr: false });
-const SizeRecommender = dynamic(() => import("@/components/SizeRecommender"), { ssr: false });
+const SizeGuide = dynamic(() => import("@/components/product/SizeGuide"), { ssr: false });
+const RelatedProducts = dynamic(() => import("@/components/product/RelatedProducts"), { ssr: false, loading: () => null });
+const PincodeServiceability = dynamic(() => import("@/components/checkout/PincodeServiceability"), { ssr: false });
+const SizeRecommender = dynamic(() => import("@/components/product/SizeRecommender"), { ssr: false });
 
 
 

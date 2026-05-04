@@ -1,4 +1,4 @@
-import ProductClient from "@/components/ProductClient";
+import ProductClient from "@/components/product/ProductClient";
 import { Suspense } from "react";
 import { safeFetch } from "@/lib/safeFetch";
 

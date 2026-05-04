@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import "./admin.css";
-import AdminOrderNotifier from "@/components/AdminOrderNotifier";
+import AdminOrderNotifier from "@/components/admin/AdminOrderNotifier";
 
 const NAV = [
   { group: "Overview", items: [

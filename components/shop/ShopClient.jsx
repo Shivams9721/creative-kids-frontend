@@ -3,13 +3,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
+import MediaRenderer, { isVideo } from "@/components/product/MediaRenderer";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, SlidersHorizontal, Heart, X, Eye } from "lucide-react";
 import { PRODUCT_ATTRIBUTES } from "@/lib/constants";
 import { useCart } from "@/context/CartContext";
-import QuickViewModal from "@/components/QuickViewModal";
+import QuickViewModal from "@/components/product/QuickViewModal";
 import { Mascot, SquiggleUnderline, AnimatedSparkle, Star, Heart as DecoHeart, Flower, Floating } from "@/components/decorations";
 
 // Filter Constants — sizes match exactly what's stored in DB (admin form format)

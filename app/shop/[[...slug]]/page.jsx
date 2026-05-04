@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ShopClient from "@/components/ShopClient";
+import ShopClient from "@/components/shop/ShopClient";
 import { safeFetch } from "@/lib/safeFetch";
 
 const SITE_URL = "https://www.creativekids.co.in";

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import MediaRenderer, { isVideo } from "@/components/MediaRenderer";
+import MediaRenderer, { isVideo } from "@/components/product/MediaRenderer";
 import { Heart, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { safeFetch } from "@/lib/safeFetch";

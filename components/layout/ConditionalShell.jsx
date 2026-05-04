@@ -1,10 +1,10 @@
 "use client";
 import { usePathname } from "next/navigation";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import CartDrawer from "@/components/CartDrawer";
-import { AgeNavigatorBanner } from "@/components/AgeNavigator";
-import MaintenanceBanner from "@/components/MaintenanceBanner";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import CartDrawer from "@/components/cart/CartDrawer";
+import { AgeNavigatorBanner } from "@/components/shop/AgeNavigator";
+import MaintenanceBanner from "@/components/layout/MaintenanceBanner";
 
 export default function ConditionalShell({ children }) {
   const pathname = usePathname();

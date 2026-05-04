@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { csrfHeaders } from "@/lib/csrf";
 import { initializeRazorpay, processRazorpayPayment } from "@/lib/razorpay";
 import { safeFetch } from "@/lib/safeFetch";
-import AddressBook from "@/components/AddressBook";
+import AddressBook from "@/components/checkout/AddressBook";
 import { CheckCircle2, ChevronLeft, MapPin, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
