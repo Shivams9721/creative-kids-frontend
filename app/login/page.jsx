@@ -140,7 +140,11 @@ function LoginContent() {
   const handleOtpResetPassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) { setError("Passwords do not match."); return; }
-    if (newPassword.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (newPassword.length < 8) { setError("Password must be at least 8 characters."); return; }
+    if (!/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setError("Password must include letters and numbers.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -164,6 +168,13 @@ function LoginContent() {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (captchaRequired && !captchaToken) { setError("Please complete the captcha."); return; }
+    if (mode === "register") {
+      if (formData.password.length < 8) { setError("Password must be at least 8 characters."); return; }
+      if (!/[A-Za-z]/.test(formData.password) || !/\d/.test(formData.password)) {
+        setError("Password must include letters and numbers.");
+        return;
+      }
+    }
     setLoading(true);
     setError("");
     setTouched({ email: true, password: true, name: true, confirmPassword: true });
@@ -315,8 +326,8 @@ function LoginContent() {
                         <label className="text-[10px] font-bold tracking-widest uppercase text-black/60">{f.label}</label>
                         <div className="relative">
                           <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30" />
-                          <input required type={f.show ? "text" : "password"} minLength={6} value={f.val}
-                            onChange={e => f.set(e.target.value)} placeholder="Min. 6 characters"
+                          <input required type={f.show ? "text" : "password"} minLength={8} value={f.val}
+                            onChange={e => f.set(e.target.value)} placeholder="8+ chars, letters and numbers"
                             className="w-full border border-black/20 pl-11 pr-10 py-3.5 rounded-lg text-[13px] outline-none focus:border-black transition-colors" />
                           <button type="button" onClick={f.toggle}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black transition-colors">
@@ -382,8 +393,8 @@ function LoginContent() {
                       </div>
                       <div className="relative">
                         <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30" />
-                        <input required type={showPassword ? "text" : "password"} name="password" minLength={6}
-                          value={formData.password} onChange={handleChange} placeholder="Min. 6 characters"
+                        <input required type={showPassword ? "text" : "password"} name="password" minLength={mode === "register" ? 8 : 1}
+                          value={formData.password} onChange={handleChange} placeholder={mode === "register" ? "8+ chars, letters and numbers" : "Your password"}
                           className="w-full border border-black/20 pl-11 pr-10 py-3.5 rounded-lg text-[13px] outline-none focus:border-black transition-colors" />
                         <button type="button" onClick={() => setShowPassword(v => !v)}
                           className="absolute right-4 top-1/2 -translate-y-1/2 text-black/30 hover:text-black transition-colors">
