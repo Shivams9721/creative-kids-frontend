@@ -69,23 +69,29 @@ export default function AdminSettings() {
 
   const changePassword = async (e) => {
     e.preventDefault();
+    if (!pwForm.current) { setPwError("Enter your current password"); return; }
     if (pwForm.next !== pwForm.confirm) { setPwError("Passwords don't match"); return; }
-    if (pwForm.next.length < 6) { setPwError("Min 6 characters"); return; }
-    setChangingPw(true); setPwError("");
+    if (pwForm.next.length < 8) { setPwError("Password must be at least 8 characters"); return; }
+    if (!/[A-Za-z]/.test(pwForm.next) || !/\d/.test(pwForm.next)) {
+      setPwError("Password must include letters and numbers");
+      return;
+    }
+    if (pwForm.current === pwForm.next) { setPwError("New password must be different from current"); return; }
+    setPwError("");
     try {
-      const me = await safeFetch("/api/admin/verify");
-      const adminId = me?.admin?.id;
-      if (!adminId) throw new Error("Admin verification failed");
-
       const res = await safeFetch(`/api/admin/change-password`, {
         method: "POST",
-        body: JSON.stringify({ adminId, newPassword: pwForm.next }),
+        body: JSON.stringify({ currentPassword: pwForm.current, newPassword: pwForm.next }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setPwError(data.error || "Failed to change password");
+        return;
+      }
       setPwSuccess(true);
       setPwForm({ current: "", next: "", confirm: "" });
       setTimeout(() => setPwSuccess(false), 3000);
     } catch { setPwError("Failed to change password"); }
-    finally { setChangingPw(false); }
   };
 
   if (loading) return <div style={{ padding: 24, color: "var(--text3)" }}>Loading settings…</div>;
@@ -150,8 +156,9 @@ export default function AdminSettings() {
             {changingPw && (
               <form onSubmit={changePassword} style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
-                  { label: "New password", key: "next", type: "password" },
-                  { label: "Confirm password", key: "confirm", type: "password" },
+                  { label: "Current password", key: "current", type: "password", placeholder: "Enter current password" },
+                  { label: "New password", key: "next", type: "password", placeholder: "8+ chars, letters and numbers" },
+                  { label: "Confirm new password", key: "confirm", type: "password", placeholder: "Re-enter new password" },
                 ].map(f => (
                   <div key={f.key}>
                     <div className="field-label">{f.label}</div>
@@ -160,7 +167,8 @@ export default function AdminSettings() {
                       className="field-input"
                       value={pwForm[f.key]}
                       onChange={e => setPwForm(p => ({ ...p, [f.key]: e.target.value }))}
-                      placeholder="Min 6 characters"
+                      placeholder={f.placeholder}
+                      autoComplete={f.key === "current" ? "current-password" : "new-password"}
                       required
                     />
                   </div>
