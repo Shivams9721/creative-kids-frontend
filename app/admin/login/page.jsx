@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Turnstile from "@/components/widgets/Turnstile";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -10,6 +12,8 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRequired = !!TURNSTILE_SITE_KEY;
 
   const [checking, setChecking] = useState(true);
 
@@ -33,13 +37,17 @@ export default function AdminLoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    if (captchaRequired && !captchaToken) {
+      setError("Please complete the captcha.");
+      return;
+    }
     setLoading(true);
     try {
       // Posts to our own route handler so the cookie is set on the frontend's domain.
       const res = await fetch(`/api/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, turnstileToken: captchaToken }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -78,9 +86,10 @@ export default function AdminLoginPage() {
               placeholder="••••••••"
             />
           </div>
+          <Turnstile onToken={setCaptchaToken} />
           {error && <p className="text-[12px] text-red-500">{error}</p>}
           <button
-            type="submit" disabled={loading}
+            type="submit" disabled={loading || (captchaRequired && !captchaToken)}
             className="w-full bg-black text-white py-3 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 transition-colors disabled:opacity-50"
           >
             {loading ? "Signing in..." : "Sign In"}
