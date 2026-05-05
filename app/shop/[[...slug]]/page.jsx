@@ -110,28 +110,38 @@ async function getProducts(params, searchParams) {
   if (slug0 === 'new') queryParams.new_arrival = 'true';
 
   try {
-    // Fetch all pages to avoid silent truncation (backend used to hard-limit at 120).
+    // First page is cached for 5 min per unique URL — this is what gets hit on every nav prefetch.
+    // Only fetch additional pages if the first page indicates more results exist.
+    const firstPath = buildApiPath({ ...queryParams, page: '1', limit: '500' });
+    const firstRes = await safeFetch(firstPath, { next: { revalidate: 300 } });
+    if (!firstRes.ok) throw new Error("Failed to fetch products");
+    const firstPayload = await firstRes.json();
+
     const all = [];
-    let pageNum = 1;
-    let hasMore = true;
-    const perPage = 120;
+    let hasMore = false;
+    if (Array.isArray(firstPayload)) {
+      all.push(...firstPayload);
+    } else {
+      all.push(...(Array.isArray(firstPayload?.items) ? firstPayload.items : []));
+      hasMore = !!firstPayload?.hasMore;
+    }
 
-    while (hasMore && pageNum <= 50) {
-      const apiPath = buildApiPath({ ...queryParams, page: String(pageNum), limit: String(perPage) });
-      const res = await safeFetch(apiPath, { cache: 'no-store' });
-      if (!res.ok) throw new Error("Failed to fetch products");
-      const payload = await res.json();
-
-      if (Array.isArray(payload)) {
-        // Backward compatibility: old API returned array (and was truncated).
-        all.push(...payload);
-        hasMore = false;
-      } else {
-        const items = Array.isArray(payload?.items) ? payload.items : [];
-        all.push(...items);
-        hasMore = !!payload?.hasMore;
+    // Rare case: > 500 products in one category. Parallelize remaining pages instead of sequential.
+    if (hasMore) {
+      const tailRequests = [];
+      for (let p = 2; p <= 10; p++) {
+        const path = buildApiPath({ ...queryParams, page: String(p), limit: '500' });
+        tailRequests.push(
+          safeFetch(path, { next: { revalidate: 300 } })
+            .then(r => r.ok ? r.json() : { items: [], hasMore: false })
+            .catch(() => ({ items: [], hasMore: false }))
+        );
       }
-      pageNum += 1;
+      const tailResults = await Promise.all(tailRequests);
+      for (const payload of tailResults) {
+        if (Array.isArray(payload)) all.push(...payload);
+        else all.push(...(Array.isArray(payload?.items) ? payload.items : []));
+      }
     }
 
     return all.map(p => ({

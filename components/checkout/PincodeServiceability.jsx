@@ -26,7 +26,7 @@ export default function PincodeServiceability() {
       const r = await safeFetch(`/api/serviceability/${pin}`);
       const data = await r.json();
       if (!r.ok || !data.serviceable) {
-        setError(data.error || "Sorry, we don't deliver here yet");
+        setError(data.reason || data.error || "Sorry, we don't deliver to this pincode yet");
       } else {
         setResult(data);
       }

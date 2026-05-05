@@ -270,7 +270,7 @@ export default function Navbar() {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/baby-boy/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
+                              <Link prefetch={false} href={`/shop/baby-boy/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
                                 {item}
                               </Link>
                             </li>
@@ -288,7 +288,7 @@ export default function Navbar() {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/baby-girl/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
+                              <Link prefetch={false} href={`/shop/baby-girl/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
                                 {item}
                               </Link>
                             </li>
@@ -317,7 +317,7 @@ export default function Navbar() {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/kids-boy/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
+                              <Link prefetch={false} href={`/shop/kids-boy/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
                                 {item}
                               </Link>
                             </li>
@@ -335,7 +335,7 @@ export default function Navbar() {
                           const itemSlug = item.toLowerCase().replace(/ & /g, '-').replace(/,/g, '').replace(/ /g, '-');
                           return (
                             <li key={item}>
-                              <Link href={`/shop/kids-girl/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
+                              <Link prefetch={false} href={`/shop/kids-girl/${itemSlug}`} className="text-[10px] font-medium tracking-widest text-black/50 hover:text-black transition-colors block uppercase">
                                 {item}
                               </Link>
                             </li>
