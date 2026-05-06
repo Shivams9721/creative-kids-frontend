@@ -77,6 +77,9 @@ export async function middleware(request: NextRequest) {
   // set, the gate is bypassed so developers can work without the secret URL.
   const gateActive = !!ADMIN_GATE_KEY && !!ADMIN_GATE_SECRET;
 
+  // Diagnostic header — REMOVE after gate is confirmed working.
+  const debug = `key:${ADMIN_GATE_KEY ? "set" : "missing"},secret:${ADMIN_GATE_SECRET ? "set" : "missing"},active:${gateActive}`;
+
   if (gateActive) {
     const supplied = searchParams.get("key");
     const cookie = request.cookies.get(UNLOCK_COOKIE)?.value;
@@ -98,7 +101,9 @@ export async function middleware(request: NextRequest) {
         return res;
       }
       // No cookie + no key → admin panel does not exist for you.
-      return notFoundResponse(pathname);
+      const r = notFoundResponse(pathname);
+      r.headers.set("x-admin-gate", debug);
+      return r;
     }
   }
 
@@ -109,11 +114,15 @@ export async function middleware(request: NextRequest) {
     const token = request.cookies.get("adminToken")?.value;
     if (!token) {
       const loginUrl = new URL("/admin/login", request.url);
-      return NextResponse.redirect(loginUrl);
+      const r = NextResponse.redirect(loginUrl);
+      r.headers.set("x-admin-gate", debug);
+      return r;
     }
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  res.headers.set("x-admin-gate", debug);
+  return res;
 }
 
 export const config = {
