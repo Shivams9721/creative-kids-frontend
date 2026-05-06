@@ -44,6 +44,27 @@ const nextConfig: NextConfig = {
 
   // Strict mode helps catch bugs early in development
   reactStrictMode: true,
+
+  // Disable CDN caching on admin routes so middleware always runs.
+  // Without this, Amplify's CloudFront serves /admin/login from cache and
+  // bypasses our admin gate middleware entirely.
+  async headers() {
+    return [
+      {
+        source: "/admin/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store, max-age=0" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      {
+        source: "/api/admin/:path*",
+        headers: [
+          { key: "Cache-Control", value: "private, no-store, max-age=0" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
