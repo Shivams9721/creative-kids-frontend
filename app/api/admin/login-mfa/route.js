@@ -1,6 +1,5 @@
-// Proxies admin login to the backend, then sets the adminToken cookie on the FRONTEND domain
-// so the Next.js middleware can read it. Without this proxy, the cookie would be set on the
-// backend's domain and the frontend middleware would never see it (infinite redirect to /admin/login).
+// Step 2 of admin login when TOTP 2FA is enabled. Forwards mfa_token + code
+// to the backend; on success sets the adminToken cookie on the frontend domain.
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -17,24 +16,17 @@ export async function POST(request) {
     return NextResponse.json({ message: "Invalid request" }, { status: 400 });
   }
 
-  const upstream = await fetch(`${API_BASE}/api/admin/login`, {
+  const upstream = await fetch(`${API_BASE}/api/admin/login-mfa`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 
   const data = await upstream.json().catch(() => ({}));
-
-  // Backend says "password ok, now do 2FA". Pass the challenge through to the
-  // client without setting any cookie — the second step issues the real token.
-  if (upstream.ok && data?.requires_totp && data?.mfa_token) {
-    return NextResponse.json({ requires_totp: true, mfa_token: data.mfa_token });
-  }
-
   if (!upstream.ok || !data?.token) {
     return NextResponse.json(
-      { message: data?.message || "Invalid credentials" },
-      { status: upstream.status || 401 }
+      { message: data?.error || data?.message || "Invalid code" },
+      { status: upstream.status || 401 },
     );
   }
 
@@ -47,5 +39,8 @@ export async function POST(request) {
     maxAge: 12 * 60 * 60,
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: true,
+    backup_codes_remaining: data.backup_codes_remaining,
+  });
 }
