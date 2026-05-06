@@ -35,13 +35,13 @@ export default function TwoFactorAuth() {
   const startEnroll = async () => {
     setError(""); setBusy(true);
     try {
-      const res = await safeFetch("/api/admin/2fa/setup", { method: "POST" });
-      if (!res || res.error) throw new Error(res?.error || "Setup failed");
+      const res = await safeFetch("/api/admin/2fa/setup", { method: "POST", body: JSON.stringify({}) });
       setQrDataUrl(res.qr_data_url || "");
       setSecret(res.secret || "");
       setMode("confirming");
     } catch (e) {
-      setError(e.message || "Could not start enrolment");
+      const msg = (e?.message || "").includes("{") ? JSON.parse(e.message).error : e?.message;
+      setError(msg || "Could not start enrolment");
     } finally { setBusy(false); }
   };
 
@@ -49,19 +49,18 @@ export default function TwoFactorAuth() {
     e.preventDefault();
     setError(""); setBusy(true);
     try {
-      const r = await fetch("/api/admin/2fa/verify-setup", {
+      const d = await safeFetch("/api/admin/2fa/verify-setup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: code.trim() }),
-        credentials: "include",
       });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Invalid code");
       setBackupCodes(d.backup_codes || []);
       setMode("showCodes");
       setEnabled(true);
     } catch (e) {
-      setError(e.message || "Could not verify code");
+      const raw = e?.message || "";
+      let msg = raw;
+      try { msg = JSON.parse(raw).error || raw; } catch {}
+      setError(msg || "Could not verify code");
     } finally { setBusy(false); }
   };
 
@@ -71,18 +70,17 @@ export default function TwoFactorAuth() {
     e.preventDefault();
     setError(""); setBusy(true);
     try {
-      const r = await fetch("/api/admin/2fa/disable", {
+      await safeFetch("/api/admin/2fa/disable", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, code: code.trim() }),
-        credentials: "include",
       });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || "Could not disable 2FA");
       setEnabled(false);
       reset();
     } catch (e) {
-      setError(e.message || "Could not disable 2FA");
+      const raw = e?.message || "";
+      let msg = raw;
+      try { msg = JSON.parse(raw).error || raw; } catch {}
+      setError(msg || "Could not disable 2FA");
     } finally { setBusy(false); }
   };
 
