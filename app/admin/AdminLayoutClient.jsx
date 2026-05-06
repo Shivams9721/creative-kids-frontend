@@ -73,8 +73,11 @@ export default function AdminLayout({ children }) {
     </div>
   );
 
-  const handleLogout = () => {
-    document.cookie = "adminToken=; path=/; max-age=0";
+  const handleLogout = async () => {
+    // Cookie is httpOnly — must be cleared server-side via the logout route.
+    try {
+      await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+    } catch {}
     router.replace("/admin/login");
   };
 
