@@ -855,15 +855,20 @@ export default function UserProfile() {
                     selectedOrder.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
                     'bg-blue-100 text-blue-700'
                   }`}>{selectedOrder.status}</span>
-                  {selectedOrder.awb_number && (
+                  {selectedOrder.awb_number && !selectedOrder.self_delivery && (
                     <span className="px-3 py-1 text-[10px] font-mono bg-gray-100 text-gray-600 rounded-full">
                       AWB: {selectedOrder.awb_number}
                     </span>
                   )}
+                  {selectedOrder.self_delivery && (
+                    <span className="px-3 py-1 text-[10px] font-bold tracking-widest uppercase bg-amber-50 text-amber-700 rounded-full">
+                      Hand-delivered by Creative Kids
+                    </span>
+                  )}
                 </div>
 
-                {/* Live Delhivery tracking */}
-                {selectedOrder.awb_number ? (
+                {/* Live Delhivery tracking — hidden for self-delivery */}
+                {selectedOrder.awb_number && !selectedOrder.self_delivery ? (
                   <LiveTracking awb={selectedOrder.awb_number} trackingUrl={selectedOrder.tracking_url} />
                 ) : (
                   <div className="space-y-6 relative pl-4">

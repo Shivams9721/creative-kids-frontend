@@ -70,6 +70,83 @@ function ShipModal({ order, onClose, onShipped }) {
   );
 }
 
+// ── Replace AWB Modal ─────────────────────────────────────────────────────────
+function ReplaceAwbModal({ order, onClose, onReplaced }) {
+  const [form, setForm] = useState({
+    awb_number: "",
+    courier_name: order.courier_name || "Delhivery",
+    tracking_url: "",
+    reason: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    if (!form.awb_number.trim()) { setError("New AWB is required"); return; }
+    setLoading(true); setError("");
+    try {
+      const data = await safeFetch(`/api/admin/orders/${order.id}/awb`, {
+        method: "PUT",
+        body: JSON.stringify(form),
+      });
+      onReplaced(data.order);
+      onClose();
+    } catch (e) { setError(e.message || "Failed to replace AWB"); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <>
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100 }} onClick={onClose} />
+      <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, width: 420, zIndex: 101 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontWeight: 600, fontSize: 14 }}>Replace AWB / Tracking</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", fontSize: 18 }}>×</button>
+        </div>
+
+        <div style={{ background: "var(--bg3)", borderRadius: 8, padding: "10px 12px", marginBottom: 16, fontSize: 12 }}>
+          <div style={{ fontWeight: 600 }}>{order.order_number}</div>
+          <div style={{ color: "var(--text3)", marginTop: 2 }}>
+            Current AWB: <span style={{ fontFamily: "'DM Mono', monospace" }}>{order.awb_number || "—"}</span>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gap: 10, marginBottom: 16 }}>
+          <div>
+            <div className="field-label">New AWB Number *</div>
+            <input className="field-input" value={form.awb_number} placeholder="e.g. 1234567890123"
+              onChange={e => setForm(p => ({ ...p, awb_number: e.target.value }))} />
+          </div>
+          <div>
+            <div className="field-label">Courier</div>
+            <input className="field-input" value={form.courier_name}
+              onChange={e => setForm(p => ({ ...p, courier_name: e.target.value }))} />
+          </div>
+          <div>
+            <div className="field-label">Tracking URL (optional)</div>
+            <input className="field-input" value={form.tracking_url} placeholder="Auto-generated for Delhivery if blank"
+              onChange={e => setForm(p => ({ ...p, tracking_url: e.target.value }))} />
+          </div>
+          <div>
+            <div className="field-label">Reason (optional, for audit log)</div>
+            <input className="field-input" value={form.reason} placeholder="e.g. Pickup failed, re-booked manually"
+              onChange={e => setForm(p => ({ ...p, reason: e.target.value }))} />
+          </div>
+        </div>
+
+        {error && <div style={{ color: "var(--red)", fontSize: 12, marginBottom: 12, padding: "8px 10px", background: "var(--red2)", borderRadius: 6 }}>{error}</div>}
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn btn-sm" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+          <button className="btn btn-sm btn-accent" style={{ flex: 1 }} disabled={loading} onClick={handleSubmit}>
+            {loading ? "Saving…" : "Replace AWB"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Order Detail Modal ────────────────────────────────────────────────────────
 function OrderDetailModal({ order, onClose }) {
   const [tracking, setTracking] = useState(null);
@@ -231,6 +308,7 @@ export default function AdminOrders() {
   const [updating, setUpdating] = useState(null);
   const [pipeline, setPipeline] = useState({});
   const [shipOrder, setShipOrder] = useState(null);
+  const [awbOrder, setAwbOrder] = useState(null);
   const [detailOrder, setDetailOrder] = useState(null);
 
   const load = useCallback(async (silent = false) => {
@@ -290,6 +368,7 @@ export default function AdminOrders() {
   return (
     <div className="page-anim" style={{ padding: 24 }}>
       {shipOrder && <ShipModal order={shipOrder} onClose={() => setShipOrder(null)} onShipped={onShipped} />}
+      {awbOrder && <ReplaceAwbModal order={awbOrder} onClose={() => setAwbOrder(null)} onReplaced={(updated) => setOrders(prev => prev.map(x => x.id === updated.id ? { ...x, ...updated } : x))} />}
       {detailOrder && <OrderDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} />}
 
       <div className="pipeline mb16">
@@ -356,9 +435,41 @@ export default function AdminOrders() {
                           Ship
                         </button>
                       )}
+                      {o.status === "Processing" && !o.awb_number && (
+                        <button className="btn btn-sm" disabled={updating === o.id}
+                          onClick={async () => {
+                            if (!window.confirm(`Mark ${o.order_number} for self-delivery?\n\nThis skips Delhivery entirely. Use only for nearby orders you'll deliver yourself.`)) return;
+                            setUpdating(o.id);
+                            try {
+                              const data = await safeFetch(`/api/admin/orders/${o.id}/self-deliver`, { method: "POST" });
+                              setOrders(prev => prev.map(x => x.id === o.id ? { ...x, ...data.order } : x));
+                            } catch (e) { alert(e.message || "Failed to mark for self-delivery"); }
+                            finally { setUpdating(null); }
+                          }}>
+                          {updating === o.id ? "…" : "Self Deliver"}
+                        </button>
+                      )}
                       {o.status === "New" && (
                         <button className="btn btn-sm btn-accent" disabled={updating === o.id} onClick={() => updateStatus(o.id, "Processing")}>
                           {updating === o.id ? "…" : "Process"}
+                        </button>
+                      )}
+                      {(o.status === "Shipped" || o.status === "Processing") && (
+                        <button className="btn btn-sm" disabled={updating === o.id}
+                          onClick={() => setAwbOrder(o)}>
+                          Edit AWB
+                        </button>
+                      )}
+                      {o.status === "Shipped" && (
+                        <button className="btn btn-sm btn-accent" disabled={updating === o.id}
+                          onClick={async () => {
+                            if (!window.confirm(`Mark ${o.order_number} as Delivered?\n\nUse this only if Delhivery hasn't auto-updated the status but the customer has received the order.`)) return;
+                            setUpdating(o.id);
+                            try {
+                              await updateStatus(o.id, "Delivered");
+                            } finally { setUpdating(null); }
+                          }}>
+                          {updating === o.id ? "…" : "Mark Delivered"}
                         </button>
                       )}
                       {o.status === "Shipped" && o.awb_number && (
