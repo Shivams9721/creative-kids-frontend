@@ -1,6 +1,7 @@
 "use client";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 // Hand-coded SVG decorations for Creative Kid's.
 // Palette: pink #E2889D, sage #B8C9A8, amber #F0B95B, sky #BDD9E8, cream #FBF7F0, brown #8B6F4E
@@ -507,7 +508,7 @@ export function FooterScene({ className = "" }) {
 
   const treeSize = isMobile ? 64 : 110;
   const treeRightSize = isMobile ? 56 : 96;
-  const mascotSize = isMobile ? 74 : 120;
+  const mascotSize = isMobile ? 150 : 240;
   const mascotLeft = isMobile ? "25%" : "8rem";
   const grassSizes = isMobile ? [28, 24, 30, 26, 28] : [46, 38, 50, 40, 44, 36, 42];
   const grassLefts = isMobile ? [4, 24, 48, 70, 92] : [4, 16, 34, 52, 68, 82, 93];
@@ -526,7 +527,16 @@ export function FooterScene({ className = "" }) {
 
       {/* Trees & mascot */}
       <motion.div className="absolute left-2 sm:left-4 bottom-3 sm:bottom-4 origin-bottom" {...sway}><Tree size={treeSize} /></motion.div>
-      <div className="absolute bottom-3 sm:bottom-4" style={{ left: mascotLeft }}><Mascot pose="stand" size={mascotSize} /></div>
+      <div className="absolute bottom-3 sm:bottom-4" style={{ left: mascotLeft }}>
+        <Image
+          src="/images/ChatGPT Image May 8, 2026, 06_24_59 PM.png"
+          alt="Creative Kid's mascot"
+          width={mascotSize}
+          height={mascotSize}
+          style={{ width: mascotSize, height: "auto" }}
+          priority={false}
+        />
+      </div>
       <motion.div className="absolute right-2 sm:right-4 bottom-3 sm:bottom-4 origin-bottom" {...sway}><Tree size={treeRightSize} /></motion.div>
 
       {/* Ground grass */}

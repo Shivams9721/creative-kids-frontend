@@ -1,7 +1,6 @@
 "use client";
-// A2: connects to the admin SSE stream and surfaces a toast on new orders.
-// Requires admin cookie (httpOnly adminToken) to authenticate — uses credentials:'include' on EventSource.
 import { useEffect, useState } from "react";
+import { safeFetch } from "@/app/admin/api";
 
 export default function AdminOrderNotifier() {
   const [toasts, setToasts] = useState([]);
@@ -9,34 +8,42 @@ export default function AdminOrderNotifier() {
   useEffect(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "";
     if (!apiBase) return;
-    let es;
-    try {
-      es = new EventSource(`${apiBase}/api/admin/orders/stream`, { withCredentials: true });
-    } catch {
-      return;
-    }
-    const onNew = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        const id = data.id || Date.now();
-        setToasts((t) => [...t, { id, ...data }]);
-        try {
-          // small audible cue — silent if browser blocks
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.connect(g); g.connect(ctx.destination);
-          o.frequency.value = 880; g.gain.value = 0.05;
-          o.start(); o.stop(ctx.currentTime + 0.15);
-        } catch {}
-        setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 8000);
-      } catch {}
-    };
-    es.addEventListener("order:new", onNew);
-    es.onerror = () => { /* browser auto-reconnects */ };
+
+    let es = null;
+    let cancelled = false;
+
+    // Use the same token mechanism as safeFetch (reads httpOnly cookie via /api/admin/token).
+    // Pass as ?token= — EventSource can't send Authorization headers.
+    fetch("/api/admin/token", { cache: "no-store", credentials: "include" })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(({ token }) => {
+        if (!token || cancelled) return;
+        es = new EventSource(
+          `${apiBase}/api/admin/orders/stream?token=${encodeURIComponent(token)}`
+        );
+        es.addEventListener("order:new", (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            const id = data.id || Date.now();
+            setToasts((t) => [...t, { id, ...data }]);
+            try {
+              const ctx = new (window.AudioContext || window.webkitAudioContext)();
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              o.connect(g); g.connect(ctx.destination);
+              o.frequency.value = 880; g.gain.value = 0.05;
+              o.start(); o.stop(ctx.currentTime + 0.15);
+            } catch {}
+            setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 8000);
+          } catch {}
+        });
+        es.onerror = () => {};
+      })
+      .catch(() => {});
+
     return () => {
-      es?.removeEventListener("order:new", onNew);
-      es?.close();
+      cancelled = true;
+      if (es) { es.close(); es = null; }
     };
   }, []);
 
