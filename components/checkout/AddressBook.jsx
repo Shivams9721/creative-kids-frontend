@@ -241,9 +241,18 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                 <div className="md:col-span-2">
                     {(form.lat && form.lng) ? (
                         <>
-                            <div className="flex items-center justify-between mb-2">
-                                <p className="text-[10px] font-bold tracking-widest uppercase text-black/60">Pinpoint Your Door</p>
-                                <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5"><Navigation size={10} /> Pin saved</span>
+                            <div className="flex items-center justify-between mb-2 gap-2">
+                                <p className="text-[10px] font-bold tracking-widest uppercase text-black/60">Pinpoint Your Door <span className="text-black/30 normal-case font-normal">(Optional)</span></p>
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5"><Navigation size={10} /> Pin saved</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm(f => ({ ...f, lat: null, lng: null, _manualPin: false }))}
+                                        className="text-[10px] font-bold tracking-widest uppercase text-black/40 hover:text-black border-b border-black/15 hover:border-black pb-0.5"
+                                    >
+                                        Clear pin
+                                    </button>
+                                </div>
                             </div>
                             <MapPinPicker
                                 lat={form.lat}
@@ -277,7 +286,7 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                             }}
                             className="w-full border border-dashed border-black/30 rounded-lg py-3 text-[11px] font-bold tracking-widest uppercase text-black/60 hover:bg-gray-50 flex items-center justify-center gap-2"
                         >
-                            <MapPin size={13} /> Set Exact Location On Map
+                            <MapPin size={13} /> Set Exact Location On Map <span className="text-black/30 normal-case font-normal">(Optional)</span>
                         </button>
                     )}
                 </div>
