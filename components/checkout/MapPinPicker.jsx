@@ -1,5 +1,5 @@
 "use client";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -16,21 +16,31 @@ const icon = L.icon({
 });
 
 // Recenters the map when lat/lng change from outside (e.g. user clicked Use GPS).
-function Recenter({ lat, lng }) {
+// Uses a wider zoom (13) when no explicit zoom is given so rural users can see
+// surrounding villages and pan to the right one.
+function Recenter({ lat, lng, zoom = 17 }) {
   const map = useMap();
   useEffect(() => {
     if (typeof lat === "number" && typeof lng === "number") {
-      map.setView([lat, lng], 17, { animate: true });
+      map.setView([lat, lng], zoom, { animate: true });
     }
-  }, [lat, lng, map]);
+  }, [lat, lng, zoom, map]);
   return null;
 }
 
-export default function MapPinPicker({ lat, lng, onMove }) {
+// Click anywhere on the map to drop / move the pin. Essential for rural India
+// where Nominatim only resolves to block centroid and the customer's village
+// isn't in the search index.
+function ClickHandler({ onClick }) {
+  useMapEvents({ click(e) { onClick({ lat: e.latlng.lat, lng: e.latlng.lng }); } });
+  return null;
+}
+
+export default function MapPinPicker({ lat, lng, onMove, initialZoom = 17 }) {
   const markerRef = useRef(null);
   // India center fallback when no coordinates yet — keeps the map renderable.
   const center = (typeof lat === "number" && typeof lng === "number") ? [lat, lng] : [22.5937, 78.9629];
-  const zoom = (typeof lat === "number" && typeof lng === "number") ? 17 : 5;
+  const zoom = (typeof lat === "number" && typeof lng === "number") ? initialZoom : 5;
 
   const handleDragEnd = () => {
     const m = markerRef.current;
@@ -40,13 +50,14 @@ export default function MapPinPicker({ lat, lng, onMove }) {
   };
 
   return (
-    <div className="rounded-lg overflow-hidden border border-black/20" style={{ height: 280 }}>
+    <div className="rounded-lg overflow-hidden border border-black/20" style={{ height: 320 }}>
       <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Recenter lat={lat} lng={lng} />
+        <Recenter lat={lat} lng={lng} zoom={initialZoom} />
+        <ClickHandler onClick={onMove} />
         {typeof lat === "number" && typeof lng === "number" && (
           <Marker
             position={[lat, lng]}

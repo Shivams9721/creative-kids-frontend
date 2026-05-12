@@ -248,9 +248,16 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                             <MapPinPicker
                                 lat={form.lat}
                                 lng={form.lng}
+                                // Manual-pin (no GPS) cases get a wider zoom so rural users can pan
+                                // across neighbouring villages and click the right one.
+                                initialZoom={form._manualPin ? 13 : 17}
                                 onMove={({ lat, lng }) => setForm(f => ({ ...f, lat, lng }))}
                             />
-                            <p className="text-[10px] text-black/40 mt-1.5">Drag the pin to your exact gate. GPS often points to the building roof — a small correction here saves the rider a phone call.</p>
+                            <p className="text-[10px] text-black/40 mt-1.5">
+                                {form._manualPin
+                                    ? "Pan the map (drag with your finger or mouse) to find your village/area, then tap or click to drop the pin on your gate. Zoom in with the + button or pinch-zoom for accuracy."
+                                    : "Drag the pin to your exact gate. GPS often points to the building roof — a small correction here saves the rider a phone call."}
+                            </p>
                         </>
                     ) : (
                         <button
@@ -265,7 +272,8 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                                         if (d[0]) center = { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
                                     } catch {}
                                 }
-                                setForm(f => ({ ...f, lat: center.lat, lng: center.lng }));
+                                // _manualPin flag signals the map to open at a wider zoom for village-level navigation.
+                                setForm(f => ({ ...f, lat: center.lat, lng: center.lng, _manualPin: true }));
                             }}
                             className="w-full border border-dashed border-black/30 rounded-lg py-3 text-[11px] font-bold tracking-widest uppercase text-black/60 hover:bg-gray-50 flex items-center justify-center gap-2"
                         >
