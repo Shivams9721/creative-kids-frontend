@@ -1,9 +1,13 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { MapPin, Plus, Trash2, Edit2, Loader2, Navigation, Search, X } from "lucide-react";
 import { State, City } from "country-state-city";
 import { safeFetch } from "@/lib/safeFetch";
 import { csrfHeaders } from "@/lib/csrf";
+
+// Leaflet uses `window` — load on the client only.
+const MapPinPicker = dynamic(() => import("./MapPinPicker"), { ssr: false, loading: () => <div className="rounded-lg border border-black/10 h-[280px] flex items-center justify-center text-[12px] text-black/40">Loading map…</div> });
 
 const EMPTY = { firstName: "", middleName: "", lastName: "", phone: "", houseNo: "", roadName: "", city: "", state: "", pincode: "", landmark: "", landmarkType: "", instructions: "", lat: null, lng: null };
 
@@ -234,12 +238,41 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                     />
                     <p className="text-[10px] text-black/40 mt-1">Helps the delivery rider find you faster. {form.instructions.length}/300</p>
                 </div>
-                {(form.lat && form.lng) && (
-                    <div className="md:col-span-2 flex items-center gap-2 text-[11px] text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                        <Navigation size={12} />
-                        <span>GPS location saved — delivery rider's app will navigate straight to your door.</span>
-                    </div>
-                )}
+                <div className="md:col-span-2">
+                    {(form.lat && form.lng) ? (
+                        <>
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-[10px] font-bold tracking-widest uppercase text-black/60">Pinpoint Your Door</p>
+                                <span className="inline-flex items-center gap-1 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-2 py-0.5"><Navigation size={10} /> Pin saved</span>
+                            </div>
+                            <MapPinPicker
+                                lat={form.lat}
+                                lng={form.lng}
+                                onMove={({ lat, lng }) => setForm(f => ({ ...f, lat, lng }))}
+                            />
+                            <p className="text-[10px] text-black/40 mt-1.5">Drag the pin to your exact gate. GPS often points to the building roof — a small correction here saves the rider a phone call.</p>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                // No GPS yet — try to center on the pincode/city via Nominatim, otherwise drop at India center.
+                                let center = { lat: 22.5937, lng: 78.9629 };
+                                if (form.pincode?.length === 6) {
+                                    try {
+                                        const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${form.pincode}&country=India&format=json&limit=1`, { headers: { "Accept-Language": "en" } });
+                                        const d = await r.json();
+                                        if (d[0]) center = { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
+                                    } catch {}
+                                }
+                                setForm(f => ({ ...f, lat: center.lat, lng: center.lng }));
+                            }}
+                            className="w-full border border-dashed border-black/30 rounded-lg py-3 text-[11px] font-bold tracking-widest uppercase text-black/60 hover:bg-gray-50 flex items-center justify-center gap-2"
+                        >
+                            <MapPin size={13} /> Set Exact Location On Map
+                        </button>
+                    )}
+                </div>
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">
