@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { safeFetch } from "../api";
-import TwoFactorAuth from "./TwoFactorAuth";
 
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
@@ -183,8 +182,6 @@ export default function AdminSettings() {
             )}
           </div>
 
-          {/* TWO-FACTOR AUTH */}
-          <TwoFactorAuth />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

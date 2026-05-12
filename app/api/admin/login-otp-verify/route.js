@@ -1,6 +1,4 @@
-// Verify an admin email-OTP. If 2FA is enabled the backend returns
-// { requires_totp, mfa_token } and the client moves on to /api/admin/login-mfa.
-// Otherwise we set the adminToken cookie on the frontend domain.
+// Verify an admin email-OTP and set the adminToken cookie on the frontend domain.
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -18,10 +16,6 @@ export async function POST(request) {
   });
   const data = await upstream.json().catch(() => ({}));
 
-  // 2FA gate — pass through to the client without setting a cookie.
-  if (upstream.ok && data?.requires_totp && data?.mfa_token) {
-    return NextResponse.json({ requires_totp: true, mfa_token: data.mfa_token });
-  }
   if (!upstream.ok || !data?.token) {
     return NextResponse.json(
       { message: data?.error || data?.message || "Invalid OTP" },

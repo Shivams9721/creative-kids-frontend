@@ -25,12 +25,6 @@ export async function POST(request) {
 
   const data = await upstream.json().catch(() => ({}));
 
-  // Backend says "password ok, now do 2FA". Pass the challenge through to the
-  // client without setting any cookie — the second step issues the real token.
-  if (upstream.ok && data?.requires_totp && data?.mfa_token) {
-    return NextResponse.json({ requires_totp: true, mfa_token: data.mfa_token });
-  }
-
   if (!upstream.ok || !data?.token) {
     return NextResponse.json(
       { message: data?.message || "Invalid credentials" },
