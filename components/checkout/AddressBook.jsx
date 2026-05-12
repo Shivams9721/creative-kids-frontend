@@ -1,10 +1,24 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { MapPin, Plus, Trash2, Edit2, Loader2, Navigation, Search, X } from "lucide-react";
+import { State, City } from "country-state-city";
 import { safeFetch } from "@/lib/safeFetch";
 import { csrfHeaders } from "@/lib/csrf";
 
-const EMPTY = { fullName: "", phone: "", houseNo: "", roadName: "", city: "", state: "", pincode: "", landmark: "" };
+const EMPTY = { firstName: "", middleName: "", lastName: "", phone: "", houseNo: "", roadName: "", city: "", state: "", pincode: "", landmark: "" };
+
+// Static list of Indian states/UTs (loaded once)
+const IN_STATES = State.getStatesOfCountry("IN").sort((a, b) => a.name.localeCompare(b.name));
+const stateNameToIso = Object.fromEntries(IN_STATES.map(s => [s.name, s.isoCode]));
+
+// Helpers — keep backend compatible: combine on save, split on load.
+const combineName = (f, m, l) => [f, m, l].filter(Boolean).map(s => s.trim()).join(" ");
+const splitFullName = (full) => {
+  const parts = String(full || "").trim().split(/\s+/);
+  if (parts.length <= 1) return { firstName: parts[0] || "", middleName: "", lastName: "" };
+  if (parts.length === 2) return { firstName: parts[0], middleName: "", lastName: parts[1] };
+  return { firstName: parts[0], middleName: parts.slice(1, -1).join(" "), lastName: parts[parts.length - 1] };
+};
 
 // ── Location Search Bar ──────────────────────────────────────────────────────
 function LocationSearch({ onFill }) {
@@ -122,17 +136,35 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
 
     const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-    // Auto-fill city/state from pincode
+    // Auto-fill state + district from pincode (India Post)
     useEffect(() => {
         if (form.pincode?.length === 6) {
             setFetchingPin(true);
             fetch(`https://api.postalpincode.in/pincode/${form.pincode}`)
                 .then(r => r.json())
-                .then(d => { if (d[0]?.Status === "Success") { const p = d[0]?.PostOffice?.[0]; if (p) setForm(f => ({ ...f, city: p.District, state: p.State })); } })
+                .then(d => {
+                    if (d[0]?.Status !== "Success") return;
+                    const p = d[0]?.PostOffice?.[0];
+                    if (!p) return;
+                    // Match API state name to dropdown's canonical name (case-insensitive)
+                    const matchedState = IN_STATES.find(s => s.name.toLowerCase() === String(p.State || "").toLowerCase());
+                    setForm(f => ({
+                        ...f,
+                        state: matchedState ? matchedState.name : (p.State || ""),
+                        city: p.District || "",
+                    }));
+                })
                 .catch(() => {})
                 .finally(() => setFetchingPin(false));
         }
     }, [form.pincode]);
+
+    // Districts for the currently-selected state (memoized by state name)
+    const districts = (() => {
+        const iso = stateNameToIso[form.state];
+        if (!iso) return [];
+        return City.getCitiesOfState("IN", iso).map(c => c.name).sort((a, b) => a.localeCompare(b));
+    })();
 
     const inp = "border border-black/20 p-3 rounded-lg text-[13px] outline-none focus:border-black w-full";
 
@@ -141,11 +173,15 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
             {/* Location search / GPS */}
             <LocationSearch onFill={(filled) => setForm(f => ({ ...f, ...filled }))} />
 
+            {/* Name row — first / middle (optional) / last */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">First Name *</label><input className={inp} value={form.firstName} onChange={e => set("firstName", e.target.value)} placeholder="Jane" /></div>
+                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Middle Name</label><input className={inp} value={form.middleName} onChange={e => set("middleName", e.target.value)} placeholder="Optional" /></div>
+                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Last Name *</label><input className={inp} value={form.lastName} onChange={e => set("lastName", e.target.value)} placeholder="Doe" /></div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Full Name *</label><input className={inp} value={form.fullName} onChange={e => set("fullName", e.target.value)} placeholder="Jane Doe" /></div>
                 <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Phone *</label><input className={inp} value={form.phone} onChange={e => set("phone", e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="10-digit number" /></div>
-                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">House No., Building *</label><input className={inp} value={form.houseNo} onChange={e => set("houseNo", e.target.value)} placeholder="Flat/House No." /></div>
-                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Road Name, Area *</label><input className={inp} value={form.roadName} onChange={e => set("roadName", e.target.value)} placeholder="Auto-filled or type manually" /></div>
                 <div>
                     <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Pincode *</label>
                     <div className="relative">
@@ -153,9 +189,25 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                         {fetchingPin && <Loader2 size={14} className="absolute right-3 top-3.5 animate-spin text-black/40" />}
                     </div>
                 </div>
-                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">City *</label><input className={inp} value={form.city} onChange={e => set("city", e.target.value)} placeholder="Auto-filled" /></div>
-                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">State *</label><input className={inp} value={form.state} onChange={e => set("state", e.target.value)} placeholder="Auto-filled" /></div>
-                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Landmark (Optional)</label><input className={inp} value={form.landmark} onChange={e => set("landmark", e.target.value)} placeholder="Near Apollo Hospital" /></div>
+                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">House No., Building *</label><input className={inp} value={form.houseNo} onChange={e => set("houseNo", e.target.value)} placeholder="Flat/House No." /></div>
+                <div><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Road Name, Area *</label><input className={inp} value={form.roadName} onChange={e => set("roadName", e.target.value)} placeholder="Auto-filled or type manually" /></div>
+                <div>
+                    <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">State *</label>
+                    <select className={inp} value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value, city: "" }))}>
+                        <option value="">Select state</option>
+                        {IN_STATES.map(s => <option key={s.isoCode} value={s.name}>{s.name}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">District / City *</label>
+                    <select className={inp} value={form.city} onChange={e => set("city", e.target.value)} disabled={!form.state}>
+                        <option value="">{form.state ? "Select district" : "Select state first"}</option>
+                        {districts.map(d => <option key={d} value={d}>{d}</option>)}
+                        {/* Allow pincode-derived district even if it's not in the curated city list */}
+                        {form.city && !districts.includes(form.city) && <option value={form.city}>{form.city}</option>}
+                    </select>
+                </div>
+                <div className="md:col-span-2"><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Landmark (Optional)</label><input className={inp} value={form.landmark} onChange={e => set("landmark", e.target.value)} placeholder="Near Apollo Hospital" /></div>
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -163,7 +215,7 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                 <span className="text-[12px] text-black/70">Set as default address</span>
             </label>
             <div className="flex gap-3 pt-2">
-                <button onClick={() => onSave({ ...form, is_default: isDefault })} disabled={saving}
+                <button onClick={() => onSave({ ...form, fullName: combineName(form.firstName, form.middleName, form.lastName), is_default: isDefault })} disabled={saving}
                     className="bg-black text-white px-6 py-2.5 rounded-full text-[11px] font-bold tracking-widest uppercase hover:bg-black/80 disabled:opacity-50">
                     {saving ? "Saving..." : "Save Address"}
                 </button>
@@ -289,7 +341,7 @@ export default function AddressBook({ selectable = false, onSelect = null }) {
                         {editingId ? "Edit Address" : "Add New Address"}
                     </h3>
                     <AddressForm
-                        initial={editingId ? (() => { const a = addresses.find(x => x.id === editingId); return a ? { fullName: a.full_name, phone: a.phone, houseNo: a.house_no, roadName: a.road_name, city: a.city, state: a.state, pincode: a.pincode, landmark: a.landmark, is_default: a.is_default } : EMPTY; })() : EMPTY}
+                        initial={editingId ? (() => { const a = addresses.find(x => x.id === editingId); if (!a) return EMPTY; const n = splitFullName(a.full_name); return { firstName: n.firstName, middleName: n.middleName, lastName: n.lastName, phone: a.phone, houseNo: a.house_no, roadName: a.road_name, city: a.city, state: a.state, pincode: a.pincode, landmark: a.landmark || "", is_default: a.is_default }; })() : EMPTY}
                         onSave={handleSave}
                         onCancel={() => { setShowForm(false); setEditingId(null); }}
                         saving={saving}
