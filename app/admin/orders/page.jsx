@@ -460,6 +460,24 @@ export default function AdminOrders() {
                           Edit AWB
                         </button>
                       )}
+                      {o.status === "Shipped" && o.awb_number && (o.courier_name || "").toLowerCase().includes("delhivery") && (
+                        <button className="btn btn-sm" disabled={updating === o.id}
+                          onClick={async () => {
+                            setUpdating(o.id);
+                            try {
+                              const data = await safeFetch(`/api/admin/orders/${o.id}/delhivery-debug`, { method: "POST" });
+                              if (data.success && data.order) {
+                                setOrders(prev => prev.map(x => x.id === o.id ? { ...x, ...data.order } : x));
+                                alert(`Synced. New status: ${data.order.status}`);
+                              } else {
+                                alert(data.message || "No update applied. Delhivery raw status: " + (data.parsed?.rawStatus || "unknown"));
+                              }
+                            } catch (e) { alert(e.message || "Sync failed"); }
+                            finally { setUpdating(null); }
+                          }}>
+                          {updating === o.id ? "…" : "Sync"}
+                        </button>
+                      )}
                       {o.status === "Shipped" && (
                         <button className="btn btn-sm btn-accent" disabled={updating === o.id}
                           onClick={async () => {
