@@ -469,11 +469,14 @@ export default function AdminOrders() {
                               if (data.success && data.order) {
                                 setOrders(prev => prev.map(x => x.id === o.id ? { ...x, ...data.order } : x));
                                 alert(`Synced. New status: ${data.order.status}`);
+                              } else if (data.delhiveryStatus || data.delhiveryBody) {
+                                alert(`Delhivery API error (HTTP ${data.delhiveryStatus || '?'}):\n\n${typeof data.delhiveryBody === 'string' ? data.delhiveryBody : JSON.stringify(data.delhiveryBody, null, 2)}`);
                               } else {
-                                alert(data.message || "No update applied. Delhivery raw status: " + (data.parsed?.rawStatus || "unknown"));
+                                alert(data.message || data.error || ("No update applied. Delhivery raw status: " + (data.parsed?.rawStatus || "unknown")));
                               }
-                            } catch (e) { alert(e.message || "Sync failed"); }
-                            finally { setUpdating(null); }
+                            } catch (e) {
+                              alert(e.message || "Sync failed. Check backend logs.");
+                            } finally { setUpdating(null); }
                           }}>
                           {updating === o.id ? "…" : "Sync"}
                         </button>
