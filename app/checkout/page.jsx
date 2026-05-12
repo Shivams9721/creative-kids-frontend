@@ -52,7 +52,8 @@ export default function CheckoutPage() {
     // Form State
     const [address, setAddress] = useState({
         fullName: "", phone: "", altPhone: "", pincode: "",
-        state: "", city: "", houseNo: "", roadName: "", landmark: ""
+        state: "", city: "", houseNo: "", roadName: "", landmark: "",
+        landmarkType: "", instructions: "", lat: null, lng: null
     });
 
     const [errors, setErrors] = useState({});
@@ -509,9 +510,11 @@ export default function CheckoutPage() {
                                             </h3>
                                             <div className="text-[13px] text-black/70 space-y-1 pl-6">
                                                 <p>{address.houseNo}, {address.roadName}</p>
-                                                {address.landmark && <p>Landmark: {address.landmark}</p>}
+                                                {(address.landmark || address.landmarkType) && <p>Landmark: Near {[address.landmarkType, address.landmark].filter(Boolean).join(" ")}</p>}
                                                 <p>{address.city}, {address.state} - <span className="font-medium text-black">{address.pincode}</span></p>
                                                 <p className="pt-2 font-medium text-black">Contact: {address.phone} {address.altPhone && `/ ${address.altPhone}`}</p>
+                                                {address.instructions && <p className="pt-1 italic text-black/60">Note for rider: "{address.instructions}"</p>}
+                                                {(address.lat && address.lng) && <p className="text-[11px] text-green-700">📍 GPS location pinned</p>}
                                             </div>
                                         </div>
                                         <button onClick={() => setStep(1)} className="text-[10px] font-bold uppercase tracking-widest text-black/50 hover:text-black border-b border-black/20 hover:border-black transition-all pb-0.5">Edit</button>

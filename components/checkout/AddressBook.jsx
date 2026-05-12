@@ -5,7 +5,10 @@ import { State, City } from "country-state-city";
 import { safeFetch } from "@/lib/safeFetch";
 import { csrfHeaders } from "@/lib/csrf";
 
-const EMPTY = { firstName: "", middleName: "", lastName: "", phone: "", houseNo: "", roadName: "", city: "", state: "", pincode: "", landmark: "" };
+const EMPTY = { firstName: "", middleName: "", lastName: "", phone: "", houseNo: "", roadName: "", city: "", state: "", pincode: "", landmark: "", landmarkType: "", instructions: "", lat: null, lng: null };
+
+// Common Indian landmark types — riders parse these faster than free text.
+const LANDMARK_TYPES = ["Temple", "Gurudwara", "Mosque", "Church", "School", "College", "Hospital", "Clinic", "Mall", "Market", "Metro Station", "Bus Stop", "Railway Station", "Petrol Pump", "Park", "Bank", "ATM", "Police Station", "Post Office", "Other"];
 
 // Static list of Indian states/UTs (loaded once)
 const IN_STATES = State.getStatesOfCountry("IN").sort((a, b) => a.name.localeCompare(b.name));
@@ -48,8 +51,8 @@ function LocationSearch({ onFill }) {
         return () => clearTimeout(timerRef.current);
     }, [query]);
 
-    // Parse Nominatim address into our form fields
-    const parseNominatim = (item) => {
+    // Parse Nominatim address into our form fields (optionally enriched with GPS coords)
+    const parseNominatim = (item, coords = null) => {
         const a = item.address || {};
         return {
             roadName: [a.road, a.suburb, a.neighbourhood, a.quarter].filter(Boolean).join(", ") || "",
@@ -57,10 +60,11 @@ function LocationSearch({ onFill }) {
             state: a.state || "",
             pincode: a.postcode || "",
             landmark: a.amenity || a.tourism || a.historic || "",
+            ...(coords ? { lat: coords.latitude, lng: coords.longitude } : {}),
         };
     };
 
-    // GPS auto-detect
+    // GPS auto-detect — captures lat/lng so Delhivery's rider app can navigate to the door.
     const detectLocation = () => {
         if (!navigator.geolocation) { setError("Geolocation not supported by your browser."); return; }
         setDetecting(true); setError("");
@@ -72,7 +76,7 @@ function LocationSearch({ onFill }) {
                         { headers: { "Accept-Language": "en" } }
                     );
                     const data = await res.json();
-                    onFill(parseNominatim(data));
+                    onFill(parseNominatim(data, coords));
                     setQuery(data.display_name?.split(",").slice(0, 3).join(",") || "");
                     setResults([]);
                 } catch { setError("Could not fetch address. Try searching manually."); }
@@ -207,7 +211,35 @@ function AddressForm({ initial = EMPTY, onSave, onCancel, saving }) {
                         {form.city && !districts.includes(form.city) && <option value={form.city}>{form.city}</option>}
                     </select>
                 </div>
-                <div className="md:col-span-2"><label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Landmark (Optional)</label><input className={inp} value={form.landmark} onChange={e => set("landmark", e.target.value)} placeholder="Near Apollo Hospital" /></div>
+                <div>
+                    <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Landmark Type (Optional)</label>
+                    <select className={inp} value={form.landmarkType} onChange={e => set("landmarkType", e.target.value)}>
+                        <option value="">Select type</option>
+                        {LANDMARK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Landmark Name (Optional)</label>
+                    <input className={inp} value={form.landmark} onChange={e => set("landmark", e.target.value)} placeholder="e.g. Apollo, DPS School" />
+                </div>
+                <div className="md:col-span-2">
+                    <label className="text-[10px] font-bold tracking-widest uppercase text-black/60 block mb-1">Delivery Instructions (Optional)</label>
+                    <textarea
+                        className={inp + " resize-none"}
+                        rows={2}
+                        maxLength={300}
+                        value={form.instructions}
+                        onChange={e => set("instructions", e.target.value)}
+                        placeholder="e.g. Ring bell twice. Green gate, 2nd floor. Look for the building with the red board."
+                    />
+                    <p className="text-[10px] text-black/40 mt-1">Helps the delivery rider find you faster. {form.instructions.length}/300</p>
+                </div>
+                {(form.lat && form.lng) && (
+                    <div className="md:col-span-2 flex items-center gap-2 text-[11px] text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                        <Navigation size={12} />
+                        <span>GPS location saved — delivery rider's app will navigate straight to your door.</span>
+                    </div>
+                )}
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -239,7 +271,12 @@ export default function AddressBook({ selectable = false, onSelect = null }) {
     const toCheckoutFormat = (a) => ({
         fullName: a.full_name, phone: a.phone, houseNo: a.house_no,
         roadName: a.road_name, city: a.city, state: a.state,
-        pincode: a.pincode, landmark: a.landmark || "", altPhone: ""
+        pincode: a.pincode, landmark: a.landmark || "",
+        landmarkType: a.landmark_type || "",
+        instructions: a.instructions || "",
+        lat: a.lat != null ? Number(a.lat) : null,
+        lng: a.lng != null ? Number(a.lng) : null,
+        altPhone: ""
     });
 
     useEffect(() => {
@@ -312,9 +349,11 @@ export default function AddressBook({ selectable = false, onSelect = null }) {
                                     {a.is_default && <span className="px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase bg-black text-white rounded">Default</span>}
                                 </div>
                                 <p className="text-[13px] text-black/70">{a.house_no}, {a.road_name}</p>
-                                {a.landmark && <p className="text-[13px] text-black/70">Near {a.landmark}</p>}
+                                {(a.landmark || a.landmark_type) && <p className="text-[13px] text-black/70">Near {[a.landmark_type, a.landmark].filter(Boolean).join(" ")}</p>}
                                 <p className="text-[13px] text-black/70">{a.city}, {a.state} — {a.pincode}</p>
                                 <p className="text-[12px] text-black/50 mt-1">📞 {a.phone}</p>
+                                {a.instructions && <p className="text-[11px] text-black/50 italic mt-1">"{a.instructions}"</p>}
+                                {(a.lat && a.lng) && <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5"><Navigation size={9} /> GPS pinned</span>}
                             </div>
                         </div>
                         {!selectable && (
@@ -341,7 +380,7 @@ export default function AddressBook({ selectable = false, onSelect = null }) {
                         {editingId ? "Edit Address" : "Add New Address"}
                     </h3>
                     <AddressForm
-                        initial={editingId ? (() => { const a = addresses.find(x => x.id === editingId); if (!a) return EMPTY; const n = splitFullName(a.full_name); return { firstName: n.firstName, middleName: n.middleName, lastName: n.lastName, phone: a.phone, houseNo: a.house_no, roadName: a.road_name, city: a.city, state: a.state, pincode: a.pincode, landmark: a.landmark || "", is_default: a.is_default }; })() : EMPTY}
+                        initial={editingId ? (() => { const a = addresses.find(x => x.id === editingId); if (!a) return EMPTY; const n = splitFullName(a.full_name); return { firstName: n.firstName, middleName: n.middleName, lastName: n.lastName, phone: a.phone, houseNo: a.house_no, roadName: a.road_name, city: a.city, state: a.state, pincode: a.pincode, landmark: a.landmark || "", landmarkType: a.landmark_type || "", instructions: a.instructions || "", lat: a.lat != null ? Number(a.lat) : null, lng: a.lng != null ? Number(a.lng) : null, is_default: a.is_default }; })() : EMPTY}
                         onSave={handleSave}
                         onCancel={() => { setShowForm(false); setEditingId(null); }}
                         saving={saving}
