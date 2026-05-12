@@ -393,6 +393,27 @@ export default function AdminOrders() {
           {refreshing ? "Refreshing…" : "Refresh"}
         </button>
         {lastRefresh && <span style={{ fontSize: 10, color: "var(--text3)", flexShrink: 0 }}>Updated {lastRefresh.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>}
+        <button
+          className="btn btn-sm btn-danger"
+          style={{ flexShrink: 0, marginLeft: "auto" }}
+          onClick={async () => {
+            const cancelledCount = orders.filter(o => o.status === "Cancelled").length;
+            if (cancelledCount === 0) { alert("No cancelled orders to delete."); return; }
+            if (!window.confirm(`Permanently delete ALL ${cancelledCount} cancelled orders?\n\nThis cannot be undone. Related rows (refunds, returns, coupon redemptions, loyalty transactions) will also be deleted.`)) return;
+            if (!window.confirm("Are you absolutely sure? Type-confirm: this is final.")) return;
+            try {
+              const data = await safeFetch(`/api/admin/orders/cleanup-cancelled`, {
+                method: "POST",
+                body: JSON.stringify({ confirm: "DELETE_ALL_CANCELLED" }),
+              });
+              alert(`Deleted ${data.deleted} cancelled order(s).`);
+              await load(true);
+            } catch (e) {
+              alert(e.message || "Failed to delete cancelled orders");
+            }
+          }}>
+          Purge Cancelled
+        </button>
       </div>
 
       <div className="card" style={{ overflow: "hidden" }}>
