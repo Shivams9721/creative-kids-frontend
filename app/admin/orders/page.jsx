@@ -172,7 +172,25 @@ function OrderDetailModal({ order, onClose }) {
       <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, width: 480, maxHeight: "80vh", overflowY: "auto", zIndex: 101 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>{order.order_number}</div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", fontSize: 18 }}>×</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {order.status === "Delivered" && (
+              <button
+                className="btn btn-sm"
+                onClick={async () => {
+                  try {
+                    const data = await safeFetch(`/api/admin/orders/${order.id}/invoice`);
+                    if (data?.success && data.invoice) {
+                      const { generateInvoicePDF } = await import("@/lib/invoice");
+                      await generateInvoicePDF(data.invoice);
+                    }
+                  } catch (e) { alert(e.message || "Could not generate invoice"); }
+                }}
+              >
+                Download Invoice
+              </button>
+            )}
+            <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text3)", fontSize: 18 }}>×</button>
+          </div>
         </div>
 
         {/* Customer + Address */}
