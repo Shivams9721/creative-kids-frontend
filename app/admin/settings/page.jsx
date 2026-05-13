@@ -14,7 +14,7 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState({
     store_name: "Creative Kid's",
     gstin: "06AAJPM1384L1ZE",
-    address: "Plot No. 667, Pace City-II, Sector 37, Gurugram, Haryana – 122001",
+    address: "Plot No. 550A, Pace City-II, Sector 37, Gurugram, Haryana – 122001",
     support_email: "support@creativekids.co.in",
     maintenance_mode: false,
     cod_enabled: true,
