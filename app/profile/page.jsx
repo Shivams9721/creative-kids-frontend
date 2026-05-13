@@ -352,7 +352,7 @@ export default function UserProfile() {
                               >
                                 View
                               </button>
-                              {order.status === 'Delivered' && (
+                              {['Shipped', 'Delivered'].includes(order.status) && (
                                 <button
                                   onClick={async () => {
                                     const token = localStorage.getItem('token');

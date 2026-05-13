@@ -173,7 +173,7 @@ function OrderDetailModal({ order, onClose }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>{order.order_number}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {order.status === "Delivered" && (
+            {["Shipped", "Delivered"].includes(order.status) && (
               <button
                 className="btn btn-sm"
                 onClick={async () => {
