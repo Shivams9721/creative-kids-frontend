@@ -15,7 +15,6 @@ import TrustBadges from "@/components/trust/TrustBadges";
 import AboutUsCarousel from "@/components/trust/AboutUsCarousel";
 import { SquiggleUnderline, Leaf, Sparkle, Cloud, Star, Flower, Heart as DecoHeart, AnimatedSparkle, AnimatedLeaf, AnimatedCloud, AnimatedStar, AnimatedFlower, WavyDivider, BouncingBalloonLoader, Grass, Bird, Mascot, CatPeek, HideAndSeek, Butterfly, Rainbow, Bunny, Floating, FlyingBird } from "@/components/decorations";
 
-const OLD_BANNER = { imageUrl: "/images/321.png", tag: "Baby & Kids", title: "The Spring Collection", ctaHref: "/shop", ctaLabel: "Explore Collection" };
 const DEFAULT_CATEGORIES = [
   { label: "Dress", targetUrl: "/shop/kids-girl/dresses", imageUrl: "/images/Dress.png" },
   { label: "Shorts", targetUrl: "/shop/kids-girl/shorts-skirts-skorts", imageUrl: "/images/shorts.jpg" },
@@ -266,9 +265,9 @@ export default function Home() {
         if (data.hero && Array.isArray(data.hero.slides) && data.hero.slides.length > 0) {
           setHeroSlides(data.hero.slides);
         } else if (data.hero && data.hero.imageUrl) {
-          setHeroSlides([{ imageUrl: data.hero.imageUrl || null, mobileImageUrl: data.hero.mobileImageUrl || null, tag: data.hero.tag || "", title: data.hero.title || "", ctaHref: data.hero.ctaHref || "", ctaLabel: data.hero.ctaLabel || "" }, OLD_BANNER]);
+          setHeroSlides([{ imageUrl: data.hero.imageUrl || null, mobileImageUrl: data.hero.mobileImageUrl || null, tag: data.hero.tag || "", title: data.hero.title || "", ctaHref: data.hero.ctaHref || "", ctaLabel: data.hero.ctaLabel || "" }]);
         } else {
-          setHeroSlides([OLD_BANNER]);
+          setHeroSlides([]);
         }
 
         if (Array.isArray(data.categoryItems) && data.categoryItems.length > 0) {
